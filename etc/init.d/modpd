@@ -124,6 +124,7 @@ do_stop()
 			log_failure_msg "Stopping ${DAEMON_NAME}"
 		fi
 
+		# shellcheck disable=SC2034
 		for i in {1..10}
 		   do
 			if do_status > /dev/null ;then
