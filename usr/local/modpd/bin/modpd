@@ -142,8 +142,6 @@ includeConfig()
 
 	case "${rc}" in
 		4|5|6|7)
-			# shellcheck source=${script_config_file}
-			## shellcheck disable=SC1091
 			source "${script_config_file}"
 			rc="$?"
 
@@ -986,6 +984,7 @@ jobHandler()
 
 		script_job_counter_total="$((script_job_counter_total + 1))"
 
+		# shellcheck disable=SC2154
 		${sleep_bin} ${job_handle_interval}
 	   done < "${named_pipe_filename}"
 }

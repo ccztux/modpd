@@ -47,7 +47,6 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Script info variables:
 #-----------------------
 
-script_pid="${BASHPID}"
 script_name="${0##*/}"
 script_version="1.0.1-alpha1"
 script_author="Christian Zettel (ccztux)"
