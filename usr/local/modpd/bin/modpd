@@ -825,7 +825,7 @@ checkAlreadyRunningInstance()
 	   	for own_pid in "${!own_session_pids[@]}"
 		   do
 			if [ "${running_script_pids[$running_pid]}" == "${own_session_pids[$own_pid]}" ] ;then
-				unset running_script_pids[$running_pid]
+				unset "running_script_pids[$running_pid]"
 				break
 			fi
 		   done
@@ -985,7 +985,7 @@ jobHandler()
 		script_job_counter_total="$((script_job_counter_total + 1))"
 
 		# shellcheck disable=SC2154
-		${sleep_bin} ${job_handle_interval}
+		${sleep_bin} "${job_handle_interval}"
 	   done < "${named_pipe_filename}"
 }
 
