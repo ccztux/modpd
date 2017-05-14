@@ -112,7 +112,7 @@ checkOptions()
 		exit 11
 	else
 		if [[ ! "${check_type}" =~ host|service ]] ;then
-			printf "Check type (option: -t) has a wrong value: '${check_type}'.\n\n"
+			printf "Check type (option: -t) has a wrong value: '%s'.\n\n" "${check_type}"
 			printUsage
 
 			exit 12
@@ -298,11 +298,11 @@ checkNamedPipe()
 			return 0
 			;;
 		10)
-			printf "Named pipe: '${named_pipe_filename}' doesnt exist.\n"
+			printf "Named pipe: '%s' doesnt exist.\n" "${named_pipe_filename}"
 			return 1
 			;;
 		*)
-			printf "Named pipe: '${named_pipe_filename}' exists, but it is not read/writeable, exiting.\n"
+			printf "Named pipe: '%s' exists, but it is not read/writeable, exiting.\n" "${named_pipe_filename}"
 			return 2
 			;;
 	esac
