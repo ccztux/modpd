@@ -39,7 +39,8 @@ DAEMON_RETVAL="255"
 
 # Source function library
 if [ -f /lib/lsb/init-functions ] ;then
-	. /lib/lsb/init-functions
+	# shellcheck source=/lib/lsb/init-functions
+	source /lib/lsb/init-functions
 else
 	log_failure_msg "File: '/lib/lsb/init-functions' doesnt exist."
 	exit 6
@@ -47,12 +48,14 @@ fi
 
 # Load the VERBOSE setting and other rcS variables
 if [ -f /lib/init/vars.sh ] ;then
-	. /lib/init/vars.sh
+	# shellcheck source=/lib/init/vars.sh
+	source /lib/init/vars.sh
 fi
 
 # Source configuration.
 if [ -f /etc/default/modpd ] ;then
-	. /etc/default/modpd
+	# shellcheck source=/etc/default/modpd
+	source /etc/default/modpd
 fi
 
 # Check if daemon is executeable
