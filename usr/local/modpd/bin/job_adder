@@ -1,0 +1,429 @@
+#!/usr/bin/env bash
+
+#========================================================================================================
+#
+#  Author:		Christian Zettel (ccztux)
+#			2017-05-05
+#			http://linuxinside.at
+#
+#  Copyright:		Copyright © 2017 Christian Zettel (ccztux), all rights reserved
+#
+#  Project website:	https://github.com/ccztux/modpd
+#
+#  Last Modification:	Christian Zettel (ccztux)
+#			2017-05-05
+#
+#  Description:		Monitoring Obsessing Data Processor Daemon
+#
+#  License:		GNU GPLv3
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#========================================================================================================
+
+
+#--------------
+# Bash options:
+#--------------
+
+set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\n" ; exit 245 ; }
+set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\n" ; exit 246 ; }
+set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\n" ; exit 247 ; }
+
+
+
+#-----------------------
+# Script info variables:
+#-----------------------
+
+script_pid="${BASHPID}"
+script_name="${0##*/}"
+script_version="1.0.0-alpha1"
+script_author="Christian Zettel (ccztux)"
+script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
+script_project_website="https://github.com/ccztux/modpd"
+script_last_modification_date="2017-05-08"
+script_license="GNU GPLv3"
+script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
+
+
+
+#-----------
+# Functions:
+#-----------
+
+printUsage()
+{
+	printf "Usage: %s OPTIONS\n\n" "${script_name}"
+	printf "Author:\t\t\t%s\n" "${script_author}"
+	printf "Last modification:\t%s\n" "${script_last_modification_date}"
+	printf "Version:\t\t%s\n\n" "${script_version}"
+	printf "Description:\t\t%s\n\n" "${script_description}"
+	printf "OPTIONS (common):\n"
+	printf "   -h\t\tShows this help.\n"
+	printf "   -v\t\tShows detailed version information.\n\n"
+	printf "OPTIONS (checks):\n"
+	printf "   -c\t\tConfig file.\n"
+	printf "   -t\t\tCheck type. (host|service)\n"
+	printf "   -H\t\tHost name.\n"
+	printf "   -S\t\tService description.\n"
+	printf "   -s\t\tCheck state.\n"
+	printf "   -o\t\tPlugin output.\n\n"
+	printf "OPTIONS (obsessing interface):\n"
+	printf "   -O\t\tMonitoring host were checks should be sent to.\n"
+	printf "   -T\t\tToken if needed.\n"
+	printf "   -p\t\tPort if needed.\n"
+}
+
+printScriptInfos()
+{
+	printf "Author:\t\t\t%s\n" "${script_author}"
+	printf "Project website:\t%s\n" "${script_project_website}"
+	printf "License:\t\t%s\n\n" "${script_license}"
+	printf "Last modification:\t%s\n" "${script_last_modification_date}"
+	printf "Version:\t\t%s\n\n" "${script_version}"
+	printf "Description:\t\t%s\n\n" "${script_description}"
+	printf "Copyright:\t\t%s\n" "${script_copyright}"
+}
+
+checkOptions()
+{
+	if [ -z "${script_config_file:-}" ] ;then
+		printf "Missing option: -c\n\n"
+		printUsage
+
+		exit 10
+	fi
+
+	if [ -z "${check_type:-}" ] ;then
+		printf "Missing option: -t\n\n"
+		printUsage
+
+		exit 11
+	else
+		if [[ ! "${check_type}" =~ host|service ]] ;then
+			printf "Check type (option: -t) has a wrong value: '${check_type}'.\n\n"
+			printUsage
+
+			exit 12
+		fi
+	fi
+
+	if [ -z "${host_name:-}" ] ;then
+		printf "Missing option: -H\n\n"
+		printUsage
+
+		exit 13
+	fi
+
+	if [ "${check_type}" == "service" ] ;then
+		if [ -z "${service_description:-}" ] ;then
+			printf "Missing option: -S\n\n"
+			printUsage
+
+			exit 14
+		fi
+	fi
+
+	if [ -z "${check_state:-}" ] ;then
+		printf "Missing option: -s\n\n"
+		printUsage
+
+		exit 15
+	fi
+
+	if [ -z "${plugin_output:-}" ] ;then
+		printf "Missing option: -o\n\n"
+		printUsage
+
+		exit 16
+	fi
+
+	if [ -z "${obsessing_host:-}" ] ;then
+		printf "Missing option: -O\n\n"
+		printUsage
+
+		exit 17
+	fi
+}
+
+includeConfig()
+{
+	local rc=
+
+	checkFilePermissions "${script_config_file}"
+	rc="$?"
+
+	case "${rc}" in
+		4|5|6|7)
+			source "${script_config_file}"
+			rc="$?"
+
+			if [ "${rc}" == "0" ] ;then
+				return 0
+			else
+				return 1
+			fi
+			;;
+		10)
+			return 2
+			;;
+		*)
+			return 3
+			;;
+	esac
+}
+
+checkRegularFileExists()
+{
+	local file="${1:-}"
+
+	if [ -f "${file}" ] ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkFilePermissions()
+{
+	# file doesnt exist:	rc=10
+	# read allowed:		rc=4|5|6|7
+	# write allowed:	rc=2|3|6|7
+	# execute allowed:	rc=1|3|5|7
+	# read/write allowed:	rc=6|7
+
+	local file="${1:-}"
+	local rc=
+	local file_permission=
+
+	checkRegularFileExists "${file}"
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		if [ -x "${file}" ] ;then
+			file_permission="$((file_permission + 2#0001))"
+		fi
+
+		if [ -w "${file}" ] ;then
+			file_permission="$((file_permission + 2#0010))"
+		fi
+
+		if [ -r "${file}" ] ;then
+			file_permission="$((file_permission + 2#0100))"
+		fi
+	else
+		file_permission="$((2#1010))"
+	fi
+
+	return "${file_permission}"
+}
+
+checkDirectoryExists()
+{
+	local directory="${1:-}"
+
+	if [ -d "${directory}" ] ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkNamedPipeExists()
+{
+	local file="${1:-}"
+
+	if [ -p "${file}" ] ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkNamedPipePermissions()
+{
+	# file doesnt exist:	rc=10
+	# read allowed:		rc=4|5|6|7
+	# write allowed:	rc=2|3|6|7
+	# execute allowed:	rc=1|3|5|7
+	# read/write allowed:	rc=6|7
+
+	local file="${1:-}"
+	local rc=
+	local file_permission=
+
+	checkNamedPipeExists "${file}"
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		if [ -x "${file}" ] ;then
+			file_permission="$((file_permission + 2#0001))"
+		fi
+
+		if [ -w "${file}" ] ;then
+			file_permission="$((file_permission + 2#0010))"
+		fi
+
+		if [ -r "${file}" ] ;then
+			file_permission="$((file_permission + 2#0100))"
+		fi
+	else
+		file_permission="$((2#1010))"
+	fi
+
+	return "${file_permission}"
+}
+
+checkNamedPipe()
+{
+	local rc=
+
+	checkNamedPipePermissions "${named_pipe_filename}"
+	rc="$?"
+
+	case "${rc}" in
+		6|7)
+			exec 3> "${named_pipe_filename}"
+			return 0
+			;;
+		10)
+			printf "Named pipe: '${named_pipe_filename}' doesnt exist.\n"
+			return 1
+			;;
+		*)
+			printf "Named pipe: '${named_pipe_filename}' exists, but it is not read/writeable, exiting.\n"
+			return 2
+			;;
+	esac
+}
+
+addJob()
+{
+	local rc=
+	local data=
+	data="${check_type}${job_data_separator}${host_name}${job_data_separator}${service_description:-}${job_data_separator}${check_state}${job_data_separator}${plugin_output}${job_data_separator}${obsessing_host}${job_data_separator}${obsessing_token:-}${job_data_separator}${obsessing_port:-}"
+
+	checkNamedPipe 
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		printf "%sEOL\n" "${data}" > "${named_pipe_filename}"
+		rc="$?"
+
+		exec 3>&-
+		exit "${rc}"
+	else
+		exit "${rc}"
+	fi
+}
+
+
+
+#-------------
+# Get options:
+#-------------
+
+OPTERR="0"
+
+while getopts ":h.c:t:H:S:s:o:O:T:p:v." OPTION
+   do
+	case "${OPTION}" in
+			h)
+				printUsage
+				exit 170
+				;;
+			c)
+				script_config_file="${OPTARG}"
+				;;
+			t)
+				check_type="${OPTARG}"
+				;;
+			H)
+				host_name="${OPTARG}"
+				;;
+			S)
+				service_description="${OPTARG}"
+				;;
+			s)
+				check_state="${OPTARG}"
+				;;
+			o)
+				plugin_output="${OPTARG}"
+				;;
+			O)
+				obsessing_host="${OPTARG}"
+				;;
+			T)
+				obsessing_token="${OPTARG}"
+				;;
+			p)
+				obsessing_port="${OPTARG}"
+				;;
+			v)
+				printScriptInfos
+				exit 171
+				;;
+			\?)
+				printf "Invalid option: -%s\n\n" "${OPTARG}"
+				printUsage
+				exit 172
+				;;
+			:)
+				printf "Option: -%s requires an argument.\n\n" "${OPTARG}"
+				printUsage
+				exit 173
+				;;
+	esac
+   done
+
+
+
+#-------
+# Start:
+#-------
+
+checkOptions
+includeConfig
+
+case "$?" in
+	0)
+		addJob
+		;;
+	1)
+		printf "Including config file: '%s' was not successful, exiting.\n" "${script_config_file}"
+		exit 20
+		;;
+	2)
+		printf "Config file: '%s' does not exist, exiting.\n" "${script_config_file}"
+		exit 21
+		;;
+	3)
+		printf "Config file: '%s' exists, but it is not readable, exiting.\n" "${script_config_file}"
+		exit 22
+		;;
+	*)
+		printf "Something went terribly wrong in line number: '%s', exiting.\n" "${LINENO}"
+		exit 23
+		;;
+esac
+
+
+
+#-------------------------
+# Should never be reached:
+#-------------------------
+
+printf "Ooops!!! Something went terribly wrong... :( Exiting.\n"
+exit 255

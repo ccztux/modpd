@@ -1,0 +1,9 @@
+/usr/local/modpd/var/log/modpd.log
+{
+    weekly
+    rotate 6
+    missingok
+    notifempty
+    sharedscripts
+    compress
+}
