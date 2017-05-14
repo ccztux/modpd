@@ -49,7 +49,7 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="1.0.0"
+script_version="1.0.1-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
