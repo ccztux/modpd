@@ -40,6 +40,7 @@ DAEMON_RETVAL="255"
 # Source function library
 if [ -f /lib/lsb/init-functions ] ;then
 	# shellcheck source=/lib/lsb/init-functions
+	# shellcheck disable=SC1091
 	source /lib/lsb/init-functions
 else
 	log_failure_msg "File: '/lib/lsb/init-functions' doesnt exist."
@@ -49,12 +50,14 @@ fi
 # Load the VERBOSE setting and other rcS variables
 if [ -f /lib/init/vars.sh ] ;then
 	# shellcheck source=/lib/init/vars.sh
+	# shellcheck disable=SC1091
 	source /lib/init/vars.sh
 fi
 
 # Source configuration.
 if [ -f /etc/default/modpd ] ;then
 	# shellcheck source=/etc/default/modpd
+	# shellcheck disable=SC1091
 	source /etc/default/modpd
 fi
 
