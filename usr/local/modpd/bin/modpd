@@ -815,10 +815,10 @@ checkAlreadyRunningInstance()
 	local own_session_pids=()
 	local running_script_pids=()
 
-	# shellcheck disable=SC2154
+	# shellcheck disable=SC2154,SC2207
 	own_session_pids+=($(${pgrep_bin} -d " " -s "${script_pid}"))
 
-	# shellcheck disable=SC2154
+	# shellcheck disable=SC2154,SC2207
 	running_script_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$"))
 
 	for running_pid in "${!running_script_pids[@]}"
@@ -953,6 +953,7 @@ jobHandler()
 			plugin_output="${BASH_REMATCH[9]}"
 			obsessing_host="${BASH_REMATCH[11]}"
 			obsessing_token="${BASH_REMATCH[13]}"
+			# shellcheck disable=SC2034
 			obsessing_port="${BASH_REMATCH[15]}"
 		else
 			script_job_counter_invalid="$((script_job_counter_invalid + 1))"
