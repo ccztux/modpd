@@ -3,7 +3,7 @@
 # modpd	This script starts and stops the modpd daemon
 #
 # Author:	Christian Zettel (ccztux)
-#		2017-05-05
+#		2017-05-14
 #		http://linuxinside.at
 #
 # chkconfig:	2345 70 29

@@ -3,7 +3,7 @@
 #========================================================================================================
 #
 #  Author:		Christian Zettel (ccztux)
-#			2017-05-05
+#			2017-05-14
 #			http://linuxinside.at
 #
 #  Copyright:		Copyright © 2017 Christian Zettel (ccztux), all rights reserved
@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-05-05
+#			2017-05-14
 #
 #  Description:		Monitoring Obsessing Data Processor Daemon
 #
@@ -49,11 +49,11 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="1.0.0-alpha1"
+script_version="1.0.0"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2017-05-08"
+script_last_modification_date="2017-05-14"
 script_license="GNU GPLv3"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 
