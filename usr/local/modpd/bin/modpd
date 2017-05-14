@@ -142,6 +142,8 @@ includeConfig()
 
 	case "${rc}" in
 		4|5|6|7)
+			# shellcheck source=${script_config_file}
+			## shellcheck disable=SC1091
 			source "${script_config_file}"
 			rc="$?"
 
