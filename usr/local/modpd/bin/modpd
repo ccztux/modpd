@@ -219,6 +219,10 @@ checkRequiredBinaries()
 		fi
 	fi
 
+	if [ "${job_timeout_enabled}" == "1" ] ;then
+		required_binaries+=("timeout")
+	fi
+
 	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "sleep" "kill")
 
 	for bin in "${required_binaries[@]}"
@@ -660,22 +664,6 @@ setProxy()
 	fi
 }
 
-timeoutWatchdog()
-{
-	local job_pid="${1:-}"
-	local actual_time="${SECONDS}"
-	local timeout_helper="$((SECONDS + job_timeout))"
-
-	(
-		while [ "${timeout_helper}" -le "${job_timeout}" ]
-		   do
-			sleep 1
-		   done
-
-		${kill_bin} -SIGTERM "${job_pid}" 2>&1 | logHandler
-	) &
-}
-
 checkNamedPipeExists()
 {
 	local file="${1:-}"
@@ -1002,9 +990,13 @@ jobHandler()
 		fi
 
 		if [ "${check_type}" == "service" ] ;then
-			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --service=\"${service_description}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
+			job_command="${job_command} /usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --service=\"${service_description}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
 		elif [ "${check_type}" == "host" ] ;then
-			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
+			job_command="${job_command} /usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
+		fi
+
+		if [ "${job_timeout_enabled}" == "1" ] ;then
+			job_command="${timeout_bin} --signal=TERM ${job_timeout} ${job_command}"
 		fi
 
 		eval "${job_command}" 2>&1 | logHandler
