@@ -998,6 +998,7 @@ jobHandler()
 		fi
 
 		if [ "${job_timeout_enabled}" == "1" ] ;then
+			# shellcheck disable=SC2154
 			job_command="${timeout_bin} --signal=TERM ${job_timeout} ${job_command}"
 		fi
 
