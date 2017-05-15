@@ -512,7 +512,6 @@ sigHandler()
 				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 			fi
 
-			logHandler "We did a great job. :)"
 			logHandler "Total jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', invalid jobs: '${script_job_counter_invalid}'."
 			logHandler "${script_name} was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
@@ -840,7 +839,9 @@ checkAlreadyRunningInstance()
 	local own_session_pids=()
 	local running_script_pids=()
 
+	# shellcheck disable=SC2154
 	own_session_pids+=("$(${pgrep_bin} -d " " -s "${script_pid}")")
+	# shellcheck disable=SC2154
 	running_script_pids+=("$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$")")
 
 	for running_pid in "${!running_script_pids[@]}"
@@ -955,6 +956,8 @@ checkNamedPipe()
 jobHandler()
 {
 	local rc=
+	local actual_time="${SECONDS}"
+	local actual_time_helper="$((actual_time + log_status_line_interval))"
 	local job_command=
 	local check_type=
 	local host_name=
@@ -1007,6 +1010,12 @@ jobHandler()
 		fi
 
 		script_job_counter_total="$((script_job_counter_total + 1))"
+
+		if [ "${actual_time}" -ge "${actual_time_helper}" ] ;then
+			logHandler "${script_name} is running: '${SECONDS}' seconds, total jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', invalid jobs: '${script_job_counter_invalid}'."
+			actual_time="${SECONDS}"
+			actual_time_helper="$((actual_time + log_status_line_interval))"
+		fi
 
 		# shellcheck disable=SC2154
 		${sleep_bin} "${job_handle_interval}"
