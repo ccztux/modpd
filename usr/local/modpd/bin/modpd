@@ -627,30 +627,38 @@ removeLock()
 
 setProxy()
 {
-	local proxy=
-	local proxy_url=
-	local proxy_credentials=
-	proxy_protocol="${proxy_protocol,,}"
+	if [ "${proxy_enabled}" == "1" ] ;then
+		logHandler "Using proxy is enabled, building proxy configuration..."
 
-	if [ ! -z "${proxy_port}" ] ;then
-		proxy_url="${proxy_ip}:${proxy_port}"
+		local proxy=
+		local proxy_url=
+		local proxy_credentials=
+		proxy_protocol="${proxy_protocol,,}"
+
+		if [ ! -z "${proxy_port}" ] ;then
+			proxy_url="${proxy_ip}:${proxy_port}"
+		else
+			proxy_url="${proxy_ip}"
+		fi
+
+		if ([ ! -z "${proxy_username}" ] && [ ! -z "${proxy_password}" ]) ;then
+			proxy_credentials="${proxy_username}:${proxy_password}"
+			proxy="${proxy_protocol}://${proxy_credentials}@${proxy_url}"
+			logHandler "We build the following proxy config: '${proxy_protocol}://${proxy_username}:[HIDDEN FOR SECURITY]@${proxy_url}'."
+		else
+			proxy="${proxy_protocol}://${proxy_url}"
+			logHandler "We build the following proxy config: '${proxy}'."
+		fi
+
+		export http_proxy="${proxy}"
+		export https_proxy="${proxy}"
+		export ftp_proxy="${proxy}"
+		export socks_proxy="${proxy}"
+		export HTTP_PROXY="${proxy}"
+		export HTTPS_PROXY="${proxy}"
+		export FTP_PROXY="${proxy}"
+		export SOCKS_PROXY="${proxy}"
 	fi
-
-	if ([ ! -z "${proxy_username}" ] && [ ! -z "${proxy_password}" ]) ;then
-		proxy_credentials="${proxy_username}:${proxy_password}"
-		proxy="${proxy_protocol}://${proxy_credentials}@${proxy_url}"
-	else
-		proxy="${proxy_protocol}://${proxy_url}"
-	fi
-
-	export http_proxy="${proxy}"
-	export https_proxy="${proxy}"
-	export ftp_proxy="${proxy}"
-	export socks_proxy="${proxy}"
-	export HTTP_PROXY="${proxy}"
-	export HTTPS_PROXY="${proxy}"
-	export FTP_PROXY="${proxy}"
-	export SOCKS_PROXY="${proxy}"
 }
 
 checkNamedPipeExists()
@@ -832,11 +840,8 @@ checkAlreadyRunningInstance()
 	local own_session_pids=()
 	local running_script_pids=()
 
-	# shellcheck disable=SC2154,SC2207
-	own_session_pids+=($(${pgrep_bin} -d " " -s "${script_pid}"))
-
-	# shellcheck disable=SC2154,SC2207
-	running_script_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$"))
+	own_session_pids+=("$(${pgrep_bin} -d " " -s "${script_pid}")")
+	running_script_pids+=("$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$")")
 
 	for running_pid in "${!running_script_pids[@]}"
 	   do
@@ -959,10 +964,6 @@ jobHandler()
 	local obsessing_host=
 	local obsessing_token=
 	local obsessing_port=
-
-	if [ "${proxy_enabled}" == "1" ] ;then
-		setProxy
-	fi
 
 	while read -r line
 	   do
@@ -1103,6 +1104,7 @@ getUser
 checkBashVersion
 checkAlreadyRunningInstance
 createNamedPipe
+setProxy
 
 logHandler "Ready to handle jobs..."
 
