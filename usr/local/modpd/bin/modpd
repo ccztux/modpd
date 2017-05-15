@@ -847,6 +847,7 @@ checkAlreadyRunningInstance()
 
 	# shellcheck disable=SC2154
 	own_session_pids+=("$(${pgrep_bin} -d " " -s "${script_pid}")")
+	own_session_pids+=("${script_pid}")
 	# shellcheck disable=SC2154
 	running_script_pids+=("$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$")")
 
