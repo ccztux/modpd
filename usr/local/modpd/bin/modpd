@@ -664,7 +664,7 @@ timeoutWatchdog()
 {
 	local job_pid="${1:-}"
 	local actual_time="${SECONDS}"
-	local timeout_helper="$((${SECONDS} + job_timeout))"
+	local timeout_helper="$((SECONDS + job_timeout))"
 
 	(
 		while [ "${timeout_helper}" -le "${job_timeout}" ]
@@ -972,7 +972,7 @@ checkNamedPipe()
 jobHandler()
 {
 	local rc=
-	local log_status_line_helper="$((${SECONDS} + log_status_line_interval))"
+	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
 	local job_command=
 	local check_type=
 	local host_name=
@@ -1028,7 +1028,7 @@ jobHandler()
 
 		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
 			logHandler "${script_name} is running: '${SECONDS}' seconds, total jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', invalid jobs: '${script_job_counter_invalid}'."
-			log_status_line_helper="$((${SECONDS} + log_status_line_interval))"
+			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
 
 		# shellcheck disable=SC2154
