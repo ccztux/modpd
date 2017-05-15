@@ -73,7 +73,7 @@ script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_exit_code="255"
-script_shutdown_in_process="0"
+script_shutdown_in_progress="0"
 script_job_counter_total="0"
 script_job_counter_ok="0"
 script_job_counter_nok="0"
@@ -436,7 +436,7 @@ sigHandler()
 
 	case "${signal}" in
 		SIGTERM)
-			if [ "${script_shutdown_in_process}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -444,7 +444,7 @@ sigHandler()
 			exit
 			;;
 		SIGINT)
-			if [ "${script_shutdown_in_process}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -452,7 +452,7 @@ sigHandler()
 			exit
 			;;
 		SIGHUP)
-			if [ "${script_shutdown_in_process}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for config reload..."
 			fi
 
@@ -466,7 +466,7 @@ sigHandler()
 			fi
 			;;
 		SIGABRT)
-			if [ "${script_shutdown_in_process}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -474,7 +474,7 @@ sigHandler()
 			exit
 			;;
 		SIGQUIT)
-			if [ "${script_shutdown_in_process}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
@@ -482,7 +482,7 @@ sigHandler()
 			exit
 			;;
 		ERR)
-			if [ "${script_shutdown_in_process}" != "1" ] ;then
+			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'." 
 			fi
 
@@ -521,7 +521,7 @@ sigHandler()
 				if [ "${signal}" != "EXIT" ] ;then
 					${kill_bin} -s "${signal}" -- -"${script_pid}"
 				else
-					script_shutdown_in_process="1"
+					script_shutdown_in_progress="1"
 					${kill_bin} -s "SIGTERM" -- -"${script_pid}"
 				fi
 			fi
