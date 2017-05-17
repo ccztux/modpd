@@ -1005,6 +1005,7 @@ jobHandler()
 			logHandler "${script_name} is running: '${SECONDS}' seconds, total jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', invalid jobs: '${script_job_counter_invalid}', timed out jobs: '${script_job_counter_timeout}'."
 			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
+	   # shellcheck disable=SC2154
 	   done < <(${nc_bin} -lkU "${unix_domain_socket_filename}")
 }
 

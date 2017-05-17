@@ -353,6 +353,7 @@ addJob()
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
+		# shellcheck disable=SC2154
 		printf "%sEOL\n" "${data}" | ${nc_bin} -U "${unix_domain_socket_filename}"
 		rc="$?"
 		exit "${rc}"
