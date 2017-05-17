@@ -185,6 +185,52 @@ includeConfig()
 	esac
 }
 
+checkBin()
+{
+	local binary="${1:-}"
+	local _bin=
+	local rc=
+
+	_bin="$(which "${binary}" 2>&1)"
+	rc="$?"
+
+	if [ "${rc}" == "0" ] ;then
+		export "${binary}"_bin="${_bin}"
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkRequiredBinaries()
+{
+	local rc=
+	local required_binaries=("nc")
+	local binaries_not_found=()
+	local binaries_not_found_helper=
+
+	for bin in "${required_binaries[@]}"
+	   do
+		checkBin "${bin}"
+		rc="$?"
+
+		if [ "${rc}" != "0" ] ;then
+			binaries_not_found+=("${bin}")
+		fi
+	   done
+
+	if [ "${#binaries_not_found[*]}" -gt "1" ] ;then
+		binaries_not_found_helper="${binaries_not_found[*]}"
+		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
+
+		printf "Required binaries: '%s' not found, exiting." "${binaries_not_found_helper}"
+		exit 127
+	elif [ "${#binaries_not_found[*]}" -eq "1" ] ;then
+		printf "Required binary: '%s' not found, exiting." "${binaries_not_found[*]}"
+		exit 127
+	fi
+}
+
 checkRegularFileExists()
 {
 	local file="${1:-}"
@@ -230,29 +276,18 @@ checkFilePermissions()
 	return "${file_permission}"
 }
 
-checkDirectoryExists()
-{
-	local directory="${1:-}"
-
-	if [ -d "${directory}" ] ;then
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkNamedPipeExists()
+checkUnixDomainSocketExists()
 {
 	local file="${1:-}"
 
-	if [ -p "${file}" ] ;then
+	if [ -S "${file}" ] ;then
 		return 0
 	else
 		return 1
 	fi
 }
 
-checkNamedPipePermissions()
+checkUnixDomainSocketPermissions()
 {
 	# file doesnt exist:	rc=10
 	# read allowed:		rc=4|5|6|7
@@ -264,7 +299,7 @@ checkNamedPipePermissions()
 	local rc=
 	local file_permission=
 
-	checkNamedPipeExists "${file}"
+	checkUnixDomainSocketExists "${file}"
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
@@ -286,24 +321,23 @@ checkNamedPipePermissions()
 	return "${file_permission}"
 }
 
-checkNamedPipe()
+checkUnixDomainSocket()
 {
 	local rc=
 
-	checkNamedPipePermissions "${named_pipe_filename}"
+	checkUnixDomainSocketPermissions "${unix_domain_socket_filename}"
 	rc="$?"
 
 	case "${rc}" in
 		6|7)
-			exec 3> "${named_pipe_filename}"
 			return 0
 			;;
 		10)
-			printf "Named pipe: '%s' doesnt exist.\n" "${named_pipe_filename}"
+			printf "Unix domain socket: '%s' doesnt exist.\n" "${unix_domain_socket_filename}"
 			return 1
 			;;
 		*)
-			printf "Named pipe: '%s' exists, but it is not read/writeable, exiting.\n" "${named_pipe_filename}"
+			printf "Unix domain socket: '%s' exists, but it is not read/writeable, exiting.\n" "${unix_domain_socket_filename}"
 			return 2
 			;;
 	esac
@@ -315,14 +349,12 @@ addJob()
 	local data=
 	data="${check_type}${job_data_separator}${host_name}${job_data_separator}${service_description:-}${job_data_separator}${check_state}${job_data_separator}${plugin_output}${job_data_separator}${obsessing_host}${job_data_separator}${obsessing_token:-}${job_data_separator}${obsessing_port:-}"
 
-	checkNamedPipe 
+	checkUnixDomainSocket 
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
-		printf "%sEOL\n" "${data}" > "${named_pipe_filename}"
+		printf "%sEOL\n" "${data}" | ${nc_bin} -U "${unix_domain_socket_filename}"
 		rc="$?"
-
-		exec 3>&-
 		exit "${rc}"
 	else
 		exit "${rc}"
@@ -396,6 +428,7 @@ while getopts ":h.c:t:H:S:s:o:O:T:p:v." OPTION
 
 checkOptions
 includeConfig
+checkRequiredBinaries
 
 case "$?" in
 	0)

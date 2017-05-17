@@ -224,7 +224,7 @@ checkRequiredBinaries()
 		required_binaries+=("timeout")
 	fi
 
-	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "sleep" "kill")
+	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "nc" "kill")
 
 	for bin in "${required_binaries[@]}"
 	   do
@@ -499,11 +499,11 @@ sigHandler()
 
 			if [ "${script_bypass_exit_routines}" != "1" ] ;then
 				if [ "${script_another_instance_is_running}" != "1" ] ;then
-					checkNamedPipe
+					checkUnixDomainSocket
 					rc="$?"
 
 					if [ "${rc}" == "0" ] ;then
-						removeNamedPipe
+						removeUnixDomainSocket
 					fi
 
 					checkLock
@@ -666,18 +666,18 @@ setProxy()
 	fi
 }
 
-checkNamedPipeExists()
+checkUnixDomainSocketExists()
 {
 	local file="${1:-}"
 
-	if [ -p "${file}" ] ;then
+	if [ -S "${file}" ] ;then
 		return 0
 	else
 		return 1
 	fi
 }
 
-checkNamedPipePermissions()
+checkUnixDomainSocketPermissions()
 {
 	# file doesnt exist:	rc=10
 	# read allowed:		rc=4|5|6|7
@@ -689,7 +689,7 @@ checkNamedPipePermissions()
 	local rc=
 	local file_permission=
 
-	checkNamedPipeExists "${file}"
+	checkUnixDomainSocketExists "${file}"
 	rc="$?"
 
 	if [ "${rc}" == "0" ] ;then
@@ -891,69 +891,42 @@ checkAlreadyRunningInstance()
 	fi
 }
 
-createNamedPipe()
+removeUnixDomainSocket()
 {
-	local rc=
-
-	checkNamedPipe
-	rc="$?"
-
-	if [ "${rc}" == "1" ] ;then
-		logHandler "Creating named pipe..."
-
-		# shellcheck disable=SC2154
-		${mkfifo_bin} "${named_pipe_filename}" 2>&1 | logHandler
-
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
-			logHandler "Creating named pipe was successful."
-			exec 3<> "${named_pipe_filename}"
-		else
-			logHandler "Creating named pipe was not successful, exiting."
-			script_exit_code="60"
-			exit
-		fi
-	fi
-}
-
-removeNamedPipe()
-{
-	logHandler "Remove named pipe..."
+	logHandler "Remove unix domain socket..."
 
 	# shellcheck disable=SC2154
-	${rm_bin} "${named_pipe_filename}" 2>&1 | logHandler
+	${rm_bin} "${unix_domain_socket_filename}" 2>&1 | logHandler
 
 	if [ "${PIPESTATUS[0]}" == "0" ] ;then
-		logHandler "Removing named pipe was successful."
-
-		exec 3>&-
-		exec 3<&-
+		logHandler "Removing unix domain socket was successful."
 	else
-		logHandler "Removing named pipe was not successful, exiting."
+		logHandler "Removing unix domain socket was not successful, exiting."
 		script_exit_code="70"
 		exit
 	fi
 }
 
-checkNamedPipe()
+checkUnixDomainSocket()
 {
 	local rc=
 
-	logHandler "Check if named pipe: '${named_pipe_filename}' exists and if it is read/writeable..."
+	logHandler "Check if unix domain socket: '${unix_domain_socket_filename}' exists and if it is read/writeable..."
 
-	checkNamedPipePermissions "${named_pipe_filename}"
+	checkUnixDomainSocketPermissions "${unix_domain_socket_filename}"
 	rc="$?"
 
 	case "${rc}" in
 		6|7)
-			logHandler "Named pipe exists and it is read/writeable."
+			logHandler "Unix domain socket exists and it is read/writeable."
 			return 0
 			;;
 		10)
-			logHandler "Named pipe doesnt exist."
+			logHandler "Unix domain socket doesnt exist."
 			return 1
 			;;
 		*)
-			logHandler "Named pipe exists, but it is not read/writeable, exiting."
+			logHandler "Unix domain socket exists, but it is not read/writeable, exiting."
 			script_exit_code="80"
 			exit
 			;;
@@ -1032,10 +1005,7 @@ jobHandler()
 			logHandler "${script_name} is running: '${SECONDS}' seconds, total jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', invalid jobs: '${script_job_counter_invalid}', timed out jobs: '${script_job_counter_timeout}'."
 			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
-
-		# shellcheck disable=SC2154
-		${sleep_bin} "${job_handle_interval}"
-	   done < "${named_pipe_filename}"
+	   done < <(${nc_bin} -lkU "${unix_domain_socket_filename}")
 }
 
 
@@ -1128,7 +1098,6 @@ esac
 getUser
 checkBashVersion
 checkAlreadyRunningInstance
-createNamedPipe
 setProxy
 
 logHandler "Ready to handle jobs..."
@@ -1136,6 +1105,8 @@ logHandler "Ready to handle jobs..."
 while true
    do
 	jobHandler
+	logHandler "jobHandler leaved, cleaning socket..."
+	removeUnixDomainSocket
    done
 
 
