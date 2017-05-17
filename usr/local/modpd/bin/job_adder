@@ -429,10 +429,10 @@ while getopts ":h.c:t:H:S:s:o:O:T:p:v." OPTION
 
 checkOptions
 includeConfig
-checkRequiredBinaries
 
 case "$?" in
 	0)
+		checkRequiredBinaries
 		addJob
 		;;
 	1)

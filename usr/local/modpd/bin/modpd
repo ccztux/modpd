@@ -938,6 +938,7 @@ jobHandler()
 	local rc=
 	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
 	local job_command=
+	local job_command_timeout_prefix=
 	local check_type=
 	local host_name=
 	local service_description=
@@ -946,6 +947,11 @@ jobHandler()
 	local obsessing_host=
 	local obsessing_token=
 	local obsessing_port=
+
+	if [ "${job_timeout_enabled}" == "1" ] ;then
+		# shellcheck disable=SC2154
+		job_command_timeout_prefix="${timeout_bin} --signal=TERM ${job_timeout}"
+	fi
 
 	while read -r line
 	   do
@@ -971,12 +977,7 @@ jobHandler()
 			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
 		fi
 
-		if [ "${job_timeout_enabled}" == "1" ] ;then
-			# shellcheck disable=SC2154
-			job_command="${timeout_bin} --signal=TERM ${job_timeout} ${job_command}"
-		fi
-
-		eval "${job_command}" 2>&1 | logHandler
+		eval "${job_command_timeout_prefix} ${job_command}" 2>&1 | logHandler
 		rc="${PIPESTATUS[0]}"
 
 		if [ "${rc}" == "0" ] ;then
@@ -1101,10 +1102,10 @@ checkBashVersion
 checkAlreadyRunningInstance
 setProxy
 
-logHandler "Ready to handle jobs..."
 
 while true
    do
+	logHandler "Ready to handle jobs..."
 	jobHandler
 	logHandler "jobHandler leaved, cleaning socket..."
 	removeUnixDomainSocket
