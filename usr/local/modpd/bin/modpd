@@ -1042,6 +1042,7 @@ jobHandler()
 
 OPTERR="0"
 
+# shellcheck disable=SC2213
 while getopts ":h.c:l:v." OPTION
    do
 	case "${OPTION}" in
