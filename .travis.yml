@@ -11,7 +11,6 @@ before_install:
 script:
   - docker run koalaman/shellcheck --version
   - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/usr/local/modpd/bin/modpd
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/usr/local/modpd/bin/job_adder
   - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always /scripts/usr/local/modpd/etc/modpd.conf
   - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/etc/init.d/modpd
 
