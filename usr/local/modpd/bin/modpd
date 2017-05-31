@@ -933,11 +933,21 @@ checkUnixDomainSocket()
 	esac
 }
 
+jobBlah()
+{
+	for item in "${!job_command[@]}"
+	   do
+		logHandler "${job_command[$item]}"
+		unset job_command[$item]
+	   done
+}
+
 jobHandler()
 {
 	local rc=
 	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
-	local job_command=
+	#local job_command=
+	job_command=()
 	local job_command_timeout_prefix=
 	local check_type=
 	local host_name=
@@ -972,13 +982,14 @@ jobHandler()
 		fi
 
 		if [ "${check_type}" == "service" ] ;then
-			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --service=\"${service_description}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
+			job_command+=("/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --service=\"${service_description}\" --state=\"${check_state}\" --output=\"${plugin_output}\"")
 		elif [ "${check_type}" == "host" ] ;then
-			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
+			job_command+=("/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=http://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --state=\"${check_state}\" --output=\"${plugin_output}\"")
 		fi
 
-		eval "${job_command_timeout_prefix} ${job_command}" 2>&1 | logHandler
-		rc="${PIPESTATUS[0]}"
+		#eval "${job_command_timeout_prefix} ${job_command}" 2>&1 | logHandler
+		#rc="${PIPESTATUS[0]}"
+		jobBlah
 
 		if [ "${rc}" == "0" ] ;then
 			script_job_counter_ok="$((script_job_counter_ok + 1))"
@@ -996,7 +1007,7 @@ jobHandler()
 			script_job_counter_nok="$((script_job_counter_nok + 1))"
 
 			if ([ "${check_type}" == "service" ] && [ "${job_command_log_service_nok}" == "1" ] || [ "${check_type}" == "host" ] && [ "${job_command_log_host_nok}" == "1" ]) ;then
-				logHandler "Command: '${job_command}' was not successful."
+				logHandler "Command: '${job_command:-}' was not successful."
 			fi
 		fi
 
