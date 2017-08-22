@@ -960,6 +960,13 @@ checkNamedPipe()
 	esac
 }
 
+doShellEncode()
+{
+	local string="${1:-}"
+
+	printf "%q" "${string}"
+}
+
 jobHandler()
 {
 	local rc=
@@ -978,7 +985,7 @@ jobHandler()
 			host_name="${BASH_REMATCH[3]}"
 			service_description="${BASH_REMATCH[5]}"
 			check_state="${BASH_REMATCH[7]}"
-			plugin_output="${BASH_REMATCH[9]}"
+			plugin_output="$(doShellEncode "${BASH_REMATCH[9]}")"
 		else
 			script_job_counter_invalid="$((script_job_counter_invalid + 1))"
 			logHandler "Invalid data: ${line}"
