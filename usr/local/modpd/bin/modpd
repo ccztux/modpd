@@ -1000,9 +1000,9 @@ jobHandler()
 		fi
 
 		if [ "${check_type}" == "service" ] ;then
-			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=${obsessing_protocol}://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --service=\"${service_description}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
+			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=${obsessing_protocol}://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --service=\"${service_description}\" --state=\"${check_state}\" --output=${plugin_output}"
 		elif [ "${check_type}" == "host" ] ;then
-			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=${obsessing_protocol}://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --state=\"${check_state}\" --output=\"${plugin_output}\""
+			job_command="/usr/bin/php ${script_libexec_directory}/send_nrdp.php --url=${obsessing_protocol}://${obsessing_host}/nrdp --token=\"${obsessing_token}\" --host=\"${host_name}\" --state=\"${check_state}\" --output=${plugin_output}"
 		fi
 
 		if [ "${job_timeout_enabled}" == "1" ] ;then
