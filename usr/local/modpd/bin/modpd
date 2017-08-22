@@ -878,11 +878,9 @@ checkAlreadyRunningInstance()
 		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
 		setLock
 	elif ([ "${rc}" == "0" ] && [ -z "${running_script_pids[*]:-}" ]) ;then
-		logHandler "Another instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
-
-		script_another_instance_is_running="1"
-		script_exit_code="50"
-		exit
+		logHandler "No other instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
+		logHandler "We try to remove the old, leftover lockfile..."
+		removeLock
 	elif ([ "${rc}" == "0" ] && [ ! -z "${running_script_pids[*]:-}" ]) ;then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)."
 
