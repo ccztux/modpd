@@ -974,7 +974,7 @@ checkNamedPipe()
 
 buildJobCommand()
 {
-	osessing_interface="${obsessing_interface,,}"
+	obsessing_interface="${obsessing_interface,,}"
 	
 	logHandler "Building job command..."
 
