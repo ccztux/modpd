@@ -648,11 +648,11 @@ removeLock()
 setProxy()
 {
 	if [ "${proxy_enabled}" == "1" ] ;then
-		logHandler "Using proxy is enabled, building proxy configuration..."
-
 		local proxy=
 		local proxy_url=
 		proxy_protocol="${proxy_protocol,,}"
+
+		logHandler "Using proxy is enabled, building proxy configuration..."
 
 		if [ ! -z "${proxy_port}" ] ;then
 			proxy_url="${proxy_ip}:${proxy_port}"
@@ -662,10 +662,8 @@ setProxy()
 
 		if ([ ! -z "${proxy_username}" ] && [ ! -z "${proxy_password}" ]) ;then
 			proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${proxy_url}"
-			logHandler "We build the following proxy config: '${proxy_protocol}://${proxy_username}:[HIDDEN FOR SECURITY]@${proxy_url}'."
 		else
 			proxy="${proxy_protocol}://${proxy_url}"
-			logHandler "We build the following proxy config: '${proxy}'."
 		fi
 
 		export http_proxy="${proxy}"
@@ -676,6 +674,10 @@ setProxy()
 		export HTTPS_PROXY="${proxy}"
 		export FTP_PROXY="${proxy}"
 		export SOCKS_PROXY="${proxy}"
+
+		proxy="${proxy//${proxy_password}/[HIDDEN FOR SECURITY]}"
+
+		logHandler "We build the following proxy config: '${proxy}'."
 	fi
 }
 
