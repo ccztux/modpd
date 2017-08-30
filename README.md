@@ -9,7 +9,7 @@
 # modpd
 (**M**onitoring **O**bsessing **D**ata **P**rocessor **D**aemon)
 
-You can use modpd with send_nrdp.php or send_nsca. It increases the performance of an existing Nagios 3.x.x installation greatly, because the obsessing commands will be executed by modpd and not by the nagios process itself.
+You can use modpd with send_nrdp.php or send_nsca. It increases the performance of an existing Nagios 3.x.x installation greatly, because the obsessing commands will be executed by modpd and not by the nagios process itself. Nagios executes the obsessing command after every check, where obsessing is activated and than Nagios waits, till every obsessing command was executed successfully or timed out.
 
 
 # TODO:
