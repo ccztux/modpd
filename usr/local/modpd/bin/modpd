@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-08-22
+#			2017-08-30
 #
 #  Description:		Monitoring Obsessing Data Processor Daemon
 #
@@ -67,7 +67,7 @@ script_version="1.0.2-beta1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2017-08-22"
+script_last_modification_date="2017-08-30"
 script_license="GNU GPLv3"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
@@ -652,7 +652,6 @@ setProxy()
 
 		local proxy=
 		local proxy_url=
-		local proxy_credentials=
 		proxy_protocol="${proxy_protocol,,}"
 
 		if [ ! -z "${proxy_port}" ] ;then
@@ -662,8 +661,7 @@ setProxy()
 		fi
 
 		if ([ ! -z "${proxy_username}" ] && [ ! -z "${proxy_password}" ]) ;then
-			proxy_credentials="${proxy_username}:${proxy_password}"
-			proxy="${proxy_protocol}://${proxy_credentials}@${proxy_url}"
+			proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${proxy_url}"
 			logHandler "We build the following proxy config: '${proxy_protocol}://${proxy_username}:[HIDDEN FOR SECURITY]@${proxy_url}'."
 		else
 			proxy="${proxy_protocol}://${proxy_url}"
@@ -976,21 +974,36 @@ checkNamedPipe()
 
 buildJobCommand()
 {
-	job_command="${script_libexec_directory}/send_nrdp.php --usestdin --url=${obsessing_protocol}://nrdpuser:test@${obsessing_host}:443/nrdp --token=\"${obsessing_token}\""
+	local obsessing_port=
+	osessing_protocol="${obsessing_protocol,,}"
 
 	if [ "${job_timeout_enabled}" == "1" ] ;then
 		# shellcheck disable=SC2154
-		job_command="${timeout_bin} --signal=TERM ${job_timeout} ${job_command}"
+		job_command="${timeout_bin} --signal=TERM ${job_timeout}"
+	fi
+
+	if [ "${obsessing_protocol}" == "https" ] ;then
+		obsessing_port="443"
+	elif [ "${obsessing_protocol}" == "http" ] ;then
+		obsessing_port="80"
+	else
+		logHandler "Invalid obsessing protocol defined in config file: '${script_config_file}', exiting."
+		script_exit_code="90"
+		exit
+	fi
+
+	if ([ ! -z "${obsessing_username}" ] && [ ! -z "${obsessing_password}" ]) ;then
+		job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${obsessing_token}\" --url=${obsessing_protocol}://${obsessing_username}:${obsessing_password}@${obsessing_host}:${obsessing_port}${obsessing_url_path}"
+		logHandler "We build the following job command: '${job_command//${obsessing_password}/[HIDDEN FOR SECURITY]}'."
+	else
+		job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${obsessing_token}\" --url=${obsessing_protocol}://${obsessing_host}:${obsessing_port}${obsessing_url_path}"
+		logHandler "We build the following job command: '${job_command}'."
 	fi
 }
 
 jobExec()
 {
 	local rc=
-
-	if [ -z "${job_command:-}" ] ;then
-		buildJobCommand
-	fi
 
 	printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 	rc="${PIPESTATUS[1]}"
@@ -1156,6 +1169,7 @@ checkBashVersion
 checkAlreadyRunningInstance
 createNamedPipe
 setProxy
+buildJobCommand
 
 logHandler "Ready to handle jobs..."
 
