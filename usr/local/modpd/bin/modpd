@@ -974,31 +974,38 @@ checkNamedPipe()
 
 buildJobCommand()
 {
-	local obsessing_port=
-	osessing_protocol="${obsessing_protocol,,}"
+	osessing_interface="${obsessing_interface,,}"
+	
+	logHandler "Building job command..."
 
 	if [ "${job_timeout_enabled}" == "1" ] ;then
 		# shellcheck disable=SC2154
 		job_command="${timeout_bin} --signal=TERM ${job_timeout}"
 	fi
 
-	if [ "${obsessing_protocol}" == "https" ] ;then
-		obsessing_port="443"
-	elif [ "${obsessing_protocol}" == "http" ] ;then
-		obsessing_port="80"
-	else
-		logHandler "Invalid obsessing protocol defined in config file: '${script_config_file}', exiting."
-		script_exit_code="90"
-		exit
-	fi
+	case "${obsessing_interface:-}" in
+				nrdp)
+					nrdp_protocol="${nrdp_protocol,,}"
 
-	if ([ ! -z "${obsessing_username}" ] && [ ! -z "${obsessing_password}" ]) ;then
-		job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${obsessing_token}\" --url=${obsessing_protocol}://${obsessing_username}:${obsessing_password}@${obsessing_host}:${obsessing_port}${obsessing_url_path}"
-		logHandler "We build the following job command: '${job_command//${obsessing_password}/[HIDDEN FOR SECURITY]}'."
-	else
-		job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${obsessing_token}\" --url=${obsessing_protocol}://${obsessing_host}:${obsessing_port}${obsessing_url_path}"
-		logHandler "We build the following job command: '${job_command}'."
-	fi
+					if ([ ! -z "${nrdp_username}" ] && [ ! -z "${nrdp_password}" ]) ;then
+						job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+					else
+						job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+					fi
+					;;
+				nsca)
+					job_command="${job_command} ${script_libexec_directory}/send_nsca -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
+					;;
+				*)
+					logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', exiting."
+					script_exit_code="90"
+					exit
+					;;
+	esac
+
+	job_command="${job_command//${nrdp_password}/[HIDDEN FOR SECURITY]}"
+	job_command="${job_command//${nrdp_token}/[HIDDEN FOR SECURITY]}"
+	logHandler "We build the following job command: '${job_command}'."
 }
 
 jobExec()
