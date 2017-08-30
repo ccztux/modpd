@@ -8,3 +8,9 @@
 
 # modpd
 (**M**onitoring **O**bsessing **D**ata **P**rocessor **D**aemon)
+
+You can use modpd with send_nrdp.php or send_nsca. It increases the performance of an existing Nagios 3.x.x installation greatly, because the obsessing commands will be executed by modpd and not by the nagios process itself.
+
+
+# TODO:
+Add the eventbroker module for Nagios 3.x.x needed by modpd.
