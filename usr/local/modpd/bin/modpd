@@ -992,7 +992,7 @@ jobExec()
 		buildJobCommand
 	fi
 
-	printf "%s\n" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
+	printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 	rc="${PIPESTATUS[1]}"
 
 	if [ "${rc}" == "0" ] ;then
@@ -1049,9 +1049,9 @@ jobHandler()
 		fi
 
 		if [ "${check_type}" == "service" ] ;then
-			script_job_data+=("$(printf "%s\t%s\t%s\t%s\n" "${host_name}" "${service_description}" "${check_state}" "${plugin_output}")")
+			script_job_data+=("$(printf "%s\\t%s\\t%s\\t%s\\n" "${host_name}" "${service_description}" "${check_state}" "${plugin_output}")")
 		elif [ "${check_type}" == "host" ] ;then
-			script_job_data+=("$(printf "%s\t%s\t%s\n" "${host_name}" "${check_state}" "${plugin_output}")")
+			script_job_data+=("$(printf "%s\\t%s\\t%s\\n" "${host_name}" "${check_state}" "${plugin_output}")")
 		fi
 
 		if [ "${job_interval_helper}" -le "${SECONDS}" ] ;then
