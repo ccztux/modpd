@@ -1077,8 +1077,8 @@ jobHandler()
 		fi
 
 		if [ "${job_interval_helper}" -le "${SECONDS}" ] ;then
-			job_interval_helper="$((SECONDS + job_exec_interval))"
 			jobExec
+			job_interval_helper="$((SECONDS + job_exec_interval))"
 		else
 			continue
 		fi
