@@ -675,8 +675,6 @@ setProxy()
 		export FTP_PROXY="${proxy}"
 		export SOCKS_PROXY="${proxy}"
 
-		proxy="${proxy//${proxy_password}/[HIDDEN FOR SECURITY]}"
-
 		logHandler "We build the following proxy config: '${proxy}'."
 	fi
 }
@@ -1005,8 +1003,6 @@ buildJobCommand()
 					;;
 	esac
 
-	job_command="${job_command//${nrdp_password}/[HIDDEN FOR SECURITY]}"
-	job_command="${job_command//${nrdp_token}/[HIDDEN FOR SECURITY]}"
 	logHandler "We build the following job command: '${job_command}'."
 }
 
