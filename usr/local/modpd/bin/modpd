@@ -63,7 +63,7 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="1.0.2-beta1"
+script_version="1.0.2"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
@@ -114,11 +114,33 @@ printScriptInfos()
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
 }
 
+printStatisticSeparator()
+{
+	logHandler "------------------------------------------------------------------------- Statistic data -------------------------------------------------------------------------"
+}
+
 printStatistic()
 {
+	printStatisticSeparator
+
 	logHandler "${script_name} is running: '${SECONDS}' seconds"
 	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
 	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid data received: '${script_invalid_data_counter}'."
+}
+
+printStatisticWatchdog()
+{
+	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
+
+	while true
+	   do
+		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
+			printStatistic
+			log_status_line_helper="$((SECONDS + log_status_line_interval))"
+		fi
+
+		${sleep_bin} 1
+	   done
 }
 
 checkOptions()
@@ -248,7 +270,7 @@ checkRequiredBinaries()
 		required_binaries+=("timeout")
 	fi
 
-	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "kill")
+	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "kill" "sleep")
 
 	for bin in "${required_binaries[@]}"
 	   do
@@ -329,6 +351,7 @@ logHandler()
 {
 	local log_message="${1:-}"
 	local log_timestamp=
+	local log_secure_replace_string="[HIDDEN FOR SECURITY]"
 
 	if [ -z "${log_message:-}" ] ;then
 		if [ ! -t "0" ] ;then
@@ -336,6 +359,9 @@ logHandler()
 		fi
 	else
 		log_message="${log_message//\`/}"
+		log_message="${log_message//${proxy_password}/${log_secure_replace_string}}"
+		log_message="${log_message//${nrdp_password}/${log_secure_replace_string}}"
+		log_message="${log_message//${nrdp_token}/${log_secure_replace_string}}"
 
 		case "${log_conf:-}" in
 					8|16|32|64) # log nothing
@@ -507,6 +533,7 @@ sigHandler()
 				logHandler "Caught: '${signal}', preparing for exiting..."
 			fi
 
+
 			script_exit_code="129"
 			exit
 			;;
@@ -519,6 +546,9 @@ sigHandler()
 			exit
 			;;
 		EXIT)
+			printStatistic
+			printStatisticSeparator
+
 			logHandler "Caught: '${signal}', exiting script..."
 
 			if [ "${script_bypass_exit_routines}" != "1" ] ;then
@@ -541,10 +571,7 @@ sigHandler()
 				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 			fi
 
-			printStatistic
-
 			logHandler "Exitcode: '${script_exit_code}'."
-			logHandler "${script_name} was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
 
 			if [ ! -z "${kill_bin:-}" ] ;then
@@ -684,8 +711,6 @@ setProxy()
 		export HTTPS_PROXY="${proxy}"
 		export FTP_PROXY="${proxy}"
 		export SOCKS_PROXY="${proxy}"
-
-		#proxy="${proxy//${proxy_password}/[HIDDEN FOR SECURITY]}"
 
 		logHandler "We build the following proxy config: '${proxy}'."
 	fi
@@ -1015,8 +1040,6 @@ buildJobCommand()
 					;;
 	esac
 
-	#job_command="${job_command//${nrdp_password}/[HIDDEN FOR SECURITY]}"
-	#job_command="${job_command//${nrdp_token}/[HIDDEN FOR SECURITY]}"
 	logHandler "We build the following job command: '${job_command}'."
 }
 
@@ -1033,17 +1056,11 @@ jobExec()
 jobHandler()
 {
 	local rc=
-	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local job_pid=
 
 	while IFS=$'\t' read -u 3 -r -a data
 	   do
-		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
-			printStatistic
-			log_status_line_helper="$((SECONDS + log_status_line_interval))"
-		fi
-
 		case "${#data[*]}" in
 				3)
 					script_host_counter="$((script_host_counter + 1))"
@@ -1194,6 +1211,7 @@ esac
 getUser
 checkBashVersion
 checkAlreadyRunningInstance
+printStatisticWatchdog &
 createNamedPipe
 setProxy
 buildJobCommand
