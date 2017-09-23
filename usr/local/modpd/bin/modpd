@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-08-30
+#			2017-09-23
 #
 #  Description:		Monitoring Obsessing Data Processor Daemon
 #
@@ -63,21 +63,23 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 
 script_pid="${BASHPID}"
 script_name="${0##*/}"
-script_version="1.0.2"
+script_version="1.0.2-beta1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2017-08-30"
+script_last_modification_date="2017-09-23"
 script_license="GNU GPLv3"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_exit_code="255"
 script_shutdown_in_progress="0"
+script_host_counter="0"
+script_service_counter="0"
+script_invalid_data_counter="0"
 script_job_counter_total="0"
 script_job_counter_ok="0"
 script_job_counter_nok="0"
-script_job_counter_invalid="0"
 script_job_counter_timeout="0"
 script_job_data=()
 
@@ -110,6 +112,13 @@ printScriptInfos()
 	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
+}
+
+printStatistic()
+{
+	logHandler "${script_name} is running: '${SECONDS}' seconds"
+	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
+	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid data received: '${script_invalid_data_counter}'."
 }
 
 checkOptions()
@@ -532,7 +541,8 @@ sigHandler()
 				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 			fi
 
-			logHandler "Total jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', invalid jobs: '${script_job_counter_invalid}', timed out jobs: '${script_job_counter_timeout}'."
+			printStatistic
+
 			logHandler "Exitcode: '${script_exit_code}'."
 			logHandler "${script_name} was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
@@ -674,6 +684,8 @@ setProxy()
 		export HTTPS_PROXY="${proxy}"
 		export FTP_PROXY="${proxy}"
 		export SOCKS_PROXY="${proxy}"
+
+		#proxy="${proxy//${proxy_password}/[HIDDEN FOR SECURITY]}"
 
 		logHandler "We build the following proxy config: '${proxy}'."
 	fi
@@ -1003,6 +1015,8 @@ buildJobCommand()
 					;;
 	esac
 
+	#job_command="${job_command//${nrdp_password}/[HIDDEN FOR SECURITY]}"
+	#job_command="${job_command//${nrdp_token}/[HIDDEN FOR SECURITY]}"
 	logHandler "We build the following job command: '${job_command}'."
 }
 
@@ -1012,73 +1026,81 @@ jobExec()
 
 	printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 	rc="${PIPESTATUS[1]}"
-
-	if [ "${rc}" == "0" ] ;then
-		script_job_counter_ok="$((script_job_counter_ok + 1))"
-
-		if ([ "${check_type}" == "service" ] && [ "${job_command_log_service_ok}" == "1" ] || [ "${check_type}" == "host" ] && [ "${job_command_log_host_ok}" == "1" ]) ;then
-			logHandler "Command: '${job_command}' was successful."
-		fi
-	elif ([ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]) ;then
-		script_job_counter_timeout="$((script_job_counter_timeout + 1))"
-
-		if ([ "${check_type}" == "service" ] && [ "${job_command_log_service_timeout}" == "1" ] || [ "${check_type}" == "host" ] && [ "${job_command_log_host_timeout}" == "1" ]) ;then
-			logHandler "Command: '${job_command}' timed out."
-		fi
-	else
-		script_job_counter_nok="$((script_job_counter_nok + 1))"
-
-		if ([ "${check_type}" == "service" ] && [ "${job_command_log_service_nok}" == "1" ] || [ "${check_type}" == "host" ] && [ "${job_command_log_host_nok}" == "1" ]) ;then
-			logHandler "Command: '${job_command}' was not successful."
-		fi
-	fi
-
-	script_job_data=()
-	script_job_counter_total="$((script_job_counter_total + 1))"
+	
+	return ${rc}
 }
 
 jobHandler()
 {
+	local rc=
 	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
-	local check_type=
-	local host_name=
-	local service_description=
-	local check_state=
-	local plugin_output=
+	local job_pid=
 
-	while read -r line
+	while IFS=$'\t' read -u 3 -r -a data
 	   do
 		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
-			logHandler "${script_name} is running: '${SECONDS}' seconds, total jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', invalid jobs: '${script_job_counter_invalid}', timed out jobs: '${script_job_counter_timeout}'."
+			printStatistic
 			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
 
-	   	if [[ "${line}" =~ ^(service|host)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})(EOL)$ ]] ;then
-			check_type="${BASH_REMATCH[1]}"
-			host_name="${BASH_REMATCH[3]}"
-			service_description="${BASH_REMATCH[5]}"
-			check_state="${BASH_REMATCH[7]}"
-			plugin_output="${BASH_REMATCH[9]}"
-		else
-			script_job_counter_invalid="$((script_job_counter_invalid + 1))"
-			logHandler "Invalid data: ${line}"
-			continue
-		fi
+		case "${#data[*]}" in
+				3)
+					script_host_counter="$((script_host_counter + 1))"
+					;;
+				4)
+					script_service_counter="$((script_service_counter + 1))"
+					;;
+				*)
+					script_invalid_data_counter="$((script_invalid_data_counter + 1))"
 
-		if [ "${check_type}" == "service" ] ;then
-			script_job_data+=("$(printf "%s\\t%s\\t%s\\t%s\\n" "${host_name}" "${service_description}" "${check_state}" "${plugin_output}")")
-		elif [ "${check_type}" == "host" ] ;then
-			script_job_data+=("$(printf "%s\\t%s\\t%s\\n" "${host_name}" "${check_state}" "${plugin_output}")")
-		fi
+					if [ "${log_invalid_data}" == "1" ] ;then
+						logHandler "Invalid data received: '${data}'"
+					fi
 
-		if [ "${job_interval_helper}" -le "${SECONDS}" ] ;then
-			jobExec
+					continue
+					;;
+		esac
+
+		script_job_data+=("${data}")
+
+		if ([ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#script_job_data[*]}" -eq "${job_max_bulk_size}" ]) ;then
+			if [ ! -z "${job_pid}" ] ;then
+				wait ${job_pid}
+				rc="$?"
+		
+				script_job_counter_total="$((script_job_counter_total + 1))"
+
+				if [ "${rc}" == "0" ] ;then
+					script_job_counter_ok="$((script_job_counter_ok + 1))"
+
+					if [ "${job_command_log_ok}" == "1" ] ;then
+						logHandler "Command: '${job_command}' was successful."
+					fi
+				elif ([ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]) ;then
+					script_job_counter_timeout="$((script_job_counter_timeout + 1))"
+
+					if [ "${job_command_log_timeout}" == "1" ] ;then
+						logHandler "Command: '${job_command}' timed out."
+					fi
+				else
+					script_job_counter_nok="$((script_job_counter_nok + 1))"
+
+					if [ "${job_command_log_service_nok}" == "1" ] ;then
+						logHandler "Command: '${job_command}' was not successful."
+					fi
+				fi
+			fi
+
+			job_pid=
+
+			jobExec  &
+
+			job_pid="$!"
+			script_job_data=()
 			job_interval_helper="$((SECONDS + job_exec_interval))"
-		else
-			continue
 		fi
-	   done < "${named_pipe_filename}"
+	   done
 }
 
 
