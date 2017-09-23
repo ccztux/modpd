@@ -139,6 +139,7 @@ printStatisticWatchdog()
 			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
 
+		# shellcheck disable=SC2154
 		${sleep_bin} 1
 	   done
 }
