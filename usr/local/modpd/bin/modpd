@@ -114,18 +114,11 @@ printScriptInfos()
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
 }
 
-printStatisticSeparator()
-{
-	logHandler "------------------------------------------------------------------------- Statistic data -------------------------------------------------------------------------"
-}
-
 printStatistic()
 {
-	printStatisticSeparator
-
-	logHandler "${script_name} is running: '${SECONDS}' seconds"
-	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
-	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid data received: '${script_invalid_data_counter}'."
+	logHandler "- Statistic data - ${script_name} is running: '${SECONDS}' seconds"
+	logHandler "- Statistic data - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
+	logHandler "- Statistic data - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid data received: '${script_invalid_data_counter}'."
 }
 
 printStatisticWatchdog()
@@ -548,7 +541,6 @@ sigHandler()
 			;;
 		EXIT)
 			printStatistic
-			printStatisticSeparator
 
 			logHandler "Caught: '${signal}', exiting script..."
 
@@ -573,6 +565,7 @@ sigHandler()
 			fi
 
 			logHandler "Exitcode: '${script_exit_code}'."
+			logHandler "${script_name} was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
 
 			if [ ! -z "${kill_bin:-}" ] ;then
