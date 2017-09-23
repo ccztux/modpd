@@ -1027,7 +1027,7 @@ jobExec()
 	printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 	rc="${PIPESTATUS[1]}"
 	
-	return ${rc}
+	return "${rc}"
 }
 
 jobHandler()
@@ -1086,7 +1086,7 @@ jobHandler()
 				else
 					script_job_counter_nok="$((script_job_counter_nok + 1))"
 
-					if [ "${job_command_log_service_nok}" == "1" ] ;then
+					if [ "${job_command_log_nok}" == "1" ] ;then
 						logHandler "Command: '${job_command}' was not successful."
 					fi
 				fi
