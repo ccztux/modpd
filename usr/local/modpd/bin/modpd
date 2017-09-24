@@ -129,6 +129,7 @@ printStatisticWatchdog()
 	while true
 	   do
 		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
+			# shellcheck disable=SC2154
 			${kill_bin} -SIGUSR1 ${script_pid}
 			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
@@ -1057,22 +1058,22 @@ jobHandler()
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local job_pid=
 
-	while IFS=$'\t' read -u 3 -r -a data
+	while read -u 3 -r -a data
 	   do
 		case "${#data[*]}" in
 				3)
 					script_host_counter="$((script_host_counter + 1))"
-	   				script_job_data+=(${data[0]}$'\t'${data[1]}$'\t'${data[2]})
+	   				script_job_data+=("${data[0]}"$'\t'"${data[1]}"$'\t'"${data[2]}")
 					;;
 				4)
 					script_service_counter="$((script_service_counter + 1))"
-	   				script_job_data+=(${data[0]}$'\t'${data[1]}$'\t'${data[2]}$'\t'${data[3]})
+	   				script_job_data+=("${data[0]}"$'\t'"${data[1]}"$'\t'"${data[2]}"$'\t'"${data[3]}")
 					;;
 				*)
 					script_invalid_data_counter="$((script_invalid_data_counter + 1))"
 
 					if [ "${log_invalid_data}" == "1" ] ;then
-						logHandler "Invalid data received: '${data[*]}'"
+						logHandler "Invalid dataset received: '${data[*]}', fields: '${#data[*]}'."
 					fi
 
 					continue
