@@ -929,13 +929,13 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="51"
+		script_exit_code="50"
 		exit
 	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids[*]:-}" ]) ;then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="52"
+		script_exit_code="51"
 		exit
 	fi
 }
@@ -1191,22 +1191,22 @@ case "$?" in
 		;;
 	1)
 		printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
-		script_exit_code="90"
+		script_exit_code="100"
 		exit
 		;;
 	2)
 		printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
-		script_exit_code="91"
+		script_exit_code="101"
 		exit
 		;;
 	3)
 		printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
-		script_exit_code="92"
+		script_exit_code="102"
 		exit
 		;;
 	*)
 		printf "Something went terribly wrong in line number: '%s', exiting.\\n" "${LINENO}"
-		script_exit_code="93"
+		script_exit_code="103"
 		exit
 		;;
 esac
