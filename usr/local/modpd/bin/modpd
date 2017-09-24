@@ -37,9 +37,9 @@
 # Bash options:
 #--------------
 
-set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\\n" ; exit 245 ; }
-set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\\n" ; exit 246 ; }
-set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\\n" ; exit 247 ; }
+set -o noclobber || { printf "Setting essential bash option: 'noclobber' was not successful, terminating...\\n" ; exit 244 ; }
+set -o nounset || { printf "Setting essential bash option: 'nounset' was not successful, terminating...\\n" ; exit 245 ; }
+set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not successful, terminating...\\n" ; exit 246 ; }
 
 
 
@@ -47,6 +47,7 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
+trap 'sigHandler SIGUSR1' SIGUSR1 || { printf "Setting essential trap for signal: 'SIGUSR1' was not successful, terminating...\\n" ; exit 247 ; }
 trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
 trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
 trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\\n" ; exit 250 ; }
@@ -118,7 +119,7 @@ printStatistic()
 {
 	logHandler "- Statistic data - ${script_name} is running: '${SECONDS}' seconds"
 	logHandler "- Statistic data - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
-	logHandler "- Statistic data - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid data received: '${script_invalid_data_counter}'."
+	logHandler "- Statistic data - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
 }
 
 printStatisticWatchdog()
@@ -128,7 +129,7 @@ printStatisticWatchdog()
 	while true
 	   do
 		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
-			printStatistic
+			${kill_bin} -SIGUSR1 ${script_pid}
 			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
 
@@ -484,6 +485,9 @@ sigHandler()
 	local rc=
 
 	case "${signal}" in
+		SIGUSR1)
+			printStatistic
+			;;
 		SIGTERM)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
@@ -1058,22 +1062,22 @@ jobHandler()
 		case "${#data[*]}" in
 				3)
 					script_host_counter="$((script_host_counter + 1))"
+	   				script_job_data+=(${data[0]}$'\t'${data[1]}$'\t'${data[2]})
 					;;
 				4)
 					script_service_counter="$((script_service_counter + 1))"
+	   				script_job_data+=(${data[0]}$'\t'${data[1]}$'\t'${data[2]}$'\t'${data[3]})
 					;;
 				*)
 					script_invalid_data_counter="$((script_invalid_data_counter + 1))"
 
 					if [ "${log_invalid_data}" == "1" ] ;then
-						logHandler "Invalid data received: '${data}'"
+						logHandler "Invalid data received: '${data[*]}'"
 					fi
 
 					continue
 					;;
 		esac
-
-		script_job_data+=("${data}")
 
 		if ([ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#script_job_data[*]}" -eq "${job_max_bulk_size}" ]) ;then
 			if [ ! -z "${job_pid}" ] ;then
