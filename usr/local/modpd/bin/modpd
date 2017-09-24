@@ -488,6 +488,7 @@ sigHandler()
 	case "${signal}" in
 		SIGUSR1)
 			printStatistic
+			jobHandler
 			;;
 		SIGTERM)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
