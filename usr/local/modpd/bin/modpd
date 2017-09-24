@@ -1047,7 +1047,7 @@ jobExec()
 {
 	local rc=
 
-	case "${obsessing_interface}" in
+	case "${obsessing_interface:-}" in
 				nrdp)
 					printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" > /dev/null 2>&1 | logHandler
 					;;
