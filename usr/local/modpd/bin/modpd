@@ -1058,7 +1058,7 @@ jobHandler()
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local job_pid=
 
-	while read -u 3 -r -a data
+	while IFS=$'\t' read -u 3 -r -a data
 	   do
 		case "${#data[*]}" in
 				3)
