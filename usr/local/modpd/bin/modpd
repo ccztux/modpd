@@ -1043,25 +1043,21 @@ buildJobCommand()
 	logHandler "We build the following job command: '${job_command}'."
 }
 
-jobExecNRDP()
+jobExec()
 {
 	local rc=
 
-	printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" > /dev/null 2>&1 | logHandler
-	rc="${PIPESTATUS[1]}"
-	
-	return "${rc}"
-}
-
-
-jobExecNSCA()
-{
-	local rc=
-
-	for data in "${script_job_data[@]}"
-	   do
-	   	printf "%s\\n\x17" "${data}"
-	   done | eval "${job_command}" > /dev/null 2>&1 | logHandler
+	case "${obsessing_interface}" in
+				nrdp)
+					printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" > /dev/null 2>&1 | logHandler
+					;;
+				nsca)
+					for data in "${script_job_data[@]}"
+					   do
+						printf "%s\\n\\x17" "${data}"
+					   done | eval "${job_command}" > /dev/null 2>&1 | logHandler
+					;;
+	esac
 
 	rc="${PIPESTATUS[1]}"
 	
@@ -1124,14 +1120,7 @@ jobHandler()
 				fi
 			fi
 
-			case "${obsessing_interface}" in
-						nrdp)
-							jobExecNRDP  &
-							;;
-						nsca)
-							jobExecNSCA  &
-							;;
-			esac
+			jobExec &
 
 			job_pid="$!"
 			script_job_data=()
