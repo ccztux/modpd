@@ -47,6 +47,7 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
+# needs analyzing. works with bash 4.3 but not with 4.1:
 #trap 'sigHandler SIGUSR1' SIGUSR1 || { printf "Setting essential trap for signal: 'SIGUSR1' was not successful, terminating...\\n" ; exit 247 ; }
 trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
 trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
@@ -486,10 +487,11 @@ sigHandler()
 	local rc=
 
 	case "${signal}" in
-		SIGUSR1)
-			printStatistic
-			jobHandler
-			;;
+		# needs analyzing. works with bash 4.3 but not with 4.1:
+		#SIGUSR1)
+		#	printStatistic
+		#	jobHandler
+		#	;;
 		SIGTERM)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
@@ -1068,37 +1070,29 @@ jobExec()
 jobHandler()
 {
 	local rc=
+	local job_pid=
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
-	local job_pid=
+	local host_regex="^(host)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})$"
+	local service_regex="^(service)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})(.*)(${job_data_separator})$"
 
-	while IFS=$'\t' read -u 3 -r -a data
+	while read -u 3 -r
 	   do
+		if [[ "${REPLY}" =~ ${service_regex} ]] ;then
+			script_service_counter="$((script_service_counter + 1))"
+	   		script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
+		elif [[ "${REPLY}" =~ ${host_regex} ]] ;then
+			script_host_counter="$((script_host_counter + 1))"
+	   		script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
+		else
+			script_invalid_data_counter="$((script_invalid_data_counter + 1))"
 
-		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
-			printStatistic
-			log_status_line_helper="$((SECONDS + log_status_line_interval))"
+			if [ "${log_invalid_data}" == "1" ] ;then
+				logHandler "Invalid dataset received: '${REPLY}'."
+			fi
+
+			continue
 		fi
-
-		case "${#data[*]}" in
-				3)
-					script_host_counter="$((script_host_counter + 1))"
-	   				script_job_data+=("${data[0]}"$'\t'"${data[1]}"$'\t'"${data[2]}")
-					;;
-				4)
-					script_service_counter="$((script_service_counter + 1))"
-	   				script_job_data+=("${data[0]}"$'\t'"${data[1]}"$'\t'"${data[2]}"$'\t'"${data[3]}")
-					;;
-				*)
-					script_invalid_data_counter="$((script_invalid_data_counter + 1))"
-
-					if [ "${log_invalid_data}" == "1" ] ;then
-						logHandler "Invalid dataset received: '${data[*]}', fields: '${#data[*]}'."
-					fi
-
-					continue
-					;;
-		esac
 
 		if ([ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#script_job_data[*]}" -eq "${job_max_bulk_size}" ]) ;then
 			if [ ! -z "${job_pid}" ] ;then
@@ -1133,6 +1127,11 @@ jobHandler()
 			job_pid="$!"
 			script_job_data=()
 			job_interval_helper="$((SECONDS + job_exec_interval))"
+		fi
+
+		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
+			printStatistic
+			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
 	   done
 }
@@ -1228,6 +1227,7 @@ esac
 getUser
 checkBashVersion
 checkAlreadyRunningInstance
+# needs analyzing. works with bash 4.3 but not with 4.1:
 #printStatisticWatchdog &
 createNamedPipe
 setProxy
