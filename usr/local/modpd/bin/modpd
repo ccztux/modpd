@@ -1083,7 +1083,7 @@ jobHandler()
 	   		script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
 		elif [[ "${REPLY}" =~ ${host_regex} ]] ;then
 			script_host_counter="$((script_host_counter + 1))"
-	   		script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
+	   		script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[6]}"$'\t'"${BASH_REMATCH[8]}")
 		else
 			script_invalid_data_counter="$((script_invalid_data_counter + 1))"
 
