@@ -47,7 +47,7 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
-trap 'sigHandler SIGUSR1' SIGUSR1 || { printf "Setting essential trap for signal: 'SIGUSR1' was not successful, terminating...\\n" ; exit 247 ; }
+#trap 'sigHandler SIGUSR1' SIGUSR1 || { printf "Setting essential trap for signal: 'SIGUSR1' was not successful, terminating...\\n" ; exit 247 ; }
 trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
 trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
 trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\\n" ; exit 250 ; }
@@ -955,13 +955,14 @@ createNamedPipe()
 
 		if [ "${PIPESTATUS[0]}" == "0" ] ;then
 			logHandler "Creating named pipe was successful."
-			exec 3<> "${named_pipe_filename}"
 		else
 			logHandler "Creating named pipe was not successful, exiting."
 			script_exit_code="60"
 			exit
 		fi
 	fi
+
+	exec 3<> "${named_pipe_filename}"
 }
 
 removeNamedPipe()
@@ -1068,10 +1069,17 @@ jobHandler()
 {
 	local rc=
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
+	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
 	local job_pid=
 
 	while IFS=$'\t' read -u 3 -r -a data
 	   do
+
+		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
+			printStatistic
+			log_status_line_helper="$((SECONDS + log_status_line_interval))"
+		fi
+
 		case "${#data[*]}" in
 				3)
 					script_host_counter="$((script_host_counter + 1))"
@@ -1220,7 +1228,7 @@ esac
 getUser
 checkBashVersion
 checkAlreadyRunningInstance
-printStatisticWatchdog &
+#printStatisticWatchdog &
 createNamedPipe
 setProxy
 buildJobCommand
