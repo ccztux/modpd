@@ -1079,7 +1079,7 @@ jobHandler()
 	local job_pid=
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
-	local regex="^(host|service)(${job_data_separator})(.+)(${job_data_separator})(.*)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
+	local regex="^(host|service)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
 
 	while read -u 3 -r
 	   do
