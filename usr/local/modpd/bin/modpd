@@ -47,8 +47,6 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
-# needs analyzing. works with bash 4.3 but not with 4.1:
-#trap 'sigHandler SIGUSR1' SIGUSR1 || { printf "Setting essential trap for signal: 'SIGUSR1' was not successful, terminating...\\n" ; exit 247 ; }
 trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
 trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
 trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\\n" ; exit 250 ; }
@@ -121,23 +119,6 @@ printStatistic()
 	logHandler "- Statistic data - ${script_name} is running: '${SECONDS}' seconds"
 	logHandler "- Statistic data - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
 	logHandler "- Statistic data - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
-}
-
-printStatisticWatchdog()
-{
-	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
-
-	while true
-	   do
-		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
-			# shellcheck disable=SC2154
-			${kill_bin} -SIGUSR1 ${script_pid}
-			log_status_line_helper="$((SECONDS + log_status_line_interval))"
-		fi
-
-		# shellcheck disable=SC2154
-		${sleep_bin} 1
-	   done
 }
 
 checkOptions()
@@ -491,11 +472,6 @@ sigHandler()
 	local rc=
 
 	case "${signal}" in
-		# needs analyzing. works with bash 4.3 but not with 4.1:
-		#SIGUSR1)
-		#	printStatistic
-		#	jobHandler
-		#	;;
 		SIGTERM)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
@@ -1237,8 +1213,6 @@ esac
 getUser
 checkBashVersion
 checkAlreadyRunningInstance
-# needs analyzing. works with bash 4.3 but not with 4.1:
-#printStatisticWatchdog &
 createNamedPipe
 setProxy
 buildJobCommand
