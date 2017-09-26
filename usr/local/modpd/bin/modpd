@@ -1079,17 +1079,21 @@ jobHandler()
 	local job_pid=
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
-	local host_regex="^(host)(${job_data_separator})(.+)(${job_data_separator})(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
-	local service_regex="^(service)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
+	local regex="^(host|service)(${job_data_separator})(.+)(${job_data_separator})(.*)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
 
 	while read -u 3 -r
 	   do
-		if [[ "${REPLY}" =~ ${service_regex} ]] ;then
-			script_service_counter="$((script_service_counter + 1))"
-	   		script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
-		elif [[ "${REPLY}" =~ ${host_regex} ]] ;then
-			script_host_counter="$((script_host_counter + 1))"
-	   		script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[6]}"$'\t'"${BASH_REMATCH[8]}")
+		if [[ "${REPLY}" =~ ${regex} ]] ;then
+			case "${BASH_REMATCH[1]}" in
+						host)
+							script_host_counter="$((script_host_counter + 1))"
+							script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
+							;;
+						service)
+							script_service_counter="$((script_service_counter + 1))"
+							script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
+							;;
+			esac
 		else
 			script_invalid_data_counter="$((script_invalid_data_counter + 1))"
 
