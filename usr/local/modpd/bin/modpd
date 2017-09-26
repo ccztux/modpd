@@ -1032,8 +1032,10 @@ buildJobCommand()
 					nrdp_protocol="${nrdp_protocol,,}"
 
 					if ([ ! -z "${nrdp_username}" ] && [ ! -z "${nrdp_password}" ]) ;then
+						# shellcheck disable=SC2154
 						job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 					else
+						# shellcheck disable=SC2154
 						job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 					fi
 					;;
