@@ -267,6 +267,10 @@ checkRequiredBinaries()
 		required_binaries+=("timeout")
 	fi
 
+	if [ "${obsessing_interface}" == "nrdp" ] ;then
+		required_binaries+=("php")
+	fi
+
 	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "kill" "sleep")
 
 	for bin in "${required_binaries[@]}"
@@ -1028,9 +1032,9 @@ buildJobCommand()
 					nrdp_protocol="${nrdp_protocol,,}"
 
 					if ([ ! -z "${nrdp_username}" ] && [ ! -z "${nrdp_password}" ]) ;then
-						job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+						job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 					else
-						job_command="${job_command} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+						job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 					fi
 					;;
 				nsca)
