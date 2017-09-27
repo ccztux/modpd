@@ -47,6 +47,7 @@ set -o pipefail || { printf "Setting essential bash option: 'pipefail' was not s
 # Traps:
 #-------
 
+trap 'sigHandler SIGUSR1' SIGUSR1 || { printf "Setting essential trap for signal: 'SIGUSR1' was not successful, terminating...\\n" ; exit 247 ; }
 trap 'sigHandler SIGTERM' SIGTERM || { printf "Setting essential trap for signal: 'SIGTERM' was not successful, terminating...\\n" ; exit 248 ; }
 trap 'sigHandler SIGINT' SIGINT || { printf "Setting essential trap for signal: 'SIGINT' was not successful, terminating...\\n" ; exit 249 ; }
 trap 'sigHandler SIGHUP' SIGHUP || { printf "Setting essential trap for signal: 'SIGHUP' was not successful, terminating...\\n" ; exit 250 ; }
@@ -119,8 +120,25 @@ printScriptInfos()
 printStatistic()
 {
 	logHandler "- Statistic data - ${script_name} is running: '${SECONDS}' seconds"
-	logHandler "- Statistic data - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsusccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
+	logHandler "- Statistic data - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
 	logHandler "- Statistic data - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
+}
+
+printStatisticWatchdog()
+{
+	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
+
+	while true
+	   do
+		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
+			# shellcheck disable=SC2154
+			${kill_bin} -SIGUSR1 ${script_pid}
+			log_status_line_helper="$((SECONDS + log_status_line_interval))"
+		fi
+
+		# shellcheck disable=SC2154
+		${sleep_bin} 1
+	   done
 }
 
 checkOptions()
@@ -178,8 +196,15 @@ reloadConfig()
 {
 	local rc=
 
+	if  [ ! -z "${script_statistic_watchdog_pid}" ] ;then
+		${kill_bin} -s SIGTERM "${script_statistic_watchdog_pid}"
+	fi
+
 	includeConfig
 	rc="$?"
+
+	printStatisticWatchdog &
+	script_statistic_watchdog_pid="$!"
 
 	if [ "${rc}" == "0" ] ;then
 		logHandlerSetConfig
@@ -343,9 +368,9 @@ logHandler()
 		fi
 	else
 		log_message="${log_message//\`/}"
-		log_message="${log_message//${proxy_password}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_password}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_token}/${log_secure_replace_string}}"
+		log_message="${log_message//${proxy_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${nrdp_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${nrdp_token:-}/${log_secure_replace_string}}"
 
 		case "${log_conf:-}" in
 					8|16|32|64) # log nothing
@@ -474,6 +499,9 @@ sigHandler()
 	local rc=
 
 	case "${signal}" in
+		SIGUSR1)
+			printStatistic
+			;;
 		SIGTERM)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
@@ -563,7 +591,7 @@ sigHandler()
 					${kill_bin} -s "${signal}" -- -"${script_pid}"
 				else
 					script_shutdown_in_progress="1"
-					${kill_bin} -s "SIGTERM" -- -"${script_pid}"
+					${kill_bin} -s SIGTERM -- -"${script_pid}"
 				fi
 			fi
 
@@ -671,7 +699,6 @@ setProxy()
 	if [ "${proxy_enabled}" == "1" ] ;then
 		local proxy=
 		local proxy_url=
-		proxy_protocol="${proxy_protocol,,}"
 
 		logHandler "Using proxy is enabled, building proxy configuration..."
 
@@ -996,8 +1023,6 @@ checkNamedPipe()
 
 buildJobCommand()
 {
-	obsessing_interface="${obsessing_interface,,}"
-	
 	logHandler "Building job command..."
 
 	if [ "${job_timeout_enabled}" == "1" ] ;then
@@ -1007,8 +1032,6 @@ buildJobCommand()
 
 	case "${obsessing_interface:-}" in
 				nrdp)
-					nrdp_protocol="${nrdp_protocol,,}"
-
 					if ([ ! -z "${nrdp_username}" ] && [ ! -z "${nrdp_password}" ]) ;then
 						# shellcheck disable=SC2154
 						job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
@@ -1115,7 +1138,6 @@ dataProcessor()
 {
 	local rc=
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
-	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
 	local regex="^(host|service)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
 
 	while read -u 3 -r
@@ -1145,11 +1167,6 @@ dataProcessor()
 			jobHandler
 			script_job_data=()
 			job_interval_helper="$((SECONDS + job_exec_interval))"
-		fi
-
-		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
-			printStatistic
-			log_status_line_helper="$((SECONDS + log_status_line_interval))"
 		fi
 	   done
 }
@@ -1245,6 +1262,8 @@ esac
 getUser
 checkBashVersion
 checkAlreadyRunningInstance
+printStatisticWatchdog &
+script_statistic_watchdog_pid="$!"
 createNamedPipe
 setProxy
 buildJobCommand
