@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-09-26
+#			2017-09-27
 #
 #  Description:		Monitoring Obsessing Data Processor Daemon
 #
@@ -67,12 +67,14 @@ script_version="1.0.3-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2017-09-26"
+script_last_modification_date="2017-09-27"
 script_license="GNU GPLv3"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_exit_code="255"
+script_job_pid_1=
+script_job_pid_2=
 script_shutdown_in_progress="0"
 script_host_counter="0"
 script_service_counter="0"
@@ -1049,10 +1051,69 @@ jobExec()
 	return "${rc}"
 }
 
+counterHandler()
+{
+	local rc="${1:-}"
+
+	script_job_counter_total="$((script_job_counter_total + 1))"
+
+	if [ "${rc}" == "0" ] ;then
+		script_job_counter_ok="$((script_job_counter_ok + 1))"
+
+		if [ "${job_command_log_ok}" == "1" ] ;then
+			logHandler "Command: '${job_command}' was successful."
+		fi
+	elif ([ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]) ;then
+		script_job_counter_timeout="$((script_job_counter_timeout + 1))"
+
+		if [ "${job_command_log_timeout}" == "1" ] ;then
+			logHandler "Command: '${job_command}' timed out."
+		fi
+	else
+		script_job_counter_nok="$((script_job_counter_nok + 1))"
+
+		if [ "${job_command_log_nok}" == "1" ] ;then
+			logHandler "Command: '${job_command}' was not successful."
+		fi
+	fi
+}
+
 jobHandler()
 {
+	if ([ -z "${script_job_pid_1}" ] && [ -z "${script_job_pid_2}" ]) ;then
+		jobExec &
+		script_job_pid_1="$!"
+	elif ([ ! -z "${script_job_pid_1}" ] && [ -z "${script_job_pid_2}" ]) ;then
+		jobExec &
+		script_job_pid_2="$!"
+
+		wait ${script_job_pid_1}
+		counterHandler "$?"
+		script_job_pid_1=
+	elif ([ -z "${script_job_pid_1}" ] && [ ! -z "${script_job_pid_2}" ]) ;then
+		jobExec &
+		script_job_pid_1="$!"
+
+		wait ${script_job_pid_2}
+		counterHandler "$?"
+		script_job_pid_2=
+	elif ([ ! -z "${script_job_pid_1}" ] && [ ! -z "${script_job_pid_2}" ]) ;then
+		wait ${script_job_pid_1}
+		counterHandler "$?"
+		script_job_pid_1=
+
+		wait ${script_job_pid_2}
+		counterHandler "$?"
+		script_job_pid_2=
+
+		jobExec &
+		script_job_pid_1="$!"
+	fi
+}
+
+dataProcessor()
+{
 	local rc=
-	local job_pid=
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
 	local regex="^(host|service)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
@@ -1080,37 +1141,8 @@ jobHandler()
 			continue
 		fi
 
-		if ([ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#script_job_data[*]}" -eq "${job_max_bulk_size}" ]) ;then
-			if [ ! -z "${job_pid}" ] ;then
-				wait ${job_pid}
-				rc="$?"
-		
-				script_job_counter_total="$((script_job_counter_total + 1))"
-
-				if [ "${rc}" == "0" ] ;then
-					script_job_counter_ok="$((script_job_counter_ok + 1))"
-
-					if [ "${job_command_log_ok}" == "1" ] ;then
-						logHandler "Command: '${job_command}' was successful."
-					fi
-				elif ([ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]) ;then
-					script_job_counter_timeout="$((script_job_counter_timeout + 1))"
-
-					if [ "${job_command_log_timeout}" == "1" ] ;then
-						logHandler "Command: '${job_command}' timed out."
-					fi
-				else
-					script_job_counter_nok="$((script_job_counter_nok + 1))"
-
-					if [ "${job_command_log_nok}" == "1" ] ;then
-						logHandler "Command: '${job_command}' was not successful."
-					fi
-				fi
-			fi
-
-			jobExec &
-
-			job_pid="$!"
+		if [ "${job_interval_helper}" -le "${SECONDS}" ] ;then
+			jobHandler
 			script_job_data=()
 			job_interval_helper="$((SECONDS + job_exec_interval))"
 		fi
@@ -1221,7 +1253,8 @@ logHandler "Ready to handle jobs..."
 
 while true
    do
-	jobHandler
+	dataProcessor
+	logHandler "Data processor left in main loop..."
    done
 
 
