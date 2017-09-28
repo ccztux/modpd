@@ -75,6 +75,8 @@ script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_exit_code="255"
+script_statistic_watchdog_pid=
+script_checkdata_watchdog_pid=
 script_job_pid_1=
 script_job_pid_2=
 script_shutdown_in_progress="0"
@@ -299,6 +301,9 @@ reloadConfig()
 		${kill_bin} -s SIGTERM "${script_statistic_watchdog_pid}"
 	fi
 
+	if  [ ! -z "${script_checkdata_watchdog_pid}" ] ;then
+		${kill_bin} -s SIGTERM "${script_checkdata_watchdog_pid}"
+	fi
 	includeConfig
 	rc="$?"
 
