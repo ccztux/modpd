@@ -376,7 +376,8 @@ includeConfig
 case "${?}" in
 	0)
 		includeCheckDataFile
-		printf "total: %s\\n" "$script_job_counter_total"
+		perfdata="'runtime'=${modpd_runtime}s;;;; 'total_jobs'=${script_job_counter_total};;;; 'jobs_ok'=${script_job_counter_ok};;;; 'jobs_nok'=${script_job_counter_nok};;;; 'jobs_timed_out'=${script_job_counter_timeout};;;; 'hosts'=${script_host_counter};;;; 'services'=${script_service_counter};;;; 'invalid_datasets'=${script_invalid_data_counter};;;;"
+		printf "OK - %s\\n" "${perfdata}"
 		script_exit_code="0"
 		exit
 		;;
