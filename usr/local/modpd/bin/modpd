@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-09-27
+#			2017-09-28
 #
 #  Description:		Monitoring Obsessing Data Processor Daemon
 #
@@ -69,7 +69,7 @@ script_version="1.0.3-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2017-09-27"
+script_last_modification_date="2017-09-28"
 script_license="GNU GPLv3"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
@@ -209,7 +209,7 @@ checkCheckDataRequirements()
 		logHandler "Checkdata generation is enabled..."
 
 		checkDirectoryPermissions "${checkdata_directory}"
-		rc="$?"
+		rc="${?}"
 
 		case "${rc}" in
 			3|7)
@@ -238,7 +238,7 @@ checkCheckDataRequirements()
 		esac
 
 		printCheckDataWatchdog &
-		script_checkdata_watchdog_pid="$!"
+		script_checkdata_watchdog_pid="${!}"
 	fi
 }
 
@@ -270,13 +270,13 @@ includeConfig()
 	local rc=
 
 	checkFilePermissions "${script_config_file}"
-	rc="$?"
+	rc="${?}"
 
 	case "${rc}" in
 		4|5|6|7)
 			# shellcheck source=/scripts/usr/local/modpd/etc/modpd.conf
 			source "${script_config_file}"
-			rc="$?"
+			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
 				return 0
@@ -305,27 +305,27 @@ reloadConfig()
 		${kill_bin} -s SIGTERM "${script_checkdata_watchdog_pid}"
 	fi
 	includeConfig
-	rc="$?"
+	rc="${?}"
 
 	printStatisticWatchdog &
-	script_statistic_watchdog_pid="$!"
+	script_statistic_watchdog_pid="${!}"
 
 	if [ "${checkdata_enabled}" == "1" ] ;then
 		printCheckDataWatchdog &
-		script_checkdata_watchdog_pid="$!"
+		script_checkdata_watchdog_pid="${!}"
 	fi
 
 	if [ "${rc}" == "0" ] ;then
 		logHandlerSetConfig
-		rc="$?"
+		rc="${?}"
 
 		if [ "${rc}" == "0" ] ;then
 			setProxy
-			rc="$?"
+			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
 				buildJobCommand
-				rc="$?"
+				rc="${?}"
 
 				if [ "${rc}" == "0" ] ;then
 					return 0
@@ -350,7 +350,7 @@ checkBin()
 	local rc=
 
 	_bin="$(which "${binary}" 2>&1)"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		export "${binary}"_bin="${_bin}"
@@ -393,7 +393,7 @@ checkRequiredBinaries()
 	for bin in "${required_binaries[@]}"
 	   do
 		checkBin "${bin}"
-		rc="$?"
+		rc="${?}"
 
 		if [ "${rc}" != "0" ] ;then
 			binaries_not_found+=("${bin}")
@@ -636,7 +636,7 @@ sigHandler()
 			fi
 
 			reloadConfig
-			rc="$?"
+			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
 				logHandler "Config reload was successful."
@@ -677,14 +677,14 @@ sigHandler()
 			if [ "${script_bypass_exit_routines}" != "1" ] ;then
 				if [ "${script_another_instance_is_running}" != "1" ] ;then
 					checkNamedPipe
-					rc="$?"
+					rc="${?}"
 
 					if [ "${rc}" == "0" ] ;then
 						removeNamedPipe
 					fi
 
 					checkLock
-					rc="$?"
+					rc="${?}"
 
 					if [ "${rc}" == "0" ] ;then
 						removeLock
@@ -707,7 +707,7 @@ sigHandler()
 				fi
 			fi
 
-			exit "${script_exit_code}"
+			exit ${script_exit_code}
 			;;
 		*)
 			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
@@ -723,7 +723,7 @@ checkLock()
 	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read/writeable..."
 
 	checkFilePermissions "${script_lock_file}"
-	rc="$?"
+	rc="${?}"
 
 	case "${rc}" in
 		6|7)
@@ -748,7 +748,7 @@ setLock()
 	logHandler "Check if script lock directory: '${script_lock_directory}' exists and permissions to set lock are ok..."
 
 	checkDirectoryPermissions "${script_lock_directory}"
-	rc="$?"
+	rc="${?}"
 
 	case "${rc}" in
 		3|7)
@@ -779,7 +779,7 @@ setLock()
 	logHandler "Setting lock..."
 
 	printf "%s\\n" "${script_pid}" > "${script_lock_file}"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		logHandler "Setting lock was successful."
@@ -863,7 +863,7 @@ checkNamedPipePermissions()
 	local file_permission=
 
 	checkNamedPipeExists "${file}"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		if [ -x "${file}" ] ;then
@@ -908,7 +908,7 @@ checkFilePermissions()
 	local file_permission=
 
 	checkRegularFileExists "${file}"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		if [ -x "${file}" ] ;then
@@ -952,7 +952,7 @@ checkDirectoryPermissions()
 	local directory_permission=
 
 	checkDirectoryExists "${directory}"
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "0" ] ;then
 		if [ -x "${directory}" ] ;then
@@ -1038,7 +1038,7 @@ checkAlreadyRunningInstance()
 	logHandler "Check if another instance of: '${script_name}' is already running..."
 
 	checkLock
-	rc="$?"
+	rc="${?}"
 
 	if ([ "${rc}" != "0" ] && [ -z "${running_script_pids[*]:-}" ]) ;then
 		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
@@ -1068,7 +1068,7 @@ createNamedPipe()
 	local rc=
 
 	checkNamedPipe
-	rc="$?"
+	rc="${?}"
 
 	if [ "${rc}" == "1" ] ;then
 		logHandler "Creating named pipe..."
@@ -1114,7 +1114,7 @@ checkNamedPipe()
 	logHandler "Check if named pipe: '${named_pipe_filename}' exists and if it is read/writeable..."
 
 	checkNamedPipePermissions "${named_pipe_filename}"
-	rc="$?"
+	rc="${?}"
 
 	case "${rc}" in
 		6|7)
@@ -1217,32 +1217,32 @@ jobHandler()
 {
 	if ([ -z "${script_job_pid_1}" ] && [ -z "${script_job_pid_2}" ]) ;then
 		jobExec &
-		script_job_pid_1="$!"
+		script_job_pid_1="${!}"
 	elif ([ ! -z "${script_job_pid_1}" ] && [ -z "${script_job_pid_2}" ]) ;then
 		jobExec &
-		script_job_pid_2="$!"
+		script_job_pid_2="${!}"
 
 		wait ${script_job_pid_1}
-		counterHandler "$?"
+		counterHandler "${?}"
 		script_job_pid_1=
 	elif ([ -z "${script_job_pid_1}" ] && [ ! -z "${script_job_pid_2}" ]) ;then
 		jobExec &
-		script_job_pid_1="$!"
+		script_job_pid_1="${!}"
 
 		wait ${script_job_pid_2}
-		counterHandler "$?"
+		counterHandler "${?}"
 		script_job_pid_2=
 	elif ([ ! -z "${script_job_pid_1}" ] && [ ! -z "${script_job_pid_2}" ]) ;then
 		wait ${script_job_pid_1}
-		counterHandler "$?"
+		counterHandler "${?}"
 		script_job_pid_1=
 
 		wait ${script_job_pid_2}
-		counterHandler "$?"
+		counterHandler "${?}"
 		script_job_pid_2=
 
 		jobExec &
-		script_job_pid_1="$!"
+		script_job_pid_1="${!}"
 	fi
 }
 
@@ -1339,7 +1339,7 @@ while getopts ":h.c:l:v." OPTION
 checkOptions
 includeConfig
 
-case "$?" in
+case "${?}" in
 	0)
 		checkRequiredBinaries
 		;;
@@ -1375,7 +1375,7 @@ getUser
 checkBashVersion
 checkAlreadyRunningInstance
 printStatisticWatchdog &
-script_statistic_watchdog_pid="$!"
+script_statistic_watchdog_pid="${!}"
 checkCheckDataRequirements
 createNamedPipe
 setProxy
