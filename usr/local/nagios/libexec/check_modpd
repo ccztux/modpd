@@ -117,7 +117,7 @@ isInteger()
 checkOptions()
 {
 	if [ ! -z "${warning_threshold:-}" ] ;then
-		if ! $(isInteger "${warning_threshold:-}") ;then
+		if ! isInteger "${warning_threshold:-}" ;then
 			printf "Option: '-W' is not an integer!\\n\\n"
 			printUsage
 			script_exit_code="20"
@@ -126,7 +126,7 @@ checkOptions()
 	fi
 
 	if [ ! -z "${critical_threshold:-}" ] ;then
-		if ! $(isInteger "${critical_threshold:-}") ;then
+		if ! isInteger "${critical_threshold:-}" ;then
 			printf "Option: '-C' is not an integer!\\n\\n"
 			printUsage
 			script_exit_code="21"
