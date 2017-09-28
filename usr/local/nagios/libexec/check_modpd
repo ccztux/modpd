@@ -107,7 +107,7 @@ setDefaultValues()
 
 isInteger()
 {
-        if [ "${1}" -ge "0" -o "${1}" -lt "0" 2>/dev/null ] ;then
+        if ([ "${1}" -ge "0" ] || [ "${1}" -lt "0" ]) 2>/dev/null ;then
                 return 0
         else
                 return 1
