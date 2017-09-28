@@ -83,7 +83,7 @@ printUsage()
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tConfig file. (If undefined default value: '${script_config_file}' will be used.)\\n"
+	printf "   -c\\t\\tConfig file. (If undefined default value: '%s' will be used.)\\n" "${script_config_file}"
 	printf "   -W\\t\\tWarning threshold. (Integer)"
 	printf "   -C\\t\\tCritical threshold. (Integer)"
 	printf "   -v\\t\\tShows detailed version information.\\n"
