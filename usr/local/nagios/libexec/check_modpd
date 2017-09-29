@@ -84,8 +84,8 @@ printUsage()
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
 	printf "   -c\\t\\tConfig file. (If undefined default value: '%s' will be used.)\\n" "${script_config_file}"
-	printf "   -W\\t\\tWarning threshold. (Integer)"
-	printf "   -C\\t\\tCritical threshold. (Integer)"
+	printf "   -W\\t\\tWarning threshold. (Integer)\\n"
+	printf "   -C\\t\\tCritical threshold. (Integer)\\n"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
@@ -120,7 +120,7 @@ checkOptions()
 		if ! isInteger "${warning_threshold:-}" ;then
 			printf "Option: '-W' is not an integer!\\n\\n"
 			printUsage
-			script_exit_code="20"
+			script_exit_code="10"
 			exit
 		fi
 	fi
@@ -129,7 +129,7 @@ checkOptions()
 		if ! isInteger "${critical_threshold:-}" ;then
 			printf "Option: '-C' is not an integer!\\n\\n"
 			printUsage
-			script_exit_code="21"
+			script_exit_code="11"
 			exit
 		fi
 	fi
@@ -169,18 +169,54 @@ includeConfig()
 			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
-				return 0
+				includeCheckDataFile
+				rc="${?}"
+
+				case "${rc}" in
+					0)
+						return 0
+						;;
+					1)
+						printf "Including checkdata file: '%s' was not successful, exiting.\\n" "${checkdata_filename}"
+						script_exit_code="20"
+						exit
+						;;
+					2)
+						printf "Checkdata file: '%s' does not exist, exiting.\\n" "${checkdata_filename}"
+						script_exit_code="21"
+						exit
+						;;
+					3)
+						printf "Checkdcata file: '%s' exists, but it is not readable, exiting.\\n" "${checkdata_filename}"
+						script_exit_code="22"
+						exit
+						;;
+					*)
+						printf "Something went terribly wrong in line number: '%s', exiting.\\n" "${LINENO}"
+						script_exit_code="23"
+						exit
+						;;
+				esac
 			else
-				return 1
+				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
+				script_exit_code="24"
+				exit
 			fi
 			;;
 		10)
-			return 2
+			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
+			script_exit_code="25"
+			exit
 			;;
 		*)
-			return 3
+			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
+			script_exit_code="26"
+			exit
 			;;
 	esac
+
+
+
 }
 
 includeCheckDataFile()
@@ -373,35 +409,12 @@ setDefaultValues
 checkOptions
 includeConfig
 
-case "${?}" in
-	0)
-		includeCheckDataFile
-		perfdata="'runtime'=${modpd_runtime}s;;;; 'total_jobs'=${script_job_counter_total};;;; 'jobs_ok'=${script_job_counter_ok};;;; 'jobs_nok'=${script_job_counter_nok};;;; 'jobs_timed_out'=${script_job_counter_timeout};;;; 'hosts'=${script_host_counter};;;; 'services'=${script_service_counter};;;; 'invalid_datasets'=${script_invalid_data_counter};;;;"
-		printf "OK - %s\\n" "${perfdata}"
-		script_exit_code="0"
-		exit
-		;;
-	1)
-		printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
-		script_exit_code="110"
-		exit
-		;;
-	2)
-		printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
-		script_exit_code="111"
-		exit
-		;;
-	3)
-		printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
-		script_exit_code="112"
-		exit
-		;;
-	*)
-		printf "Something went terribly wrong in line number: '%s', exiting.\\n" "${LINENO}"
-		script_exit_code="113"
-		exit
-		;;
-esac
+perfdata="'runtime'=${modpd_runtime}s;;;; 'total_jobs'=${script_job_counter_total};;;; 'jobs_ok'=${script_job_counter_ok};;;; 'jobs_nok'=${script_job_counter_nok};;;; 'jobs_timed_out'=${script_job_counter_timeout};;;; 'hosts'=${script_host_counter};;;; 'services'=${script_service_counter};;;; 'invalid_datasets'=${script_invalid_data_counter};;;;"
+
+printf "OK - %s\\n" "${perfdata}"
+
+script_exit_code="0"
+exit
 
 
 

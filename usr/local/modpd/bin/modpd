@@ -122,9 +122,9 @@ printScriptInfos()
 
 printStatistic()
 {
-	logHandler "- Statistic data from the last ${log_status_line_interval} seconds - ${script_name} is running: '${SECONDS}' seconds"
-	logHandler "- Statistic data from the last ${log_status_line_interval} seconds - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
-	logHandler "- Statistic data from the last ${log_status_line_interval} seconds - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
+	logHandler "- Statistic data - ${script_name} is running: '${SECONDS}' seconds"
+	logHandler "- Statistic data - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
+	logHandler "- Statistic data - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
 }
 
 resetCounters()
@@ -140,19 +140,38 @@ resetCounters()
 
 printStatisticWatchdog()
 {
-	local log_status_line_helper="$((SECONDS + log_status_line_interval))"
+	local statistic_interval_helper="$((SECONDS + statistic_interval))"
 
 	while true
 	   do
-		if [ "${log_status_line_helper}" -le "${SECONDS}" ] ;then
+		if [ "${statistic_interval_helper}" -le "${SECONDS}" ] ;then
 			# shellcheck disable=SC2154
 			${kill_bin} -SIGUSR1 ${script_pid}
-			log_status_line_helper="$((SECONDS + log_status_line_interval))"
+			statistic_interval_helper="$((SECONDS + statistic_interval))"
 		fi
 
 		# shellcheck disable=SC2154
 		${sleep_bin} 1
 	   done
+}
+
+removeCheckData()
+{
+	local rc=
+
+	logHandler "Removing checkdata file..."
+
+	# shellcheck disable=SC2154
+	${rm_bin} "${checkdata_filename}" 2>&1 | logHandler
+	rc="${PIPESTATUS[0]}"
+
+	if [ "${rc}" == "0" ] ;then
+		logHandler "Removing checkdata file was successful."
+	else
+		logHandler "Removing checkdata file was not successful."
+		script_exit_code="10"
+		exit
+	fi
 }
 
 printCheckData()
@@ -181,19 +200,19 @@ printCheckData()
 	printf "#-----------------------------------------------------------------------\\n\\n\\n\\n"
 	printf "# shows how long %s is running in seconds\\n" "${script_name}"
 	printf "%s_runtime=\"%s\"\\n\\n" "${script_name}" "${SECONDS}"
-	printf "# shows how much nrdp or nsca jobs where handled in one statistic data period (%s seconds)\\n" "${log_status_line_interval}"
+	printf "# shows how much nrdp or nsca jobs where handled in one statistic data period (%s seconds)\\n" "${statistic_interval}"
 	printf "script_job_counter_total=\"%s\"\\n\\n" "${script_job_counter_total}"
-	printf "# shows how much nrdp or nsca jobs where handled successfully in one statistic data period (%s seconds)\\n" "${log_status_line_interval}"
+	printf "# shows how much nrdp or nsca jobs where handled successfully in one statistic data period (%s seconds)\\n" "${statistic_interval}"
 	printf "script_job_counter_ok=\"%s\"\\n\\n" "${script_job_counter_ok}"
-	printf "# shows how much nrdp or nsca jobs where handled unsuccessfully in one statistic data period (%s seconds)\\n" "${log_status_line_interval}"
+	printf "# shows how much nrdp or nsca jobs where handled unsuccessfully in one statistic data period (%s seconds)\\n" "${statistic_interval}"
 	printf "script_job_counter_nok=\"%s\"\\n\\n" "${script_job_counter_nok}"
-	printf "# shows how much nrdp or nsca jobs timed out in one statistic data period (%s seconds)\\n" "${log_status_line_interval}"
+	printf "# shows how much nrdp or nsca jobs timed out in one statistic data period (%s seconds)\\n" "${statistic_interval}"
 	printf "script_job_counter_timeout=\"%s\"\\n\\n" "${script_job_counter_timeout}"
-	printf "# shows how much host checks where handled in one statistic data period (%s seconds)\\n" "${log_status_line_interval}"
+	printf "# shows how much host checks where handled in one statistic data period (%s seconds)\\n" "${statistic_interval}"
 	printf "script_host_counter=\"%s\"\\n\\n" "${script_host_counter}"
-	printf "# shows how much service checks where handled in one statistic data period (%s seconds)\\n" "${log_status_line_interval}"
+	printf "# shows how much service checks where handled in one statistic data period (%s seconds)\\n" "${statistic_interval}"
 	printf "script_service_counter=\"%s\"\\n\\n" "${script_service_counter}"
-	printf "# shows how much invalid datasets where received in one statistic data period (%s seconds)\\n" "${log_status_line_interval}"
+	printf "# shows how much invalid datasets where received in one statistic data period (%s seconds)\\n" "${statistic_interval}"
 	printf "script_invalid_data_counter=\"%s\"\\n" "${script_invalid_data_counter}"
 }
 
@@ -234,22 +253,24 @@ checkCheckDataRequirements()
 
 				# shellcheck disable=SC2154
 				${mkdir_bin} -p "${checkdata_directory}" 2>&1 | logHandler
+				rc="${PIPESTATUS[0]}"
 
-				if [ "${PIPESTATUS[0]}" == "0" ] ;then
+				if [ "${rc}" == "0" ] ;then
 					logHandler "Creating checkdata directory was successful."
 				else
 					logHandler "Creating checkdata directory was not successful, exiting."
-					script_exit_code="10"
+					script_exit_code="20"
 					exit
 				fi
 				;;
 			*)
 				logHandler "Checkdata directory exists, but permissions are not ok, exiting."
-				script_exit_code="11"
+				script_exit_code="21"
 				exit
 				;;
 		esac
 
+		printCheckData >| "${checkdata_filename}"
 		printCheckDataWatchdog &
 		script_checkdata_watchdog_pid="${!}"
 	fi
@@ -262,7 +283,7 @@ checkOptions()
 		printUsage
 
 		script_bypass_exit_routines="1"
-		script_exit_code="20"
+		script_exit_code="30"
 
 		exit
 	fi
@@ -271,7 +292,7 @@ checkOptions()
 		printf "Missing option: -l\\n\\n"
 		printUsage
 
-		script_exit_code="21"
+		script_exit_code="31"
 		script_bypass_exit_routines="1"
 
 		exit
@@ -292,16 +313,22 @@ includeConfig()
 			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
-				return 0
+				checkRequiredBinaries
 			else
-				return 1
+				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
+				script_exit_code="40"
+				exit
 			fi
 			;;
 		10)
-			return 2
+			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
+			script_exit_code="41"
+			exit
 			;;
 		*)
-			return 3
+			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
+			script_exit_code="42"
+			exit
 			;;
 	esac
 }
@@ -317,6 +344,7 @@ reloadConfig()
 	if  [ ! -z "${script_checkdata_watchdog_pid}" ] ;then
 		${kill_bin} -s SIGTERM "${script_checkdata_watchdog_pid}"
 	fi
+
 	includeConfig
 	rc="${?}"
 
@@ -622,11 +650,15 @@ sigHandler()
 
 	case "${signal}" in
 		SIGUSR1)
-			printStatistic
+			if [ "${statistic_enabled}" == "1" ] ;then
+				printStatistic
+			fi
 			resetCounters
 			;;
 		SIGUSR2)
-			printCheckData >| "${checkdata_filename}"
+			if [ "${checkdata_enabled}" == "1" ] ;then
+				printCheckData >| "${checkdata_filename}"
+			fi
 			;;
 		SIGTERM)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
@@ -703,6 +735,10 @@ sigHandler()
 					if [ "${rc}" == "0" ] ;then
 						removeLock
 					fi
+
+					if [ "${checkdata_enabled}" == "1" ] ;then
+						removeCheckData
+					fi
 				fi
 			else
 				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
@@ -774,18 +810,19 @@ setLock()
 
 			# shellcheck disable=SC2154
 			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
+			rc="${PIPESTATUS[0]}"
 
-			if [ "${PIPESTATUS[0]}" == "0" ] ;then
+			if [ "${rc}" == "0" ] ;then
 				logHandler "Creating script lock directory was successful."
 			else
 				logHandler "Creating script lock directory was not successful, exiting."
-				script_exit_code="30"
+				script_exit_code="50"
 				exit
 			fi
 			;;
 		*)
 			logHandler "Script lock directory exists, but permissions are not ok, exiting."
-			script_exit_code="31"
+			script_exit_code="51"
 			exit
 			;;
 	esac
@@ -799,23 +836,26 @@ setLock()
 		logHandler "Setting lock was successful."
 	else
 		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
-		script_exit_code="32"
+		script_exit_code="52"
 		exit
 	fi
 }
 
 removeLock()
 {
+	local rc=
+
 	logHandler "Removing lock..."
 
 	# shellcheck disable=SC2154
 	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
+	rc="${PIPESTATUS[0]}"
 
-	if [ "${PIPESTATUS[0]}" == "0" ] ;then
+	if [ "${rc}" == "0" ] ;then
 		logHandler "Removing lock was successful."
 	else
 		logHandler "Removing lock was not successful."
-		script_exit_code="40"
+		script_exit_code="60"
 		exit
 	fi
 }
@@ -993,7 +1033,7 @@ checkBashVersion()
 
 	if [ -z "${BASH_VERSINFO[0]}" ] ;then
 		logHandler "Could not determine bash version, exiting."
-		script_exit_code="50"
+		script_exit_code="70"
 		exit
 	else
 		case "${BASH_VERSINFO[0]}" in
@@ -1002,7 +1042,7 @@ checkBashVersion()
 						;;
 					*)
 						logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
-						script_exit_code="51"
+						script_exit_code="71"
 						exit
 						;;
 		esac
@@ -1066,13 +1106,13 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="60"
+		script_exit_code="80"
 		exit
 	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids[*]:-}" ]) ;then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="61"
+		script_exit_code="81"
 		exit
 	fi
 }
@@ -1089,12 +1129,13 @@ createNamedPipe()
 
 		# shellcheck disable=SC2154
 		${mkfifo_bin} "${named_pipe_filename}" 2>&1 | logHandler
+		rc="${PIPESTATUS[0]}"
 
-		if [ "${PIPESTATUS[0]}" == "0" ] ;then
+		if [ "${rc}" == "0" ] ;then
 			logHandler "Creating named pipe was successful."
 		else
 			logHandler "Creating named pipe was not successful, exiting."
-			script_exit_code="70"
+			script_exit_code="90"
 			exit
 		fi
 	fi
@@ -1104,19 +1145,22 @@ createNamedPipe()
 
 removeNamedPipe()
 {
+	local rc=
+
 	logHandler "Remove named pipe..."
 
 	# shellcheck disable=SC2154
 	${rm_bin} "${named_pipe_filename}" 2>&1 | logHandler
+	rc="${PIPESTATUS[0]}"
 
-	if [ "${PIPESTATUS[0]}" == "0" ] ;then
+	if [ "${rc}" == "0" ] ;then
 		logHandler "Removing named pipe was successful."
 
 		exec 3>&-
 		exec 3<&-
 	else
 		logHandler "Removing named pipe was not successful, exiting."
-		script_exit_code="80"
+		script_exit_code="100"
 		exit
 	fi
 }
@@ -1141,7 +1185,7 @@ checkNamedPipe()
 			;;
 		*)
 			logHandler "Named pipe exists, but it is not read/writeable, exiting."
-			script_exit_code="90"
+			script_exit_code="110"
 			exit
 			;;
 	esac
@@ -1171,7 +1215,7 @@ buildJobCommand()
 					;;
 				*)
 					logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', exiting."
-					script_exit_code="100"
+					script_exit_code="120"
 					exit
 					;;
 	esac
@@ -1229,6 +1273,8 @@ counterHandler()
 
 jobHandler()
 {
+	local rc=
+
 	if ([ -z "${script_job_pid_1}" ] && [ -z "${script_job_pid_2}" ]) ;then
 		jobExec &
 		script_job_pid_1="${!}"
@@ -1237,22 +1283,26 @@ jobHandler()
 		script_job_pid_2="${!}"
 
 		wait ${script_job_pid_1}
-		counterHandler "${?}"
+		rc="${?}"
+		counterHandler "${rc}"
 		script_job_pid_1=
 	elif ([ -z "${script_job_pid_1}" ] && [ ! -z "${script_job_pid_2}" ]) ;then
 		jobExec &
 		script_job_pid_1="${!}"
 
 		wait ${script_job_pid_2}
-		counterHandler "${?}"
+		rc="${?}"
+		counterHandler "${rc}"
 		script_job_pid_2=
 	elif ([ ! -z "${script_job_pid_1}" ] && [ ! -z "${script_job_pid_2}" ]) ;then
 		wait ${script_job_pid_1}
-		counterHandler "${?}"
+		rc="${?}"
+		counterHandler "${rc}"
 		script_job_pid_1=
 
 		wait ${script_job_pid_2}
-		counterHandler "${?}"
+		rc="${?}"
+		counterHandler "${rc}"
 		script_job_pid_2=
 
 		jobExec &
@@ -1346,45 +1396,12 @@ while getopts ":h.c:l:v." OPTION
 
 
 
-#-------
-# Start:
-#-------
-
-checkOptions
-includeConfig
-
-case "${?}" in
-	0)
-		checkRequiredBinaries
-		;;
-	1)
-		printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
-		script_exit_code="110"
-		exit
-		;;
-	2)
-		printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
-		script_exit_code="111"
-		exit
-		;;
-	3)
-		printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
-		script_exit_code="112"
-		exit
-		;;
-	*)
-		printf "Something went terribly wrong in line number: '%s', exiting.\\n" "${LINENO}"
-		script_exit_code="113"
-		exit
-		;;
-esac
-
-
-
 #------
 # Main:
 #------
 
+checkOptions
+includeConfig
 getUser
 checkBashVersion
 checkAlreadyRunningInstance
