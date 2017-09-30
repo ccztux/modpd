@@ -262,7 +262,7 @@ requestNagiosCheckDataUpdate()
 				# shellcheck disable=SC2154
 				${kill_bin} -SIGUSR2 "${modpd_pid}"
 				# shellcheck disable=SC2154
-				${sleep_bin} 0.1
+				${sleep_bin} 0.3
 			else
 				nagios_output="modpd-pid is empty\\n"
 				script_exit_code="200"
