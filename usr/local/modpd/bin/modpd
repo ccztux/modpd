@@ -105,8 +105,8 @@ printUsage()
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tConfig file.\\n"
-	printf "   -l\\t\\tLock file.\\n"
+	printf "   -c\\t\\tConfig file. (If undefined default value: '%s' will be used.)\\n" "${script_config_file}"
+	printf "   -l\\t\\tLock file. (If undefined default value: '%s' will be used.)\\n" "${script_lock_file}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
@@ -194,6 +194,7 @@ printNagiosCheckData()
 	timestamp="$(eval "${date_cmd}")"
 
 	printf "#!/usr/bin/env bash\\n\\n"
+	printf "# shellcheck disable=SC2034\\n\\n"
 	printf "#-----------------------------------------------------------------------\\n"
 	printf "#\\n"
 	printf "# DONT DELETE THIS FILE, because its the database for check_modpd !!!\\n"
@@ -1050,10 +1051,10 @@ checkAlreadyRunningInstance()
 	local running_script_pids=()
 
 	# shellcheck disable=SC2154
-	own_session_pids+=("$(${pgrep_bin} -d " " -s "${script_pid}")")
+	own_session_pids+=($(${pgrep_bin} -d " " -s "${script_pid}"))
 	own_session_pids+=("${script_pid}")
 	# shellcheck disable=SC2154
-	running_script_pids+=("$(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$")")
+	running_script_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$"))
 
 	for running_pid in "${!running_script_pids[@]}"
 	   do
