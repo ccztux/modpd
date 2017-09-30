@@ -84,6 +84,7 @@ printUsage()
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
 	printf "   -c\\t\\tConfig file. (If undefined default value: '%s' will be used.)\\n" "${script_config_file}"
+	printf "   -l\\t\\tLock file. (If undefined default value: '%s' will be used.)\\n" "${script_lock_file}"
 	printf "   -W\\t\\tWarning threshold. (Integer)\\n"
 	printf "   -C\\t\\tCritical threshold. (Integer)\\n"
 	printf "   -v\\t\\tShows detailed version information.\\n"
@@ -103,6 +104,7 @@ printScriptInfos()
 setDefaultValues()
 {
 	script_config_file="${script_config_file:=/usr/local/modpd/etc/modpd.conf}"
+	script_lock_file="${script_lock_file:=/usr/local/modpd/var/lock/modpd.lock}"
 }
 
 isInteger()
@@ -144,15 +146,70 @@ sigHandler()
 
 	case "${signal}" in
 		ERR)
-			printf "Caught: '%s', at line number: '%s', command: '%s'.\\n" "${signal}" "${bash_lineno}" "${bash_command}"
+			nagios_output="Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'."
 			script_exit_code="1"
 			exit
 			;;
 		EXIT)
+			if [ ! -z "${nagios_perfdata:-}" ] ;then
+				printf "%s | %s\\n" "${nagios_output}" "${nagios_perfdata}"
+			else
+				printf "%s\\n" "${nagios_output}"
+			fi
 
 			exit ${script_exit_code}
 			;;
 	esac
+}
+
+checkBin()
+{
+	local binary="${1:-}"
+	local _bin=
+	local rc=
+
+	_bin="$(which "${binary}" 2>&1)"
+	rc="${?}"
+
+	if [ "${rc}" == "0" ] ;then
+		export "${binary}"_bin="${_bin}"
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkRequiredBinaries()
+{
+	local rc=
+	local required_binaries=()
+	local binaries_not_found=()
+	local binaries_not_found_helper=
+
+	required_binaries+=("kill" "sleep")
+
+	for bin in "${required_binaries[@]}"
+	   do
+		checkBin "${bin}"
+		rc="${?}"
+
+		if [ "${rc}" != "0" ] ;then
+			binaries_not_found+=("${bin}")
+		fi
+	   done
+
+	if [ "${#binaries_not_found[*]}" -gt "1" ] ;then
+		binaries_not_found_helper="${binaries_not_found[*]}"
+		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
+
+		nagios_output="Required binaries: '${binaries_not_found_helper}' not found, exiting."
+		script_exit_code="127"
+		exit
+	elif [ "${#binaries_not_found[*]}" -eq "1" ] ;then
+		nagios_output="Required binary: '${binaries_not_found[*]}' not found, exiting."
+		script_exit_code="127"
+		exit
+	fi
 }
 
 includeConfig()
@@ -169,95 +226,105 @@ includeConfig()
 			rc="${?}"
 
 			if [ "${rc}" == "0" ] ;then
-				includeCheckDataFile
-				rc="${?}"
-
-				case "${rc}" in
-					0)
-						return 0
-						;;
-					1)
-						printf "Including checkdata file: '%s' was not successful, exiting.\\n" "${checkdata_filename}"
-						script_exit_code="20"
-						exit
-						;;
-					2)
-						printf "Checkdata file: '%s' does not exist, exiting.\\n" "${checkdata_filename}"
-						script_exit_code="21"
-						exit
-						;;
-					3)
-						printf "Checkdcata file: '%s' exists, but it is not readable, exiting.\\n" "${checkdata_filename}"
-						script_exit_code="22"
-						exit
-						;;
-					*)
-						printf "Something went terribly wrong in line number: '%s', exiting.\\n" "${LINENO}"
-						script_exit_code="23"
-						exit
-						;;
-				esac
+				return 0
 			else
-				printf "Including config file: '%s' was not successful, exiting.\\n" "${script_config_file}"
+				nagios_output="Including config file: '${script_config_file}' was not successful, exiting."
 				script_exit_code="24"
 				exit
 			fi
 			;;
 		10)
-			printf "Config file: '%s' does not exist, exiting.\\n" "${script_config_file}"
+			nagios_output="Config file: '${script_config_file}' does not exist, exiting."
 			script_exit_code="25"
 			exit
 			;;
 		*)
-			printf "Config file: '%s' exists, but it is not readable, exiting.\\n" "${script_config_file}"
+			nagios_output="Config file: '${script_config_file}' exists, but it is not readable, exiting."
 			script_exit_code="26"
 			exit
 			;;
 	esac
-
-
-
 }
 
-includeCheckDataFile()
+requestNagiosCheckDataUpdate()
+{
+	local rc=
+	local modpd_pid=
+
+	checkFilePermissions "${script_lock_file}"
+	rc="${?}"
+
+	case "${rc}" in
+		4|5|6|7)
+			modpd_pid="$(< "${script_lock_file}")"
+
+			if [ ! -z "${modpd_pid}" ] ;then
+				${kill_bin} -SIGUSR2 "${modpd_pid}"
+				${sleep_bin} 0.1
+			else
+				nagios_output="modpd-pid is empty\\n"
+				script_exit_code="200"
+				exit
+			fi
+			;;
+		10)
+			nagios_output="Lock file: '${script_lock_file}' does not exist, exiting."
+			script_exit_code="25"
+			exit
+			;;
+		*)
+			nagios_output="Lock file: '${script_lock_file}' exists, but it is not readable, exiting."
+			script_exit_code="26"
+			exit
+			;;
+	esac
+}
+
+includeNagiosCheckDataFile()
 {
 	local rc=
 
-	checkDirectoryPermissions "${checkdata_directory}"
+	checkDirectoryPermissions "${nagios_check_data_directory}"
 	rc="${?}"
 
 	case "${rc}" in
 		3|7)
-			checkFilePermissions "${checkdata_filename}"
+			checkFilePermissions "${nagios_check_data_file}"
 			rc="${?}"
 
 			case "${rc}" in
 				4|5|6|7)
-					# shellcheck source=/scripts/usr/local/modpd/var/checkdata/checkdata.inc.sh
-					source "${checkdata_filename}"
+					# shellcheck source=/scripts/usr/local/modpd/var/nagios_checkdata/nagios_checkdata.inc.sh
+					source "${nagios_check_data_file}"
 					rc="${?}"
 
 					if [ "${rc}" == "0" ] ;then
 						return 0
 					else
-						return 1
+						nagios_output="Including checkdata file: '${nagios_check_data_file}' was not successful, exiting."
+						script_exit_code="20"
+						exit
 					fi
 					;;
 				10)
-					return 2
+					nagios_output="Nagios checkdata file: '${nagios_check_data_file}' does not exist, exiting."
+					script_exit_code="21"
+					exit
 					;;
 				*)
-					return 3
+					nagios_output="Nagios checkdata file: '${nagios_check_data_file}' exists, but it is not readable, exiting."
+					script_exit_code="22"
+					exit
 					;;
 			esac
 			;;
 		10)
-			printf "Checkdata directory doesnt exist."
+			nagios_output="Nagios checkdata directory doesnt exist."
 			script_exit_code="30"
 			exit
 			;;
 		*)
-			printf "Checkdata directory exists, but permissions are not ok, exiting."
+			nagios_output="Nagios checkdata directory exists, but permissions are not ok, exiting."
 			script_exit_code="31"
 			exit
 			;;
@@ -362,7 +429,7 @@ checkDirectoryPermissions()
 OPTERR="0"
 
 # shellcheck disable=SC2213
-while getopts ":h.c:W:C:v." OPTION
+while getopts ":h.c:l:W:C:v." OPTION
    do
 	case "${OPTION}" in
 			h)
@@ -372,6 +439,9 @@ while getopts ":h.c:W:C:v." OPTION
 				;;
 			c)
 				script_config_file="${OPTARG}"
+				;;
+			l)
+				script_lock_file="${OPTARG}"
 				;;
 			W)
 				warning_threshold="${OPTARG}"
@@ -407,11 +477,13 @@ while getopts ":h.c:W:C:v." OPTION
 
 setDefaultValues
 checkOptions
+checkRequiredBinaries
 includeConfig
+requestNagiosCheckDataUpdate
+includeNagiosCheckDataFile
 
-perfdata="'runtime'=${modpd_runtime}s;;;; 'total_jobs'=${script_job_counter_total};;;; 'jobs_ok'=${script_job_counter_ok};;;; 'jobs_nok'=${script_job_counter_nok};;;; 'jobs_timed_out'=${script_job_counter_timeout};;;; 'hosts'=${script_host_counter};;;; 'services'=${script_service_counter};;;; 'invalid_datasets'=${script_invalid_data_counter};;;;"
-
-printf "OK - %s\\n" "${perfdata}"
+nagios_output="OK - ${script_name//check_/} is running..."
+nagios_perfdata="'runtime'=${modpd_runtime}s;;;; 'total_jobs'=${script_job_counter_total};;;; 'jobs_ok'=${script_job_counter_ok};;;; 'jobs_nok'=${script_job_counter_nok};;;; 'jobs_timed_out'=${script_job_counter_timeout};;;; 'hosts'=${script_host_counter};;;; 'services'=${script_service_counter};;;; 'invalid_datasets'=${script_invalid_data_counter};;;;"
 
 script_exit_code="0"
 exit
@@ -422,5 +494,5 @@ exit
 # Should never be reached:
 #-------------------------
 
-printf "Ooops!!! Something went terribly wrong... :( Exiting.\\n"
+nagios_output="Ooops!!! Something went terribly wrong... :( Exiting."
 exit

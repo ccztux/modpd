@@ -76,7 +76,6 @@ script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
 script_exit_code="255"
 script_statistic_watchdog_pid=
-script_checkdata_watchdog_pid=
 script_job_pid_1=
 script_job_pid_2=
 script_shutdown_in_progress="0"
@@ -97,6 +96,8 @@ script_job_data=()
 
 printUsage()
 {
+	setDefaultValues
+
 	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
 	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
 	printf "Last modification:\\t%s\\n" "${script_last_modification_date}"
@@ -118,6 +119,12 @@ printScriptInfos()
 	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
+}
+
+setDefaultValues()
+{
+	script_config_file="${script_config_file:=/usr/local/modpd/etc/modpd.conf}"
+	script_lock_file="${script_lock_file:=/usr/local/modpd/var/lock/modpd.lock}"
 }
 
 printStatistic()
@@ -155,26 +162,26 @@ printStatisticWatchdog()
 	   done
 }
 
-removeCheckData()
+removeNagiosCheckData()
 {
 	local rc=
 
-	logHandler "Removing checkdata file..."
+	logHandler "Removing nagios checkdata file..."
 
 	# shellcheck disable=SC2154
-	${rm_bin} "${checkdata_filename}" 2>&1 | logHandler
+	${rm_bin} "${nagios_check_data_file}" 2>&1 | logHandler
 	rc="${PIPESTATUS[0]}"
 
 	if [ "${rc}" == "0" ] ;then
-		logHandler "Removing checkdata file was successful."
+		logHandler "Removing nagios checkdata file was successful."
 	else
-		logHandler "Removing checkdata file was not successful."
+		logHandler "Removing nagios checkdata file was not successful."
 		script_exit_code="10"
 		exit
 	fi
 }
 
-printCheckData()
+printNagiosCheckData()
 {
 	local timestamp=
 
@@ -216,63 +223,42 @@ printCheckData()
 	printf "script_invalid_data_counter=\"%s\"\\n" "${script_invalid_data_counter}"
 }
 
-printCheckDataWatchdog()
+checkNagiosCheckRequirements()
 {
-	local checkdata_interval_helper="$((SECONDS + checkdata_interval))"
-
-	while true
-	   do
-		if [ "${checkdata_interval_helper}" -le "${SECONDS}" ] ;then
-			# shellcheck disable=SC2154
-			${kill_bin} -SIGUSR2 ${script_pid}
-			checkdata_interval_helper="$((SECONDS + checkdata_interval))"
-		fi
-
-		# shellcheck disable=SC2154
-		${sleep_bin} 1
-	   done
-}
-
-checkCheckDataRequirements()
-{
-	if [ "${checkdata_enabled}" == "1" ] ;then
+	if [ "${nagios_check_enabled}" == "1" ] ;then
 		local rc=
 
-		logHandler "Checkdata generation is enabled..."
+		logHandler "Nagios check is enabled..."
 
-		checkDirectoryPermissions "${checkdata_directory}"
+		checkDirectoryPermissions "${nagios_check_data_directory}"
 		rc="${?}"
 
 		case "${rc}" in
 			3|7)
-				logHandler "Checkdata directory exists and permissions are ok."
+				logHandler "Nagios checkdata directory exists and permissions are ok."
 				;;
 			10)
-				logHandler "Checkdata directory doesnt exist."
-				logHandler "Creating checkdata directory..."
+				logHandler "Nagios checkdata directory doesnt exist."
+				logHandler "Creating nagios checkdata directory..."
 
 				# shellcheck disable=SC2154
-				${mkdir_bin} -p "${checkdata_directory}" 2>&1 | logHandler
+				${mkdir_bin} -p "${nagios_check_data_directory}" 2>&1 | logHandler
 				rc="${PIPESTATUS[0]}"
 
 				if [ "${rc}" == "0" ] ;then
-					logHandler "Creating checkdata directory was successful."
+					logHandler "Creating nagios checkdata directory was successful."
 				else
-					logHandler "Creating checkdata directory was not successful, exiting."
+					logHandler "Creating nagios checkdata directory was not successful, exiting."
 					script_exit_code="20"
 					exit
 				fi
 				;;
 			*)
-				logHandler "Checkdata directory exists, but permissions are not ok, exiting."
+				logHandler "Nagios checkdata directory exists, but permissions are not ok, exiting."
 				script_exit_code="21"
 				exit
 				;;
 		esac
-
-		printCheckData >| "${checkdata_filename}"
-		printCheckDataWatchdog &
-		script_checkdata_watchdog_pid="${!}"
 	fi
 }
 
@@ -341,20 +327,11 @@ reloadConfig()
 		${kill_bin} -s SIGTERM "${script_statistic_watchdog_pid}"
 	fi
 
-	if  [ ! -z "${script_checkdata_watchdog_pid}" ] ;then
-		${kill_bin} -s SIGTERM "${script_checkdata_watchdog_pid}"
-	fi
-
 	includeConfig
 	rc="${?}"
 
 	printStatisticWatchdog &
 	script_statistic_watchdog_pid="${!}"
-
-	if [ "${checkdata_enabled}" == "1" ] ;then
-		printCheckDataWatchdog &
-		script_checkdata_watchdog_pid="${!}"
-	fi
 
 	if [ "${rc}" == "0" ] ;then
 		logHandlerSetConfig
@@ -656,8 +633,8 @@ sigHandler()
 			resetCounters
 			;;
 		SIGUSR2)
-			if [ "${checkdata_enabled}" == "1" ] ;then
-				printCheckData >| "${checkdata_filename}"
+			if [ "${nagios_check_enabled}" == "1" ] ;then
+				printNagiosCheckData >| "${nagios_check_data_file}"
 			fi
 			;;
 		SIGTERM)
@@ -736,8 +713,8 @@ sigHandler()
 						removeLock
 					fi
 
-					if [ "${checkdata_enabled}" == "1" ] ;then
-						removeCheckData
+					if [ "${nagios_check_enabled}" == "1" ] ;then
+						removeNagiosCheckData
 					fi
 				fi
 			else
@@ -1407,7 +1384,7 @@ checkBashVersion
 checkAlreadyRunningInstance
 printStatisticWatchdog &
 script_statistic_watchdog_pid="${!}"
-checkCheckDataRequirements
+checkNagiosCheckRequirements
 createNamedPipe
 setProxy
 buildJobCommand
