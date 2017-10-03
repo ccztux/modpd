@@ -162,6 +162,31 @@ printStatisticWatchdog()
 	   done
 }
 
+checkNagiosCheckData()
+{
+	local rc=
+
+	logHandler "Check if nagios checkdata file: '${nagios_check_data_file}' exists and if it is read/writeable..."
+
+	checkFilePermissions "${nagios_check_data_file}"
+	rc="${?}"
+
+	case "${rc}" in
+		6|7)
+			logHandler "Nagios checkdata file exists and it is read/writeable."
+			return 0
+			;;
+		10)
+			logHandler "Nagios checkdata file doesnt exist."
+			return 1
+			;;
+		*)
+			logHandler "Nagios checkdata file exists, but it is not read/writeable."
+			return 2
+			;;
+	esac
+}
+
 removeNagiosCheckData()
 {
 	local rc=
@@ -707,15 +732,20 @@ sigHandler()
 						removeNamedPipe
 					fi
 
+					if [ "${nagios_check_enabled}" == "1" ] ;then
+						checkNagiosCheckData
+						rc="${?}"
+
+						if [ "${rc}" == "0" ] ;then
+							removeNagiosCheckData
+						fi
+					fi
+
 					checkLock
 					rc="${?}"
 
 					if [ "${rc}" == "0" ] ;then
 						removeLock
-					fi
-
-					if [ "${nagios_check_enabled}" == "1" ] ;then
-						removeNagiosCheckData
 					fi
 				fi
 			else
