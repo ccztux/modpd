@@ -11,7 +11,7 @@
 #  Project website:	https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#			2017-09-28
+#			2017-10-03
 #
 #  Description:		Nagios check plugin to check modpd.
 #
@@ -61,7 +61,7 @@ script_version="1.0.3-alpha1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2017-09-28"
+script_last_modification_date="2017-10-03"
 script_license="GNU GPLv3"
 script_description="Nagios check plugin to check modpd."
 script_exit_code="255"
@@ -151,6 +151,10 @@ sigHandler()
 			exit
 			;;
 		EXIT)
+			if [ -z "${nagios_output:-}" ] ;then
+				nagios_output="Should not happen..."
+			fi
+			
 			if [ ! -z "${nagios_perfdata:-}" ] ;then
 				printf "%s | %s\\n" "${nagios_output}" "${nagios_perfdata}"
 			else
@@ -186,7 +190,7 @@ checkRequiredBinaries()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
 
-	required_binaries+=("kill" "sleep")
+	required_binaries+=("pgrep" "kill" "sleep")
 
 	for bin in "${required_binaries[@]}"
 	   do
@@ -249,15 +253,12 @@ includeConfig()
 requestNagiosCheckDataUpdate()
 {
 	local rc=
-	local modpd_pid=
 
 	checkFilePermissions "${script_lock_file}"
 	rc="${?}"
 
 	case "${rc}" in
 		4|5|6|7)
-			modpd_pid="$(< "${script_lock_file}")"
-
 			if [ ! -z "${modpd_pid}" ] ;then
 				# shellcheck disable=SC2154
 				${kill_bin} -SIGUSR2 "${modpd_pid}"
@@ -331,6 +332,16 @@ includeNagiosCheckDataFile()
 			exit
 			;;
 	esac
+}
+
+checkRunningProcesses()
+{
+	modpd_session_pids=()
+	modpd_pid="$(< "${script_lock_file}")"
+
+	# shellcheck disable=SC2154
+	# shellcheck disable=SC2207
+	modpd_session_pids+=($(${pgrep_bin} -d " " -s "${modpd_pid}"))
 }
 
 checkRegularFileExists()
@@ -481,11 +492,12 @@ setDefaultValues
 checkOptions
 checkRequiredBinaries
 includeConfig
+checkRunningProcesses
 requestNagiosCheckDataUpdate
 includeNagiosCheckDataFile
 
-nagios_output="OK - ${script_name//check_/} is running..."
-nagios_perfdata="'runtime'=${modpd_runtime}s;;;; 'total_jobs'=${script_job_counter_total};;;; 'jobs_ok'=${script_job_counter_ok};;;; 'jobs_nok'=${script_job_counter_nok};;;; 'jobs_timed_out'=${script_job_counter_timeout};;;; 'hosts'=${script_host_counter};;;; 'services'=${script_service_counter};;;; 'invalid_datasets'=${script_invalid_data_counter};;;;"
+nagios_output="OK - ${script_name//check_/} is running... (PIDS: ${modpd_session_pids[*]// /,})"
+nagios_perfdata="'running_processes'=${#modpd_session_pids[*]};;;; 'runtime'=${modpd_runtime}s;;;; 'total_jobs'=${script_job_counter_total};;;; 'jobs_ok'=${script_job_counter_ok};;;; 'jobs_nok'=${script_job_counter_nok};;;; 'jobs_timed_out'=${script_job_counter_timeout};;;; 'hosts'=${script_host_counter};;;; 'services'=${script_service_counter};;;; 'invalid_datasets'=${script_invalid_data_counter};;;;"
 
 script_exit_code="0"
 exit
