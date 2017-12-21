@@ -199,7 +199,7 @@ checkRequiredBinaries()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
 
-	required_binaries+=("kill" "sleep")
+	required_binaries+=("pgrep" "kill" "sleep")
 
 	for bin in "${required_binaries[@]}"
 	   do
