@@ -331,11 +331,11 @@ logHandlerSetConfig()
 
 	if ([ -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
 		log_conf="$((log_conf + 2#0001000))"
-	elif ([ ! -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
+	elif ([ -n "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
 		log_conf="$((log_conf + 2#0010000))"
-	elif ([ -z "${date_bin:-}" ] && [ ! -z "${logger_bin:-}" ]) ;then
+	elif ([ -z "${date_bin:-}" ] && [ -n "${logger_bin:-}" ]) ;then
 		log_conf="$((log_conf + 2#0100000))"
-	elif ([ ! -z "${date_bin:-}" ] && [ ! -z "${logger_bin:-}" ]) ;then
+	elif ([ -n "${date_bin:-}" ] && [ -n "${logger_bin:-}" ]) ;then
 		log_conf="$((log_conf + 2#1000000))"
 	fi
 }
@@ -580,7 +580,7 @@ sigHandler()
 			logHandler "${script_name} was running: '${SECONDS}' seconds."
 			logHandler "Bye, bye..."
 
-			if [ ! -z "${kill_bin:-}" ] ;then
+			if [ -n "${kill_bin:-}" ] ;then
 				if [ "${signal}" != "EXIT" ] ;then
 					${kill_bin} -s "${signal}" -- -"${script_pid}"
 				else
@@ -697,13 +697,13 @@ setProxy()
 
 		logHandler "Using proxy is enabled, building proxy configuration..."
 
-		if [ ! -z "${proxy_port}" ] ;then
+		if [ -n "${proxy_port}" ] ;then
 			proxy_url="${proxy_ip}:${proxy_port}"
 		else
 			proxy_url="${proxy_ip}"
 		fi
 
-		if ([ ! -z "${proxy_username}" ] && [ ! -z "${proxy_password}" ]) ;then
+		if ([ -n "${proxy_username}" ] && [ -n "${proxy_password}" ]) ;then
 			proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${proxy_url}"
 		else
 			proxy="${proxy_protocol}://${proxy_url}"
@@ -885,7 +885,7 @@ getUser()
 
 	logHandler "Get user which starts the script..."
 
-	if [ ! -z "${SUDO_USER:-}" ] ;then
+	if [ -n "${SUDO_USER:-}" ] ;then
 		script_exec_user="$SUDO_USER"
 	else
 		# shellcheck disable=SC2154
@@ -931,13 +931,13 @@ checkAlreadyRunningInstance()
 		logHandler "We try to remove the old, leftover lockfile..."
 
 		removeLock
-	elif ([ "${rc}" == "0" ] && [ ! -z "${running_script_pids[*]:-}" ]) ;then
+	elif ([ "${rc}" == "0" ] && [ -n "${running_script_pids[*]:-}" ]) ;then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
 		script_exit_code="50"
 		exit
-	elif ([ "${rc}" != "0" ] && [ ! -z "${running_script_pids[*]:-}" ]) ;then
+	elif ([ "${rc}" != "0" ] && [ -n "${running_script_pids[*]:-}" ]) ;then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
@@ -1031,7 +1031,7 @@ buildJobCommand()
 				nrdp)
 					nrdp_protocol="${nrdp_protocol,,}"
 
-					if ([ ! -z "${nrdp_username}" ] && [ ! -z "${nrdp_password}" ]) ;then
+					if ([ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]) ;then
 						# shellcheck disable=SC2154
 						job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 					else
@@ -1105,7 +1105,7 @@ jobHandler()
 		fi
 
 		if ([ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#script_job_data[*]}" -eq "${job_max_bulk_size}" ]) ;then
-			if [ ! -z "${job_pid}" ] ;then
+			if [ -n "${job_pid}" ] ;then
 				wait ${job_pid}
 				rc="$?"
 		
