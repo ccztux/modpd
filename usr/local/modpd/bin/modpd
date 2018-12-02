@@ -254,8 +254,8 @@ checkRequiredBinaries()
 		required_binaries+=("logger")
 	fi
 
-	if ([ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]) ;then
-		if ([ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]) ;then
+	if [ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ] ;then
+		if [ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ] ;then
 			date_bin_printf="1"
 			date_bin="printf"
 		else
@@ -311,31 +311,31 @@ logHandlerSetConfig()
 		date_cmd="${date_bin:-} '+${log_timestamp_format}'"
 	fi
 
-	if ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
+	if [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ] ;then
 		return
-	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]) ;then
+	elif [ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ] ;then
 		log_conf="$((log_conf + 2#0000001))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ]) ;then
+	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ] ;then
 		log_conf="$((log_conf + 2#0000010))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ]) ;then
+	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ] ;then
 		log_conf="$((log_conf + 2#0000011))"
-	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ]) ;then
+	elif [ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ] ;then
 		log_conf="$((log_conf + 2#0000100))"
-	elif ([ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ]) ;then
+	elif [ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ] ;then
 		log_conf="$((log_conf + 2#0000101))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ]) ;then
+	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ] ;then
 		log_conf="$((log_conf + 2#0000110))"
-	elif ([ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ]) ;then
+	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ] ;then
 		log_conf="$((log_conf + 2#0000111))"
 	fi
 
-	if ([ -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
+	if [ -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ] ;then
 		log_conf="$((log_conf + 2#0001000))"
-	elif ([ -n "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]) ;then
+	elif [ -n "${date_bin:-}" ] && [ -z "${logger_bin:-}" ] ;then
 		log_conf="$((log_conf + 2#0010000))"
-	elif ([ -z "${date_bin:-}" ] && [ -n "${logger_bin:-}" ]) ;then
+	elif [ -z "${date_bin:-}" ] && [ -n "${logger_bin:-}" ] ;then
 		log_conf="$((log_conf + 2#0100000))"
-	elif ([ -n "${date_bin:-}" ] && [ -n "${logger_bin:-}" ]) ;then
+	elif [ -n "${date_bin:-}" ] && [ -n "${logger_bin:-}" ] ;then
 		log_conf="$((log_conf + 2#1000000))"
 	fi
 }
@@ -703,7 +703,7 @@ setProxy()
 			proxy_url="${proxy_ip}"
 		fi
 
-		if ([ -n "${proxy_username}" ] && [ -n "${proxy_password}" ]) ;then
+		if [ -n "${proxy_username}" ] && [ -n "${proxy_password}" ] ;then
 			proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${proxy_url}"
 		else
 			proxy="${proxy_protocol}://${proxy_url}"
@@ -923,21 +923,21 @@ checkAlreadyRunningInstance()
 	checkLock
 	rc="$?"
 
-	if ([ "${rc}" != "0" ] && [ -z "${running_script_pids[*]:-}" ]) ;then
+	if [ "${rc}" != "0" ] && [ -z "${running_script_pids[*]:-}" ] ;then
 		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
 		setLock
-	elif ([ "${rc}" == "0" ] && [ -z "${running_script_pids[*]:-}" ]) ;then
+	elif [ "${rc}" == "0" ] && [ -z "${running_script_pids[*]:-}" ] ;then
 		logHandler "No other instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
 		logHandler "We try to remove the old, leftover lockfile..."
 
 		removeLock
-	elif ([ "${rc}" == "0" ] && [ -n "${running_script_pids[*]:-}" ]) ;then
+	elif [ "${rc}" == "0" ] && [ -n "${running_script_pids[*]:-}" ] ;then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
 		script_exit_code="50"
 		exit
-	elif ([ "${rc}" != "0" ] && [ -n "${running_script_pids[*]:-}" ]) ;then
+	elif [ "${rc}" != "0" ] && [ -n "${running_script_pids[*]:-}" ] ;then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
@@ -1031,7 +1031,7 @@ buildJobCommand()
 				nrdp)
 					nrdp_protocol="${nrdp_protocol,,}"
 
-					if ([ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]) ;then
+					if [ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ] ;then
 						# shellcheck disable=SC2154
 						job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 					else
@@ -1104,7 +1104,7 @@ jobHandler()
 			continue
 		fi
 
-		if ([ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#script_job_data[*]}" -eq "${job_max_bulk_size}" ]) ;then
+		if [ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#script_job_data[*]}" -eq "${job_max_bulk_size}" ] ;then
 			if [ -n "${job_pid}" ] ;then
 				wait ${job_pid}
 				rc="$?"
@@ -1117,7 +1117,7 @@ jobHandler()
 					if [ "${job_command_log_ok}" == "1" ] ;then
 						logHandler "Command: '${job_command}' was successful."
 					fi
-				elif ([ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]) ;then
+				elif [ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ] ;then
 					script_job_counter_timeout="$((script_job_counter_timeout + 1))"
 
 					if [ "${job_command_log_timeout}" == "1" ] ;then
