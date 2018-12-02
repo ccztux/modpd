@@ -119,7 +119,7 @@ isInteger()
 
 checkOptions()
 {
-	if [ ! -z "${warning_threshold:-}" ] ;then
+	if [ -n "${warning_threshold:-}" ] ;then
 		if ! isInteger "${warning_threshold:-}" ;then
 			printf "Option: '-W' is not an integer!\\n\\n"
 			printUsage
@@ -128,7 +128,7 @@ checkOptions()
 		fi
 	fi
 
-	if [ ! -z "${critical_threshold:-}" ] ;then
+	if [ -n "${critical_threshold:-}" ] ;then
 		if ! isInteger "${critical_threshold:-}" ;then
 			printf "Option: '-C' is not an integer!\\n\\n"
 			printUsage
@@ -164,7 +164,7 @@ sigHandler()
 				script_exit_code="0"
 			fi
 
-			if [ ! -z "${nagios_perfdata:-}" ] ;then
+			if [ -n "${nagios_perfdata:-}" ] ;then
 				printf "%s | %s\\n" "${nagios_output}" "${nagios_perfdata}"
 			else
 				printf "%s\\n" "${nagios_output}"
@@ -268,7 +268,7 @@ requestNagiosCheckDataUpdate()
 
 	case "${rc}" in
 		4|5|6|7)
-			if [ ! -z "${modpd_pid}" ] ;then
+			if [ -n "${modpd_pid}" ] ;then
 				# shellcheck disable=SC2154
 				${kill_bin} -SIGUSR2 "${modpd_pid}"
 				# shellcheck disable=SC2154

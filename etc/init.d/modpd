@@ -85,7 +85,7 @@ do_start()
 	DAEMON_RETVAL="$?"
 
 	if [ "${DAEMON_RETVAL}" != "0" ] ;then
-		if [ ! -z "${DAEMON_USER}" ] ;then
+		if [ -n "${DAEMON_USER}" ] ;then
 			runuser ${DAEMON_USER} -c "setsid ${DAEMON_PATH} ${DAEMON_ARGS} </dev/null >/dev/null 2>&1 &" </dev/null >/dev/null 2>&1
 		else
 			setsid ${DAEMON_PATH} "${DAEMON_ARGS}" </dev/null >/dev/null 2>&1 &
@@ -150,7 +150,7 @@ do_status()
 	local PIDS=
 	PIDS="$(pidofproc -p "${DAEMON_LOCK_FILE}" "${DAEMON_PATH}")"
 
-	if [ ! -z "${PIDS}" ] ;then
+	if [ -n "${PIDS}" ] ;then
 		log_success_msg "${DAEMON_NAME} (PID ${PIDS// /,}) is running"
 		return 0
 	else
