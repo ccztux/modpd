@@ -162,50 +162,6 @@ printStatisticWatchdog()
 	   done
 }
 
-checkNagiosCheckData()
-{
-	local rc=
-
-	logHandler "Check if nagios checkdata file: '${nagios_check_data_file}' exists and if it is read/writeable..."
-
-	checkFilePermissions "${nagios_check_data_file}"
-	rc="${?}"
-
-	case "${rc}" in
-		6|7)
-			logHandler "Nagios checkdata file exists and it is read/writeable."
-			return 0
-			;;
-		10)
-			logHandler "Nagios checkdata file doesnt exist."
-			return 1
-			;;
-		*)
-			logHandler "Nagios checkdata file exists, but it is not read/writeable."
-			return 2
-			;;
-	esac
-}
-
-removeNagiosCheckData()
-{
-	local rc=
-
-	logHandler "Removing nagios checkdata file..."
-
-	# shellcheck disable=SC2154
-	${rm_bin} "${nagios_check_data_file}" 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
-
-	if [ "${rc}" == "0" ] ;then
-		logHandler "Removing nagios checkdata file was successful."
-	else
-		logHandler "Removing nagios checkdata file was not successful."
-		script_exit_code="10"
-		exit
-	fi
-}
-
 printNagiosCheckData()
 {
 	local timestamp=
@@ -276,45 +232,6 @@ printNagiosCheckData()
 	printf "script_invalid_data_counter=\"%s\"\\n" "${script_invalid_data_counter}"
 }
 
-checkNagiosCheckRequirements()
-{
-	if [ "${nagios_check_enabled}" == "1" ] ;then
-		local rc=
-
-		logHandler "Nagios check is enabled..."
-
-		checkDirectoryPermissions "${nagios_check_data_directory}"
-		rc="${?}"
-
-		case "${rc}" in
-			3|7)
-				logHandler "Nagios checkdata directory exists and permissions are ok."
-				;;
-			10)
-				logHandler "Nagios checkdata directory doesnt exist."
-				logHandler "Creating nagios checkdata directory..."
-
-				# shellcheck disable=SC2154
-				${mkdir_bin} -p "${nagios_check_data_directory}" 2>&1 | logHandler
-				rc="${PIPESTATUS[0]}"
-
-				if [ "${rc}" == "0" ] ;then
-					logHandler "Creating nagios checkdata directory was successful."
-				else
-					logHandler "Creating nagios checkdata directory was not successful, exiting."
-					script_exit_code="20"
-					exit
-				fi
-				;;
-			*)
-				logHandler "Nagios checkdata directory exists, but permissions are not ok, exiting."
-				script_exit_code="21"
-				exit
-				;;
-		esac
-	fi
-}
-
 checkOptions()
 {
 	if [ -z "${script_config_file:-}" ] ;then
@@ -326,7 +243,7 @@ checkOptions()
 
 		exit
 	fi
-	
+
 	if [ -z "${script_lock_file:-}" ] ;then
 		printf "Missing option: -l\\n\\n"
 		printUsage
@@ -685,11 +602,6 @@ sigHandler()
 			fi
 			resetCounters
 			;;
-		SIGUSR2)
-			if [ "${nagios_check_enabled}" == "1" ] ;then
-				printNagiosCheckData >| "${nagios_check_data_file}"
-			fi
-			;;
 		SIGTERM)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
 				logHandler "Caught: '${signal}', preparing for exiting..."
@@ -739,7 +651,7 @@ sigHandler()
 			;;
 		ERR)
 			if [ "${script_shutdown_in_progress}" != "1" ] ;then
-				logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'." 
+				logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'."
 			fi
 
 			script_exit_code="1"
@@ -757,15 +669,6 @@ sigHandler()
 
 					if [ "${rc}" == "0" ] ;then
 						removeNamedPipe
-					fi
-
-					if [ "${nagios_check_enabled}" == "1" ] ;then
-						checkNagiosCheckData
-						rc="${?}"
-
-						if [ "${rc}" == "0" ] ;then
-							removeNagiosCheckData
-						fi
 					fi
 
 					checkLock
@@ -1277,7 +1180,7 @@ jobExec()
 	esac
 
 	rc="${PIPESTATUS[1]}"
-	
+
 	return "${rc}"
 }
 
