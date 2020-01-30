@@ -69,6 +69,7 @@ script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
 script_last_modification_date="2017-10-03"
+script_minimal_required_bash_version="3"
 script_license="GNU GPLv3"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
@@ -1044,22 +1045,21 @@ checkBashVersion()
 		script_exit_code="70"
 		exit
 	else
-		case "${BASH_VERSINFO[0]}" in
-					3|4)
-						logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
-						;;
-					*)
-						logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
-						script_exit_code="71"
-						exit
-						;;
-		esac
+		if [ "${BASH_VERSINFO[0]}" -lt "${script_minimal_required_bash_version}" ]
+		then
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
+
+			script_bypass_exit_routines="1"
+			script_exit_code="71"
+			exit
+		else
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
+		fi
 	fi
 }
 
 getUser()
 {
-	local rc=
 	local script_exec_user=
 
 	logHandler "Get user which starts the script..."
