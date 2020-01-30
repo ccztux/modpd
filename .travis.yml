@@ -6,15 +6,15 @@ services:
   - docker
 
 before_install:
-  - docker pull koalaman/shellcheck
+  - docker pull koalaman/shellcheck:stable
 
 script:
-  - docker run koalaman/shellcheck --version
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/usr/local/modpd/bin/modpd
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always /scripts/usr/local/modpd/etc/modpd.conf
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always /scripts/usr/local/modpd/var/nagios_checkdata/nagios_checkdata.inc.sh
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/etc/init.d/modpd
-  - docker run -v $(pwd):/scripts koalaman/shellcheck --color=always --external-sources /scripts/usr/local/nagios/libexec/check_modpd
+  - docker run koalaman/shellcheck:stable --version
+  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --external-sources /scripts/usr/local/modpd/bin/modpd
+  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/modpd/etc/modpd.conf
+  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/modpd/var/nagios_checkdata/nagios_checkdata.inc.sh
+  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --external-sources /scripts/etc/init.d/modpd
+  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --external-sources /scripts/usr/local/nagios/libexec/check_modpd
 
 matrix:
   fast_finish: true
