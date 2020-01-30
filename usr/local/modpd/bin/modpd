@@ -33,6 +33,17 @@
 #========================================================================================================
 
 
+#--------------------------------
+# Print error messages to stderr:
+#--------------------------------
+
+eprintf()
+{
+	printf "%b\\n" "${1}" >&2
+}
+
+
+
 #--------------
 # Bash options:
 #--------------
@@ -74,6 +85,7 @@ script_license="GNU GPLv3"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 script_another_instance_is_running="0"
 script_bypass_exit_routines="0"
+script_log_requirements_ok="1"
 script_exit_code="255"
 script_statistic_watchdog_pid=
 script_job_pid_1=
@@ -345,14 +357,10 @@ checkBin()
 {
 	local binary="${1:-}"
 	local _bin=
-	local rc=
 
-	_bin="$(command -v "${binary}" 2>&1)"
-	rc="${?}"
-
-	if [ "${rc}" == "0" ]
+	if _bin="$(command -v "${binary}" 2>/dev/null)"
 	then
-		export "${binary}"_bin="${_bin}"
+		export "${binary//-/_}"_bin="${_bin}"
 		return 0
 	else
 		return 1
@@ -369,6 +377,11 @@ checkRequiredBinaries()
 	if [ "${log_to_syslog}" == "1" ]
 	then
 		required_binaries+=("logger")
+	fi
+
+	if [ "${log_to_journal}" -eq "1" ]
+	then
+		required_binaries+=("systemd-cat")
 	fi
 
 	if [ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]
@@ -396,10 +409,7 @@ checkRequiredBinaries()
 
 	for bin in "${required_binaries[@]}"
 	do
-		checkBin "${bin}"
-		rc="${?}"
-
-		if [ "${rc}" != "0" ]
+		if ! checkBin "${bin}"
 		then
 			binaries_not_found+=("${bin}")
 		fi
@@ -408,7 +418,7 @@ checkRequiredBinaries()
 	logHandlerSetConfig
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
 
-	if [ "${#binaries_not_found[*]}" -gt "1" ]
+	if [ "${#binaries_not_found[@]}" -gt "1" ]
 	then
 		binaries_not_found_helper="${binaries_not_found[*]}"
 		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
@@ -416,7 +426,7 @@ checkRequiredBinaries()
 		logHandler "Required binaries: '${binaries_not_found_helper}' not found, exiting."
 		script_exit_code="127"
 		exit
-	elif [ "${#binaries_not_found[*]}" -eq "1" ]
+	elif [ "${#binaries_not_found[@]}" -eq "1" ]
 	then
 		logHandler "Required binary: '${binaries_not_found[*]}' not found, exiting."
 		script_exit_code="127"
@@ -426,54 +436,58 @@ checkRequiredBinaries()
 
 logHandlerSetConfig()
 {
-	log_conf="$((2#0000000))"
+	log_conf="0"
 	log_file_full_path="${log_directory}${log_filename}"
+	b_log_to_file="1"
+	b_log_to_stdout="2"
+	b_log_to_syslog="4"
+	b_log_to_journal="8"
+	b_date_bin_available="16"
+	b_logger_bin_available="32"
+	b_systemd_cat_bin_available="64"
 
-	if [ "${date_bin_printf:-}" == "1" ]
+	if [ "${date_bin_printf:-}" -eq "1" ]
 	then
-		date_cmd="${date_bin:-} '%(${log_timestamp_format})T\\n'"
+		date_cmd_format_prefix="'%("
+		date_cmd_format_suffix=")T\\n' -1"
 	else
-		date_cmd="${date_bin:-} '+${log_timestamp_format}'"
+		date_cmd_format_prefix="'+"
+		date_cmd_format_suffix="'"
 	fi
 
-	if [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]
+	if [ "${log_to_file}" -eq "1" ]
 	then
-		return
-	elif [ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "0" ]
-	then
-		log_conf="$((log_conf + 2#0000001))"
-	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ]
-	then
-		log_conf="$((log_conf + 2#0000010))"
-	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ]
-	then
-		log_conf="$((log_conf + 2#0000011))"
-	elif [ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "0" ]
-	then
-		log_conf="$((log_conf + 2#0000100))"
-	elif [ "${log_to_file}" == "1" ] && [ "${log_to_stdout}" == "0" ] && [ "${log_to_syslog}" == "1" ]
-	then
-		log_conf="$((log_conf + 2#0000101))"
-	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ]
-	then
-		log_conf="$((log_conf + 2#0000110))"
-	elif [ "${log_to_file}" == "0" ] && [ "${log_to_stdout}" == "1" ] && [ "${log_to_syslog}" == "1" ]
-	then
-		log_conf="$((log_conf + 2#0000111))"
+		log_conf="$(( log_conf | b_log_to_file ))"
 	fi
 
-	if [ -z "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]
+	if [ "${log_to_stdout}" -eq "1" ]
 	then
-		log_conf="$((log_conf + 2#0001000))"
-	elif [ -n "${date_bin:-}" ] && [ -z "${logger_bin:-}" ]
+		log_conf="$(( log_conf | b_log_to_stdout ))"
+	fi
+
+	if [ "${log_to_syslog}" -eq "1" ]
 	then
-		log_conf="$((log_conf + 2#0010000))"
-	elif [ -z "${date_bin:-}" ] && [ -n "${logger_bin:-}" ]
+		log_conf="$(( log_conf | b_log_to_syslog ))"
+	fi
+
+	if [ "${log_to_journal}" -eq "1" ]
 	then
-		log_conf="$((log_conf + 2#0100000))"
-	elif [ -n "${date_bin:-}" ] && [ -n "${logger_bin:-}" ]
+		log_conf="$(( log_conf | b_log_to_journal ))"
+	fi
+
+	if [ -n "${date_bin:-}" ]
 	then
-		log_conf="$((log_conf + 2#1000000))"
+		log_conf="$(( log_conf | b_date_bin_available ))"
+	fi
+
+	if [ -n "${logger_bin:-}" ]
+	then
+		log_conf="$(( log_conf | b_logger_bin_available ))"
+	fi
+
+	if [ -n "${systemd_cat_bin:-}" ]
+	then
+		log_conf="$(( log_conf | b_systemd_cat_bin_available ))"
 	fi
 }
 
@@ -489,6 +503,7 @@ logHandler()
 {
 	local log_message="${1:-}"
 	local log_timestamp=
+	local calling_function=
 	local log_secure_replace_string="[HIDDEN FOR SECURITY]"
 
 	if [ -z "${log_message:-}" ]
@@ -499,126 +514,73 @@ logHandler()
 		fi
 	else
 		log_message="${log_message//\`/}"
-		log_message="${log_message//${proxy_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_token:-}/${log_secure_replace_string}}"
 
-		case "${log_conf:-}" in
-			8|16|32|64) # log nothing
-				return
-				;;
-			9) # log to file, zero date, zero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				;;
-			10) # log to stdout, zero date, zero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			11) # log to syslog, zero date, zero logger
-				printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			12) # log to file and stdout, zero date, zero logger
-				printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			13) # log to file and syslog, zero date, zero logger
-				printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				;;
-			14) # log to stdout and syslog, zero date, zero logger
-				printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			15) # log to file, stdout and syslog, zero date, zero logger
-				printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[Date bin not found] %s: [%s] [Logger bin not found] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			17) # log to file, nonzero date, zero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				;;
-			18) # log to stdout, nonzero date, zero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			19) # log to syslog, nonzero date, zero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			20) # log to file and stdout, nonzero date, zero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			21) # log to file and syslog, nonzero date, zero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				;;
-			22) # log to stdout and syslog, nonzero date, zero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			23) # log to file, stdout and syslog, nonzero date, zero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[%s] %s: [%s] [Logger bin not found] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			33) # log to file, zero date, nonzero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				;;
-			34) # log to stdout, zero date, nonzero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			35) # log to syslog, zero date, nonzero logger
-				${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-				;;
-			36) # log to file and stdout, zero date, nonzero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			37) # log to file and syslog, zero date, nonzero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
-				;;
-			38) # log to stdout and syslog, zero date, nonzero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
-				;;
-			39) # log to file, stdout and syslog, zero date, nonzero logger
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[Date bin not found] %s: [%s] %s\\n" "${script_name}" "${script_pid}" "${log_message}"
-				${logger_bin} -t "${script_name}[${script_pid}]" "[Date bin not found] ${log_message}"
-				;;
-			65) # log to file, nonzero date, nonzero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				;;
-			66) # log to stdout, nonzero date, nonzero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			67) # log to syslog, nonzero date, nonzero logger
-				${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-				;;
-			68) # log to file and stdout, nonzero date, nonzero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				;;
-			69) # log to file and syslog, nonzero date, nonzero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-				;;
-			70) # log to stdout and syslog, nonzero date, nonzero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-				;;
-			71) # log to file, stdout and syslog, nonzero date, nonzero logger
-				log_timestamp="$(eval "${date_cmd}")"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}" >> "${log_file_full_path}"
-				printf "[%s] %s: [%s] %s\\n" "${log_timestamp}" "${script_name}" "${script_pid}" "${log_message}"
-				${logger_bin} -t "${script_name}[${script_pid}]" "${log_message}"
-				;;
-		esac
+		if [ "${script_log_requirements_ok}" -ne "1" ]
+		then
+			eprintf "${log_message}"
+			return
+		fi
+
+		if [ "${FUNCNAME[1]}" != "logHandlerStdinHelper" ]
+		then
+			calling_function="${FUNCNAME[1]}"
+		else
+			calling_function="${FUNCNAME[3]}"
+		fi
+
+		if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ]
+		then
+			if [ "$(( log_conf & b_date_bin_available ))" -gt "0" ]
+			then
+				if [ -z "${log_timestamp}" ]
+				then
+					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+				fi
+
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+			else
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+			fi
+		fi
+
+		if [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
+		then
+			if [ "$(( log_conf & b_log_to_file_truncate ))" -gt "0" ] && [ "${script_log_file_truncated}" -ne "1" ]
+			then
+				if true >|"${script_log_file}"
+				then
+					script_log_file_truncated="1"
+				fi
+			fi
+
+			if [ "$(( log_conf & b_date_bin_available ))" -gt "0" ]
+			then
+				if [ -z "${log_timestamp}" ]
+				then
+					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+				fi
+
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${script_log_file}"
+			else
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${script_log_file}"
+			fi
+		fi
+
+		if [ "$(( log_conf & b_log_to_syslog ))" -gt "0" ]
+		then
+			if [ "$(( log_conf & b_logger_bin_available ))" -gt "0" ]
+			then
+				${logger_bin} -t "${script_name}[${script_pid}]" -- "(${calling_function}) ${log_message}"
+			fi
+		fi
+
+		if [ "$(( log_conf & b_log_to_journal ))" -gt "0" ]
+		then
+			if [ "$(( log_conf & b_systemd_cat_bin_available ))" -gt "0" ]
+			then
+				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${script_name}"
+			fi
+		fi
 	fi
 }
 
@@ -1389,7 +1351,7 @@ dataProcessor()
 OPTERR="0"
 
 # shellcheck disable=SC2213
-while getopts ":h.c:l:v." OPTION
+while getopts ":c:l:hv" OPTION
 do
 	case "${OPTION}" in
 		h)
