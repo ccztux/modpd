@@ -514,6 +514,9 @@ logHandler()
 		fi
 	else
 		log_message="${log_message//\`/}"
+		log_message="${log_message//${proxy_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${nrdp_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${nrdp_token:-}/${log_secure_replace_string}}"
 
 		if [ "${script_log_requirements_ok}" -ne "1" ]
 		then
