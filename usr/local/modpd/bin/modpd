@@ -249,7 +249,7 @@ setRequiredVariables()
 	script_libexec_directory="${script_base_path}/libexec"
 
 	# log directory
-	log_directory="${script_base_path}/var/log/"
+	script_log_directory="${script_base_path}/var/log/"
 
 	if [ -n "${script_config_file:-}" ]
 	then
