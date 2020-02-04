@@ -69,36 +69,6 @@ trap 'sigHandler EXIT' EXIT || { printf "Setting essential trap for signal: 'EXI
 
 
 
-#-----------------------
-# Script info variables:
-#-----------------------
-
-script_pid="$$"
-script_name="${0##*/}"
-script_version="1.0.3-alpha1"
-script_author="Christian Zettel (ccztux)"
-script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
-script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2017-10-03"
-script_minimal_required_bash_version="3"
-script_license="GNU GPLv3"
-script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
-script_another_instance_is_running="0"
-script_bypass_exit_routines="0"
-script_log_requirements_ok="1"
-script_exit_code="255"
-script_statistic_watchdog_pid=
-script_job_pid_1=
-script_job_pid_2=
-script_shutdown_in_progress="0"
-script_host_counter="0"
-script_service_counter="0"
-script_invalid_data_counter="0"
-script_job_counter_total="0"
-script_job_counter_ok="0"
-script_job_counter_nok="0"
-script_job_counter_timeout="0"
-script_job_data=()
 
 
 
@@ -108,7 +78,7 @@ script_job_data=()
 
 printUsage()
 {
-	setDefaultValues
+	setRequiredVariables
 
 	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
 	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
@@ -131,12 +101,6 @@ printScriptInfos()
 	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
-}
-
-setDefaultValues()
-{
-	script_config_file="${script_config_file:=/usr/local/modpd/etc/modpd.conf}"
-	script_lock_file="${script_lock_file:=/usr/local/modpd/var/lock/modpd.lock}"
 }
 
 printStatistic()
@@ -268,6 +232,31 @@ checkOptions()
 		script_bypass_exit_routines="1"
 
 		exit
+	fi
+}
+
+setRequiredVariables()
+{
+	local script_config_name=
+
+	# define base path of modpd
+	script_base_path="/usr/local/modpd"
+
+	# path to lock directory
+	script_lock_directory="${script_base_path}/var/lock"
+
+	# path to libexec directory
+	script_libexec_directory="${script_base_path}/libexec"
+
+	# log directory
+	log_directory="${script_base_path}/var/log/"
+
+	if [ -n "${script_config_file:-}" ]
+	then
+		script_config_name="${script_config_file##*/}"
+		script_config_name="${script_config_name//.conf/}"
+		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
+		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
 	fi
 }
 
@@ -453,7 +442,6 @@ calculateFunctionNameLength()
 logHandlerSetConfig()
 {
 	log_conf="0"
-	log_file_full_path="${log_directory}${log_filename}"
 	b_log_to_file="1"
 	b_log_to_stdout="2"
 	b_log_to_syslog="4"
@@ -1353,84 +1341,129 @@ dataProcessor()
 	done
 }
 
+main()
+{
+	#------
+	# Main:
+	#------
 
+	checkOptions
+	setRequiredVariables
+	includeConfig
+	getUser
+	checkBashVersion
+	checkAlreadyRunningInstance
+	printStatisticWatchdog &
+	script_statistic_watchdog_pid="${!}"
+	checkNagiosCheckRequirements
+	createNamedPipe
+	setProxy
+	buildJobCommand
 
-#-------------
-# Get options:
-#-------------
+	logHandler "Ready to handle jobs..."
 
-OPTERR="0"
-
-# shellcheck disable=SC2213
-while getopts ":c:l:hv" OPTION
-do
-	case "${OPTION}" in
-		h)
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="170"
-			exit
-			;;
-		c)
-			script_config_file="${OPTARG}"
-			;;
-		l)
-			script_lock_file="${OPTARG}"
-			;;
-		v)
-			printScriptInfos
-			script_bypass_exit_routines="1"
-			script_exit_code="171"
-			exit
-			;;
-		\?)
-			printf "Invalid option: -%s\\n\\n" "${OPTARG}"
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="172"
-			exit
-			;;
-		:)
-			printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
-			printUsage
-			script_bypass_exit_routines="1"
-			script_exit_code="173"
-			exit
-			;;
-	esac
-done
+	while true
+	do
+		dataProcessor
+		logHandler "Data processor left in main loop..."
+	done
+}
 
 
 
-#------
-# Main:
-#------
+#-------
+# Start:
+#-------
 
-checkOptions
-includeConfig
-getUser
-checkBashVersion
-checkAlreadyRunningInstance
-printStatisticWatchdog &
-script_statistic_watchdog_pid="${!}"
-checkNagiosCheckRequirements
-createNamedPipe
-setProxy
-buildJobCommand
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+then
+	#-----------------------
+	# Script info variables:
+	#-----------------------
 
-logHandler "Ready to handle jobs..."
+	script_pid="$$"
+	script_name="${0##*/}"
+	script_version="1.0.3-alpha1"
+	script_author="Christian Zettel (ccztux)"
+	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
+	script_project_website="https://github.com/ccztux/modpd"
+	script_last_modification_date="2017-10-03"
+	script_minimal_required_bash_version="3"
+	script_license="GNU GPLv3"
+	script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
+	script_another_instance_is_running="0"
+	script_bypass_exit_routines="0"
+	script_log_requirements_ok="1"
+	script_exit_code="255"
+	script_statistic_watchdog_pid=
+	script_job_pid_1=
+	script_job_pid_2=
+	script_shutdown_in_progress="0"
+	script_host_counter="0"
+	script_service_counter="0"
+	script_invalid_data_counter="0"
+	script_job_counter_total="0"
+	script_job_counter_ok="0"
+	script_job_counter_nok="0"
+	script_job_counter_timeout="0"
+	script_job_data=()
 
-while true
-do
-	dataProcessor
-	logHandler "Data processor left in main loop..."
-done
+
+
+	#-----------------
+	# Get CLI options:
+	#-----------------
+
+	OPTERR="0"
+
+	# shellcheck disable=SC2213
+	while getopts ":c:l:hv" OPTION
+	do
+		case "${OPTION}" in
+			h)
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="170"
+				exit
+				;;
+			c)
+				script_config_file="${OPTARG}"
+				;;
+			l)
+				script_lock_file="${OPTARG}"
+				;;
+			v)
+				printScriptInfos
+				script_bypass_exit_routines="1"
+				script_exit_code="171"
+				exit
+				;;
+			\?)
+				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="172"
+				exit
+				;;
+			:)
+				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
+				printUsage
+				script_bypass_exit_routines="1"
+				script_exit_code="173"
+				exit
+				;;
+		esac
+	done
 
 
 
-#-------------------------
-# Should never be reached:
-#-------------------------
+	#-------------------------
+	# Jump into main function:
+	#-------------------------
 
-logHandler "Ooops!!! Something went terribly wrong... :( Exiting."
-exit
+	main "${@}"
+	exit
+else
+	logHandler "\\nThis is NOT a bash library. Execute it directly!\\n\\n"
+	exit 1
+fi
