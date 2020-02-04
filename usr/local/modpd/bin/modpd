@@ -564,14 +564,6 @@ logHandler()
 
 		if [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
 		then
-			if [ "$(( log_conf & b_log_to_file_truncate ))" -gt "0" ] && [ "${script_log_file_truncated}" -ne "1" ]
-			then
-				if true >|"${script_log_file}"
-				then
-					script_log_file_truncated="1"
-				fi
-			fi
-
 			if [ "$(( log_conf & b_date_bin_available ))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
