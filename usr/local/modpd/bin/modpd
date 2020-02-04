@@ -129,8 +129,7 @@ printStatisticWatchdog()
 	do
 		if [ "${statistic_interval_helper}" -le "${SECONDS}" ]
 		then
-			# shellcheck disable=SC2154
-			${kill_bin} -SIGUSR1 ${script_pid}
+			${kill_bin} -SIGUSR1 "${script_pid}"
 			statistic_interval_helper="$((SECONDS + statistic_interval))"
 		fi
 
