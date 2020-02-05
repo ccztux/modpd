@@ -330,7 +330,7 @@ setBashOption()
 setRequiredShellOptions()
 {
 	local shell_option=
-	local required_shell_options=("noclobber" "nounset" "pipefail")
+	local required_shell_options=("noclobber" "nounset" "pipefail" "errtrace")
 
 	for shell_option in "${required_shell_options[@]}"
 	do
