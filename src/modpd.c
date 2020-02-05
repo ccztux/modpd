@@ -1,20 +1,36 @@
-/*****************************************************************************
- *
- * modpd.c		NEB module to write obsessing data to unix socket
- *
- * Copyright (c) 2017 Christian Zettel (ccztux)
- *
- * Last Modified:	2020-01-30
- *
- * Description:		NEB module to write obsessing data to unix socket
- *
- * Instructions:
- *
- * Compile with the following command:
- *
- *     gcc -shared -g -O2 -DHAVE_CONFIG_H -o modpd.o modpd.c -fPIC
- *
- *****************************************************************************/
+/*******************************************************************************************************
+*
+*  Author:				Christian Zettel (ccztux)
+*						2017-05-14
+*						http://linuxinside.at
+*
+*  Copyright:			Copyright © 2017 Christian Zettel (ccztux), all rights reserved
+*
+*  Project website:		https://github.com/ccztux/modpd
+*
+*  Last Modification:	Christian Zettel (ccztux)
+*						2020-02-05
+*
+*  Description:			NEB module to write obsessing data to unix socket
+*						Based on example: nagioscore/module/helloworld.c
+*
+*  License:				GNU GPLv3
+*
+*  This program is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*******************************************************************************************************/
+
 
 /* include (minimum required) event broker header files */
 #include "nebmodules.h"
@@ -58,7 +74,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle) {
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "modpd");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_AUTHOR, "Christian Zettel (ccztux)");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright (c) 2017 Christian Zettel");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "1.0.2-beta2");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "1.0.3-alpha1");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v3");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_DESC, "Obsessing NEB Module.");
 
