@@ -11,6 +11,8 @@
 *  Last Modification:	Christian Zettel (ccztux)
 *						2020-02-05
 *
+*  Version				1.0.3-alpha2
+*
 *  Description:			NEB module to write obsessing data to unix socket
 *						Based on example: nagioscore/module/helloworld.c
 *
@@ -74,12 +76,12 @@ int nebmodule_init(int flags, char *args, nebmodule *handle) {
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "modpd");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_AUTHOR, "Christian Zettel (ccztux)");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright (c) 2017 Christian Zettel");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "1.0.3-alpha1");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "1.0.3-alpha2");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v3");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_DESC, "Obsessing NEB Module.");
 
 	/* log module info to the Nagios log file */
-	write_to_all_logs("modpd: Copyright (c) 2017 Christian Zettel (ccztux), Version: 1.0.3-alpha1", NSLOG_INFO_MESSAGE);
+	write_to_all_logs("modpd: Copyright (c) 2017 Christian Zettel (ccztux), Version: 1.0.3-alpha2", NSLOG_INFO_MESSAGE);
 
 	/* log a message to the Nagios log file */
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: Starting...\n");
