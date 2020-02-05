@@ -157,8 +157,7 @@ Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
 OPTIONS:
    -h           Shows this help.
-   -c           Config file. (If undefined default value: '' will be used.)
-   -l           Lock file. (If undefined default value: '' will be used.)
+   -c           Path to config file. (Default: /usr/local/modpd/etc/modpd.conf)
    -v           Shows detailed version information.
 ```
 

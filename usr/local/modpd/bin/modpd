@@ -383,7 +383,6 @@ printUsage()
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
 	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${script_config_file}"
-	printf "   -l\\t\\tLock file. (If undefined default value: '%s' will be used.)\\n" "${script_lock_file}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
@@ -441,15 +440,6 @@ checkCliOptions()
 		printUsage
 		script_bypass_exit_routines="1"
 		script_exit_code="30"
-		exit
-	fi
-
-	if [ -z "${script_lock_file:-}" ]
-	then
-		printf "Missing option: -l\\n\\n"
-		printUsage
-		script_bypass_exit_routines="1"
-		script_exit_code="32"
 		exit
 	fi
 }
@@ -1507,7 +1497,7 @@ then
 	OPTERR="0"
 
 	# shellcheck disable=SC2213
-	while getopts ":c:l:hv" OPTION
+	while getopts ":c:hv" OPTION
 	do
 		case "${OPTION}" in
 			h)
@@ -1518,9 +1508,6 @@ then
 				;;
 			c)
 				script_config_file="${OPTARG}"
-				;;
-			l)
-				script_lock_file="${OPTARG}"
 				;;
 			v)
 				printScriptInfos
