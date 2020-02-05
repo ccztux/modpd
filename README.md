@@ -69,9 +69,8 @@ printf 'broker_module=/usr/local/nagios/include/modpd.o\n' >> /usr/local/nagios/
 
 
 
-Set the eventbroker options in your main nagios config file:
+Set the eventbroker options (event_broker_options=-1) in your main nagios config file:
 
-(event_broker_options=-1)
 ```bash
 vim /usr/local/nagios/etc/nagios.cfg
 ```
