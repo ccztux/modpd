@@ -382,7 +382,7 @@ printUsage()
 	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tConfig file. (If undefined default value: '%s' will be used.)\\n" "${script_config_file}"
+	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${script_config_file}"
 	printf "   -l\\t\\tLock file. (If undefined default value: '%s' will be used.)\\n" "${script_lock_file}"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
@@ -434,16 +434,13 @@ printStatisticWatchdog()
 	done
 }
 
-checkOptions()
+checkCliOptions()
 {
-	if [ -z "${script_config_file:-}" ]
+	if [ "${script_argc}" -eq "0" ]
 	then
-		printf "Missing option: -c\\n\\n"
 		printUsage
-
 		script_bypass_exit_routines="1"
 		script_exit_code="30"
-
 		exit
 	fi
 
@@ -451,18 +448,14 @@ checkOptions()
 	then
 		printf "Missing option: -l\\n\\n"
 		printUsage
-
-		script_exit_code="31"
 		script_bypass_exit_routines="1"
-
+		script_exit_code="32"
 		exit
 	fi
 }
 
 setRequiredVariables()
 {
-	local script_config_name=
-
 	# define base path of modpd
 	script_base_path="/usr/local/modpd"
 
@@ -473,15 +466,19 @@ setRequiredVariables()
 	script_libexec_directory="${script_base_path}/libexec"
 
 	# log directory
-	script_log_directory="${script_base_path}/var/log/"
+	script_log_directory="${script_base_path}/var/log"
 
-	if [ -n "${script_config_file:-}" ]
-	then
-		script_config_name="${script_config_file##*/}"
-		script_config_name="${script_config_name//.conf/}"
-		script_lock_file="${script_lock_directory}/${script_name}.${script_config_name}.lock"
-		script_log_file="${script_log_directory}/${script_name}.${script_config_name}.log"
-	fi
+	# etc directory
+	script_etc_directory="${script_base_path}/etc"
+
+	# default config file
+	script_config_file="${script_config_file:=${script_etc_directory}/${script_name}.conf}"
+
+	# lock file
+	script_lock_file="${script_lock_directory}/${script_name}.lock"
+
+	# log file
+	script_log_file="${script_log_directory}/${script_name}.log"
 }
 
 includeConfig()
@@ -1396,7 +1393,6 @@ jobHandler()
 
 dataProcessor()
 {
-	local rc=
 	local job_interval_helper="$((SECONDS + job_exec_interval))"
 	local regex="^(host|service)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
 
@@ -1440,7 +1436,7 @@ _main()
 	# Main:
 	#------
 
-	checkOptions
+	checkCliOptions
 	setRequiredVariables
 	includeConfig
 	getUser
@@ -1474,7 +1470,8 @@ then
 	# Script info variables:
 	#-----------------------
 
-	script_pid="$$"
+	script_pid="${$}"
+	script_argc="${#}"
 	script_name="${0##*/}"
 	script_version="1.0.3-alpha2"
 	script_author="Christian Zettel (ccztux)"
