@@ -23,6 +23,10 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 - **mkfifo** to create the named_pipe_filename
 - **kill** to send kill signal to modpd
 - **sleep** to do nothing :)
+- **make** to build the eventbroker module
+- **gcc** to compile the eventbroker module
+- **install** to install the eventbroker module
+- **strip** to strip the eventbroker binary
 
 
 
@@ -44,6 +48,57 @@ wget "https://api.github.com/repos/ccztux/modpd/tarball" -O modpd.latest.tar.gz
 tar -xvzf modpd.latest.tar.gz
 cd ccztux-modpd-*
 ```
+
+
+Build the eventbroker module:
+
+```bash
+cd ./src/
+make
+make install
+cd ../
+```
+
+
+
+Add the eventbroker module to you main nagios config file:
+
+```bash
+printf 'broker_module=/usr/local/nagios/include/modpd.o\n' >> /usr/local/nagios/etc/nagios.cfg
+```
+
+
+
+Set the eventbroker options in your main nagios config file:
+
+(event_broker_options=-1)
+```bash
+vim /usr/local/nagios/etc/nagios.cfg
+```
+
+
+Restart nagios:
+
+```bash
+service nagios restart
+```
+
+
+
+Check if nagios is running:
+
+```bash
+service nagios status
+```
+
+
+
+Check if the eventbroker module was loaded by nagios:
+
+```bash
+grep -i modpd /usr/local/nagios/var/nagios.log
+```
+
 
 
 Copy the files:
