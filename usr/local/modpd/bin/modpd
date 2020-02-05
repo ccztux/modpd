@@ -417,7 +417,7 @@ resetCounters()
 
 printStatisticWatchdog()
 {
-	local statistic_interval_helper="$((SECONDS + statistic_interval))"
+	local statistic_interval_helper="$(( SECONDS + statistic_interval ))"
 
 	while true
 	do
@@ -425,7 +425,7 @@ printStatisticWatchdog()
 		then
 			# shellcheck disable=SC2154
 			${kill_bin} -SIGUSR1 "${script_pid}"
-			statistic_interval_helper="$((SECONDS + statistic_interval))"
+			statistic_interval_helper="$(( SECONDS + statistic_interval ))"
 		fi
 
 		# shellcheck disable=SC2154
@@ -958,20 +958,20 @@ checkNamedPipePermissions()
 	then
 		if [ -x "${file}" ]
 		then
-			file_permission="$((file_permission + 2#0001))"
+			file_permission="$(( file_permission + 2#0001 ))"
 		fi
 
 		if [ -w "${file}" ]
 		then
-			file_permission="$((file_permission + 2#0010))"
+			file_permission="$(( file_permission + 2#0010 ))"
 		fi
 
 		if [ -r "${file}" ]
 		then
-			file_permission="$((file_permission + 2#0100))"
+			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
-		file_permission="$((2#1010))"
+		file_permission="$(( 2#1010 ))"
 	fi
 
 	return "${file_permission}"
@@ -1008,20 +1008,20 @@ checkFilePermissions()
 	then
 		if [ -x "${file}" ]
 		then
-			file_permission="$((file_permission + 2#0001))"
+			file_permission="$(( file_permission + 2#0001 ))"
 		fi
 
 		if [ -w "${file}" ]
 		then
-			file_permission="$((file_permission + 2#0010))"
+			file_permission="$(( file_permission + 2#0010 ))"
 		fi
 
 		if [ -r "${file}" ]
 		then
-			file_permission="$((file_permission + 2#0100))"
+			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
-		file_permission="$((2#1010))"
+		file_permission="$(( 2#1010 ))"
 	fi
 
 	return "${file_permission}"
@@ -1057,20 +1057,20 @@ checkDirectoryPermissions()
 	then
 		if [ -x "${directory}" ]
 		then
-			directory_permission="$((directory_permission + 2#0001))"
+			directory_permission="$(( directory_permission + 2#0001 ))"
 		fi
 
 		if [ -w "${directory}" ]
 		then
-			directory_permission="$((directory_permission + 2#0010))"
+			directory_permission="$(( directory_permission + 2#0010 ))"
 		fi
 
 		if [ -r "${directory}" ]
 		then
-			directory_permission="$((directory_permission + 2#0100))"
+			directory_permission="$(( directory_permission + 2#0100 ))"
 		fi
 	else
-		directory_permission="$((2#1010))"
+		directory_permission="$(( 2#1010 ))"
 	fi
 
 	return "${directory_permission}"
@@ -1310,11 +1310,11 @@ counterHandler()
 {
 	local rc="${1:-}"
 
-	script_job_counter_total="$((script_job_counter_total + 1))"
+	script_job_counter_total="$(( script_job_counter_total + 1 ))"
 
 	if [ "${rc}" == "0" ]
 	then
-		script_job_counter_ok="$((script_job_counter_ok + 1))"
+		script_job_counter_ok="$(( script_job_counter_ok + 1 ))"
 
 		if [ "${job_command_log_ok}" == "1" ]
 		then
@@ -1322,14 +1322,14 @@ counterHandler()
 		fi
 	elif [ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
 	then
-		script_job_counter_timeout="$((script_job_counter_timeout + 1))"
+		script_job_counter_timeout="$(( script_job_counter_timeout + 1 ))"
 
 		if [ "${job_command_log_timeout}" == "1" ]
 		then
 			logHandler "Command: '${job_command}' timed out."
 		fi
 	else
-		script_job_counter_nok="$((script_job_counter_nok + 1))"
+		script_job_counter_nok="$(( script_job_counter_nok + 1 ))"
 
 		if [ "${job_command_log_nok}" == "1" ]
 		then
@@ -1383,7 +1383,7 @@ jobHandler()
 
 dataProcessor()
 {
-	local job_interval_helper="$((SECONDS + job_exec_interval))"
+	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
 	local regex="^(host|service)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})$"
 
 	while read -u 3 -r
@@ -1392,16 +1392,16 @@ dataProcessor()
 		then
 			case "${BASH_REMATCH[1]}" in
 				host)
-					script_host_counter="$((script_host_counter + 1))"
+					script_host_counter="$(( script_host_counter + 1 ))"
 					script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
 					;;
 				service)
-					script_service_counter="$((script_service_counter + 1))"
+					script_service_counter="$(( script_service_counter + 1 ))"
 					script_job_data+=("${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}"$'\t'"${BASH_REMATCH[9]}")
 					;;
 			esac
 		else
-			script_invalid_data_counter="$((script_invalid_data_counter + 1))"
+			script_invalid_data_counter="$(( script_invalid_data_counter + 1 ))"
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
@@ -1415,7 +1415,7 @@ dataProcessor()
 		then
 			jobHandler
 			script_job_data=()
-			job_interval_helper="$((SECONDS + job_exec_interval))"
+			job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
 	done
 }
