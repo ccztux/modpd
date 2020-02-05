@@ -17,7 +17,7 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 - **bash** (Version >= 3)
 - **whoami** to check the user who executes modpd
 - **pgrep** to check if an instance of modpd is already running
-- **date** for logging purposes (Only required if bash version < 4.2. Else printf bash builtin will be used.)
+- **date** for logging purposes (Only required if bash version < 4.2. else bash's printf builtin will be used.)
 - **rm** to delete the named_pipe_filename
 - **mkdir** to create directories
 - **mkfifo** to create the named_pipe_filename
