@@ -34,31 +34,17 @@
 
 
 # Source code directory
-SRC_INCLUDE=../nagios
+SRC_DIR=./src
 
-CC=gcc
-MOD_CFLAGS=-fPIC
-CFLAGS=-g -O2 -DHAVE_CONFIG_H
-MOD_LDFLAGS=-shared
-LDFLAGS=
-LIBS=
 
-prefix=/usr/local/nagios
-exec_prefix=${prefix}
-INSTALL=/usr/bin/install -c
-INSTALL_OPTS=-o nagios -g nagios
-
-DESTDIR=${prefix}/include
 
 all:	modpd.o
 
 modpd.o: modpd.c
-	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd.o modpd.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
+	cd $(SRC_DIR) && $(MAKE)
 
 clean:
-	rm -f modpd.o
-	rm -f *~ *.*~
+	cd $(SRC_DIR) && $(MAKE) clean
 
 install:
-	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)
-	$(INSTALL) -s -m 774 $(INSTALL_OPTS) modpd.o $(DESTDIR)
+	cd $(SRC_DIR) && $(MAKE) install

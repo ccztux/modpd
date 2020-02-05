@@ -53,15 +53,13 @@ cd ccztux-modpd-*
 Build the modpd NEB module:
 
 ```bash
-cd ./src/
 make
 make install
-cd ../
 ```
 
 
 
-Add the modpd NEB module to you main nagios config file:
+Add the modpd NEB module to your main nagios config file:
 
 ```bash
 printf 'broker_module=/usr/local/nagios/include/modpd.o\n' >> /usr/local/nagios/etc/nagios.cfg
