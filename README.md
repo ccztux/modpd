@@ -21,7 +21,7 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 - **rm** to delete the named_pipe_filename
 - **mkdir** to create directories
 - **mkfifo** to create the named_pipe_filename
-- **kill** to send kill signal to modpd
+- **kill** to send signals to modpd
 - **sleep** to do nothing :)
 - **make** to build the eventbroker module
 - **gcc** to compile the eventbroker module
