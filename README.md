@@ -13,6 +13,11 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 
 
 
+# Flowchart
+![Alt](images/modpd.png)
+
+
+
 ## It requires the following binaries:
 - **bash** (Version >= 3)
 - **whoami** to check the user who executes modpd
