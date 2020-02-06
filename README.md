@@ -22,7 +22,7 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 Nagios® is a registered trademark
 
 
-
+# Required binaries by modpd (the daemon part)
 ## It requires the following binaries:
 - **bash** (Version >= 3)
 - **whoami** to check the user who executes modpd
@@ -48,7 +48,7 @@ Nagios® is a registered trademark
 
 
 
-## Installation:
+# Installation:
 
 Download the latest tarball and extract it:
 
@@ -153,7 +153,7 @@ chkconfig --list modpd
 
 
 
-## Example help output:
+# Example help output:
 ```
 Usage: modpd OPTIONS
 
@@ -171,7 +171,7 @@ OPTIONS:
 
 
 
-## Configuration variables (default):
+# Configuration variables (default):
 ```bash
 #---------
 # Logging:
@@ -327,4 +327,5 @@ statistic_interval="300"
 
 
 
-## Example log:
+# Example log:
+tbd...
