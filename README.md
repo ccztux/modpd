@@ -18,6 +18,11 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 
 
 
+# Registered trademarks
+Nagios® is a registered trademark
+
+
+
 ## It requires the following binaries:
 - **bash** (Version >= 3)
 - **whoami** to check the user who executes modpd
