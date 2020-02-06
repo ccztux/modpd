@@ -1592,7 +1592,8 @@ then
 	script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
 	script_another_instance_is_running="0"
 	script_bypass_exit_routines="0"
-	script_log_requirements_ok="1"
+	script_config_file_included="0"
+	script_log_requirements_ok="0"
 	script_exit_code="255"
 	script_statistic_watchdog_pid=
 	script_job_pid_1=
