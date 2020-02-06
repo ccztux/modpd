@@ -9,9 +9,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-02-05
+#						2020-02-06
 #
-#  Version				1.0.3-alpha2
+#  Version				1.0.3-alpha3
 #
 #  Description:			Makefile for the modpd NEB module
 #
@@ -40,7 +40,7 @@ SRC_DIR=./src
 
 all:	modpd.o
 
-modpd.o: modpd.c
+modpd.o:
 	cd $(SRC_DIR) && $(MAKE)
 
 clean:
