@@ -19,7 +19,7 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 
 
 # Registered trademarks
-![Nagios®](https://www.nagios.org/) is a registered trademark
+[Nagios®](https://www.nagios.org/) is a registered trademark
 
 
 # Required binaries by modpd (the daemon part)
