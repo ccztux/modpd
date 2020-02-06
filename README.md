@@ -51,7 +51,6 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 # Installation:
 
 Download the latest tarball and extract it:
-
 ```bash
 cd /tmp
 wget "https://api.github.com/repos/ccztux/modpd/tarball" -O modpd.latest.tar.gz
@@ -61,7 +60,6 @@ cd ccztux-modpd-*
 
 
 Build the modpd NEB module:
-
 ```bash
 make
 make install
@@ -70,7 +68,6 @@ make install
 
 
 Add the modpd NEB module to your main nagios config file:
-
 ```bash
 printf 'broker_module=/usr/local/nagios/include/modpd.o\n' >> /usr/local/nagios/etc/nagios.cfg
 ```
@@ -78,14 +75,12 @@ printf 'broker_module=/usr/local/nagios/include/modpd.o\n' >> /usr/local/nagios/
 
 
 Set the eventbroker options (**event_broker_options=-1**) in your main nagios config file:
-
 ```bash
 vim /usr/local/nagios/etc/nagios.cfg
 ```
 
 
 Restart nagios:
-
 ```bash
 service nagios restart
 ```
@@ -93,7 +88,6 @@ service nagios restart
 
 
 Check if nagios is running:
-
 ```bash
 service nagios status
 ```
@@ -101,7 +95,6 @@ service nagios status
 
 
 Check if the modpd NEB module was loaded by nagios:
-
 ```bash
 grep -i modpd /usr/local/nagios/var/nagios.log
 ```
@@ -109,31 +102,36 @@ grep -i modpd /usr/local/nagios/var/nagios.log
 
 
 Copy the files:
-
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
 cp -av ./etc/logrotate.d/modpd /etc/logrotate.d/
+cp -av ./etc/init.d/modpd /etc/init.d/
 ```
 
 
 Change the file ownership:
-
 ```bash
 chown -R root:root /usr/local/modpd/
 chown root:root /etc/logrotate.d/modpd
 chmod 644 /etc/logrotate.d/modpd
+chown root:root /etc/init.d/modpd
+chmod 755 /etc/init.d/modpd
+```
+
+
+Copy the client you want to use (send_nsca | send_nrdp.php) to the libexec directory of modpd:
+```
+cp -av /path/where/your/client/exists /usr/local/modpd/libexec/
 ```
 
 
 Edit the config:
-
 ```bash
 vim /usr/local/modpd/etc/modpd.conf
 ```
 
 
 Start modpd:
-
 ```bash
 service modpd start
 ```
