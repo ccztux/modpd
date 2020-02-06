@@ -228,6 +228,9 @@ job_exec_interval="4"
 # separator to separate job data (ONLY MODIFY THIS IF YOU KNOW WHAT YOU DO!!!)
 job_data_separator="<==##modpd##==>"
 
+# job max bulk size
+job_max_bulk_size="50"
+
 # log unsuccessful job commands
 # (valid values: 1|0)
 job_command_log_nok="1"
