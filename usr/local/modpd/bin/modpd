@@ -192,6 +192,7 @@ signalHandler()
 			;;
 		EXIT)
 			if [ "${script_config_file_included}" -eq "1" ]
+			then
 				printStatistic
 
 				logHandler "Caught: '${signal}', exiting script..."
