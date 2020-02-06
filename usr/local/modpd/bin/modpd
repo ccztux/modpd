@@ -191,37 +191,39 @@ signalHandler()
 			exit
 			;;
 		EXIT)
-			printStatistic
+			if [ "${script_config_file_included}" -eq "1" ]
+				printStatistic
 
-			logHandler "Caught: '${signal}', exiting script..."
+				logHandler "Caught: '${signal}', exiting script..."
 
-			if [ "${script_bypass_exit_routines}" != "1" ]
-			then
-				if [ "${script_another_instance_is_running}" != "1" ]
+				if [ "${script_bypass_exit_routines}" != "1" ]
 				then
-					checkNamedPipe
-					rc="${?}"
-
-					if [ "${rc}" == "0" ]
+					if [ "${script_another_instance_is_running}" != "1" ]
 					then
-						removeNamedPipe
-					fi
+						checkNamedPipe
+						rc="${?}"
 
-					checkLock
-					rc="${?}"
+						if [ "${rc}" == "0" ]
+						then
+							removeNamedPipe
+						fi
 
-					if [ "${rc}" == "0" ]
-					then
-						removeLock
+						checkLock
+						rc="${?}"
+
+						if [ "${rc}" == "0" ]
+						then
+							removeLock
+						fi
 					fi
+				else
+					logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 				fi
-			else
-				logHandler "We hope you are informed better now. :P This was a lazy job. :)"
-			fi
 
-			logHandler "Exitcode: '${script_exit_code}'."
-			logHandler "${script_name} was running: '${SECONDS}' seconds."
-			logHandler "Bye, bye..."
+				logHandler "Exitcode: '${script_exit_code}'."
+				logHandler "${script_name} was running: '${SECONDS}' seconds."
+				logHandler "Bye, bye..."
+			fi
 
 			if [ -n "${kill_bin:-}" ]
 			then
