@@ -111,7 +111,8 @@ cp -av ./etc/init.d/modpd /etc/init.d/
 
 Change the file ownership:
 ```bash
-chown -R root:root /usr/local/modpd/
+chown root:root /usr/local/modpd/
+chown nagios:nagios /usr/local/modpd/*
 chown root:root /etc/logrotate.d/modpd
 chmod 644 /etc/logrotate.d/modpd
 chown root:root /etc/init.d/modpd
