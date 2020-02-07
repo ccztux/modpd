@@ -13,7 +13,8 @@
 #
 #  Version				1.0.3-alpha8
 #
-#  Description:			init script for modpd (Monitoring Obsessing Data Processor Daemon)
+#  Description:			Config parameters for the init script of the modpd daemon
+#						(Monitoring Obsessing Data Processor Daemon)
 #
 #  License:				GNU GPLv3
 #
