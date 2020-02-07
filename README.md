@@ -24,19 +24,15 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 
 # Required binaries by modpd (the daemon part)
 ## It requires the following binaries:
-- **bash** (Version >= 3)
-- **whoami** to check the user who executes modpd
+- **bash** (version >= 3)
+- **whoami** to check the user who has started modpd
 - **pgrep** to check if an instance of modpd is already running
-- **date** for logging purposes (Only required if bash version < 4.2. else bash's printf builtin will be used.)
+- **date** for logging purposes (Only required if bash version < 4.2, else bash's printf builtin will be used.)
 - **rm** to delete the named_pipe_filename
 - **mkdir** to create directories
 - **mkfifo** to create the named_pipe_filename
 - **kill** to send signals to modpd
 - **sleep** to do nothing :)
-- **make** to build the modpd NEB module
-- **gcc** to compile the modpd NEB module
-- **install** to install the modpd NEB module
-- **strip** to strip the eventbroker binary
 
 
 
@@ -46,6 +42,13 @@ You can use modpd with send_nrdp.php or send_nsca. It increases the performance 
 - **timeout** to start the obsessing jobs with a timeout value
 - **php** in case obsessing_interface is nrdp
 
+
+
+# Required binaries for building the modpd NEB module
+- **make** to build the modpd NEB module
+- **gcc** to compile the modpd NEB module
+- **install** to install the modpd NEB module
+- **strip** to strip the modpd NEB module
 
 
 # Installation:
@@ -112,7 +115,7 @@ cp -av ./etc/init.d/modpd /etc/init.d/
 Change the file ownership:
 ```bash
 chown root:root /usr/local/modpd/
-chown nagios:nagios /usr/local/modpd/*
+chown -R nagios:nagios /usr/local/modpd/*
 chown root:root /etc/logrotate.d/modpd
 chmod 644 /etc/logrotate.d/modpd
 chown root:root /etc/init.d/modpd
