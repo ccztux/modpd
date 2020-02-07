@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-02-06
+#						2020-02-07
 #
 #  Version				1.0.3-alpha7
 #
@@ -56,19 +56,9 @@
 
 
 
-DAEMON_BASE_PATH="/usr/local/modpd"
-DAEMON_PATH="${DAEMON_BASE_PATH}/bin/modpd"
-DAEMON_NAME="${DAEMON_PATH##*/}"
-DAEMON_LOCK_FILE="${DAEMON_BASE_PATH}/var/lock/${DAEMON_NAME}.lock"
-DAEMON_CONFIG_FILE="${DAEMON_BASE_PATH}/etc/${DAEMON_NAME}.conf"
-DAEMON_ARGS="-c ${DAEMON_CONFIG_FILE}"
-DAEMON_USER="nagios"
-DAEMON_RETVAL="255"
-
-
-
 # Source function library
-if [ -f /lib/lsb/init-functions ] ;then
+if [ -f /lib/lsb/init-functions ]
+then
 	# shellcheck source=/lib/lsb/init-functions
 	# shellcheck disable=SC1091
 	source /lib/lsb/init-functions
@@ -78,21 +68,33 @@ else
 fi
 
 # Load the VERBOSE setting and other rcS variables
-if [ -f /lib/init/vars.sh ] ;then
+if [ -f /lib/init/vars.sh ]
+then
 	# shellcheck source=/lib/init/vars.sh
 	# shellcheck disable=SC1091
 	source /lib/init/vars.sh
 fi
 
 # Source configuration.
-if [ -f /etc/default/modpd ] ;then
-	# shellcheck source=/etc/default/modpd
+if [ -f /etc/sysconfig/modpd ]
+then
+	# shellcheck source=/etc/sysconfig/modpd
 	# shellcheck disable=SC1091
-	source /etc/default/modpd
+	source /etc/sysconfig/modpd
+else
+	DAEMON_BASE_PATH="${DAEMON_BASE_PATH:?ERROR: Required variable is unset.}"
+	DAEMON_PATH="${DAEMON_PATH:?ERROR: Required variable is unset.}"
+	DAEMON_NAME="${DAEMON_NAME:?ERROR: Required variable is unset.}"
+	DAEMON_LOCK_FILE="${DAEMON_LOCK_FILE:?ERROR: Required variable is unset.}"
+	DAEMON_CONFIG_FILE="${DAEMON_CONFIG_FILE:?ERROR: Required variable is unset.}"
+	DAEMON_ARGS="${DAEMON_ARGS:?ERROR: Required variable is unset.}"
+	DAEMON_USER="${DAEMON_USER:?ERROR: Required variable is unset.}"
+	DAEMON_RETVAL="${DAEMON_RETVAL:?ERROR: Required variable is unset.}"
 fi
 
 # Check if daemon is executeable
-if [ ! -x "${DAEMON_PATH}" ] ;then
+if [ ! -x "${DAEMON_PATH}" ]
+then
 	log_failure_msg "${DAEMON_PATH} is not executeable."
 	exit 5
 fi
@@ -101,7 +103,8 @@ fi
 
 check_uid()
 {
-	if [ "$UID" -ne "0" ] ;then
+	if [ "$UID" -ne "0" ]
+	then
 		log_failure_msg "User has insufficient privilege."
 		exit 4
 	fi
@@ -114,8 +117,10 @@ do_start()
 
 	DAEMON_RETVAL="$?"
 
-	if [ "${DAEMON_RETVAL}" != "0" ] ;then
-		if [ -n "${DAEMON_USER}" ] ;then
+	if [ "${DAEMON_RETVAL}" != "0" ]
+	then
+		if [ -n "${DAEMON_USER}" ]
+		then
 			runuser ${DAEMON_USER} -c "setsid ${DAEMON_PATH} ${DAEMON_ARGS} </dev/null >/dev/null 2>&1 &" </dev/null >/dev/null 2>&1
 		else
 			setsid ${DAEMON_PATH} "${DAEMON_ARGS}" </dev/null >/dev/null 2>&1 &
@@ -123,7 +128,8 @@ do_start()
 
 		DAEMON_RETVAL="$?"
 
-		if [ "${DAEMON_RETVAL}" == "0" ] ;then
+		if [ "${DAEMON_RETVAL}" == "0" ]
+		then
 			log_success_msg "Starting ${DAEMON_NAME}"
 		else
 			log_failure_msg "Starting ${DAEMON_NAME}"
@@ -143,12 +149,14 @@ do_stop()
 
 	DAEMON_RETVAL="$?"
 
-	if [ "${DAEMON_RETVAL}" == "0" ] ;then
+	if [ "${DAEMON_RETVAL}" == "0" ]
+	then
 		killproc -p ${DAEMON_LOCK_FILE} ${DAEMON_PATH} -SIGTERM
 
 		DAEMON_RETVAL="$?"
 
-		if [ "${DAEMON_RETVAL}" == "0" ] ;then
+		if [ "${DAEMON_RETVAL}" == "0" ]
+		then
 			log_success_msg "Stopping ${DAEMON_NAME}"
 		else
 			log_failure_msg "Stopping ${DAEMON_NAME}"
@@ -157,14 +165,16 @@ do_stop()
 		# shellcheck disable=SC2034
 		for i in {1..10}
 		   do
-			if do_status > /dev/null ;then
+			if do_status > /dev/null
+			then
 				sleep 1
 			else
 				break
 			fi
 		done
 
-		if do_status > /dev/null ;then
+		if do_status > /dev/null
+		then
 		    log_warning_msg "Warning - ${DAEMON_NAME} did not exit in a timely manner"
 		fi
 
@@ -180,7 +190,8 @@ do_status()
 	local PIDS=
 	PIDS="$(pidofproc -p "${DAEMON_LOCK_FILE}" "${DAEMON_PATH}")"
 
-	if [ -n "${PIDS}" ] ;then
+	if [ -n "${PIDS}" ]
+	then
 		log_success_msg "${DAEMON_NAME} (PID ${PIDS// /,}) is running"
 		return 0
 	else
@@ -196,12 +207,14 @@ do_reload()
 
 	DAEMON_RETVAL="$?"
 
-	if [ "${DAEMON_RETVAL}" == "0" ] ;then
+	if [ "${DAEMON_RETVAL}" == "0" ]
+	then
 		killproc -p ${DAEMON_LOCK_FILE} ${DAEMON_PATH} -SIGHUP
 
 		DAEMON_RETVAL="$?"
 
-		if [ "${DAEMON_RETVAL}" == "0" ] ;then
+		if [ "${DAEMON_RETVAL}" == "0" ]
+		then
 			log_success_msg "Reloading ${DAEMON_NAME}"
 		else
 			log_failure_msg "Reloading ${DAEMON_NAME}"
@@ -224,24 +237,23 @@ do_restart()
 
 
 case "${1}" in
-	  start)
+	start)
 		do_start
 		;;
-	  stop)
+	stop)
 		do_stop
 		;;
-	  status)
+	status)
 		do_status
 		exit "$?"
 		;;
-	  reload)
+	reload)
 		do_reload
-
 		;;
-	  restart)
-	  	do_restart
+	restart)
+		do_restart
 		;;
-	  *)
+	*)
 		echo "Usage: ${0} {start|stop|reload|restart}" >&2
 		exit 3
 		;;

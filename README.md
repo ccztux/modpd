@@ -160,7 +160,7 @@ chkconfig --list modpd
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2020-02-06
+Last modification:      2020-02-07
 Version:                1.0.3-alpha7
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
