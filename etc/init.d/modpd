@@ -121,9 +121,9 @@ do_start()
 	then
 		if [ -n "${DAEMON_USER}" ]
 		then
-			runuser ${DAEMON_USER} -c "setsid ${DAEMON_PATH} ${DAEMON_ARGS} </dev/null >/dev/null 2>&1 &" </dev/null >/dev/null 2>&1
+			runuser "${DAEMON_USER}" -c "setsid ${DAEMON_PATH} ${DAEMON_ARGS} </dev/null >/dev/null 2>&1 &" </dev/null >/dev/null 2>&1
 		else
-			setsid ${DAEMON_PATH} "${DAEMON_ARGS}" </dev/null >/dev/null 2>&1 &
+			setsid "${DAEMON_PATH}" "${DAEMON_ARGS}" </dev/null >/dev/null 2>&1 &
 		fi
 
 		DAEMON_RETVAL="$?"
@@ -151,7 +151,7 @@ do_stop()
 
 	if [ "${DAEMON_RETVAL}" == "0" ]
 	then
-		killproc -p ${DAEMON_LOCK_FILE} ${DAEMON_PATH} -SIGTERM
+		killproc -p "${DAEMON_LOCK_FILE}" "${DAEMON_PATH}" -SIGTERM
 
 		DAEMON_RETVAL="$?"
 
@@ -209,7 +209,7 @@ do_reload()
 
 	if [ "${DAEMON_RETVAL}" == "0" ]
 	then
-		killproc -p ${DAEMON_LOCK_FILE} ${DAEMON_PATH} -SIGHUP
+		killproc -p "${DAEMON_LOCK_FILE}" "${DAEMON_PATH}" -SIGHUP
 
 		DAEMON_RETVAL="$?"
 
