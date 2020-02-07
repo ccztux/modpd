@@ -109,6 +109,7 @@ Copy the files:
 cp -av ./usr/local/modpd/ /usr/local/
 cp -av ./etc/logrotate.d/modpd /etc/logrotate.d/
 cp -av ./etc/init.d/modpd /etc/init.d/
+cp -av ./etc/sysconfig/modpd /etc/sysconfig/
 ```
 
 
@@ -120,6 +121,8 @@ chown root:root /etc/logrotate.d/modpd
 chmod 644 /etc/logrotate.d/modpd
 chown root:root /etc/init.d/modpd
 chmod 755 /etc/init.d/modpd
+chown root:root /etc/sysconfig/modpd
+chmod 644 /etc/sysconfig/modpd
 ```
 
 
@@ -160,7 +163,7 @@ chkconfig --list modpd
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2020-02-06
+Last modification:      2020-02-07
 Version:                1.0.3-alpha7
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
