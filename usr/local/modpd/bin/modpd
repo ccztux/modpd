@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-02-18
 #
-#  Version				2.0.0
+#  Version				2.0.1-beta1
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -1079,7 +1079,7 @@ checkNamedPipePermissions()
 	then
 		if [ -x "${file}" ]
 		then
-			file_permission="$(( file_permission + 2#0001 ))"
+			file_permission="$(( file_permission + 2.0.1-beta11 ))"
 		fi
 
 		if [ -w "${file}" ]
@@ -1089,7 +1089,7 @@ checkNamedPipePermissions()
 
 		if [ -r "${file}" ]
 		then
-			file_permission="$(( file_permission + 2#0100 ))"
+			file_permission="$(( file_permission + 2.0.1-beta10 ))"
 		fi
 	else
 		file_permission="$(( 2#1010 ))"
@@ -1129,7 +1129,7 @@ checkFilePermissions()
 	then
 		if [ -x "${file}" ]
 		then
-			file_permission="$(( file_permission + 2#0001 ))"
+			file_permission="$(( file_permission + 2.0.1-beta11 ))"
 		fi
 
 		if [ -w "${file}" ]
@@ -1139,7 +1139,7 @@ checkFilePermissions()
 
 		if [ -r "${file}" ]
 		then
-			file_permission="$(( file_permission + 2#0100 ))"
+			file_permission="$(( file_permission + 2.0.1-beta10 ))"
 		fi
 	else
 		file_permission="$(( 2#1010 ))"
@@ -1178,7 +1178,7 @@ checkDirectoryPermissions()
 	then
 		if [ -x "${directory}" ]
 		then
-			directory_permission="$(( directory_permission + 2#0001 ))"
+			directory_permission="$(( directory_permission + 2.0.1-beta11 ))"
 		fi
 
 		if [ -w "${directory}" ]
@@ -1188,7 +1188,7 @@ checkDirectoryPermissions()
 
 		if [ -r "${directory}" ]
 		then
-			directory_permission="$(( directory_permission + 2#0100 ))"
+			directory_permission="$(( directory_permission + 2.0.1-beta10 ))"
 		fi
 	else
 		directory_permission="$(( 2#1010 ))"
@@ -1582,7 +1582,7 @@ then
 	script_pid="${$}"
 	script_argc="${#}"
 	script_name="${0##*/}"
-	script_version="2.0.0"
+	script_version="2.0.1-beta1"
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/modpd"
