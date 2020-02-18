@@ -1079,7 +1079,7 @@ checkNamedPipePermissions()
 	then
 		if [ -x "${file}" ]
 		then
-			file_permission="$(( file_permission + 2.0.1-beta11 ))"
+			file_permission="$(( file_permission + 2#0001 ))"
 		fi
 
 		if [ -w "${file}" ]
@@ -1089,7 +1089,7 @@ checkNamedPipePermissions()
 
 		if [ -r "${file}" ]
 		then
-			file_permission="$(( file_permission + 2.0.1-beta10 ))"
+			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
 		file_permission="$(( 2#1010 ))"
@@ -1129,7 +1129,7 @@ checkFilePermissions()
 	then
 		if [ -x "${file}" ]
 		then
-			file_permission="$(( file_permission + 2.0.1-beta11 ))"
+			file_permission="$(( file_permission + 2#0001 ))"
 		fi
 
 		if [ -w "${file}" ]
@@ -1139,7 +1139,7 @@ checkFilePermissions()
 
 		if [ -r "${file}" ]
 		then
-			file_permission="$(( file_permission + 2.0.1-beta10 ))"
+			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
 		file_permission="$(( 2#1010 ))"
@@ -1178,7 +1178,7 @@ checkDirectoryPermissions()
 	then
 		if [ -x "${directory}" ]
 		then
-			directory_permission="$(( directory_permission + 2.0.1-beta11 ))"
+			directory_permission="$(( directory_permission + 2#0001 ))"
 		fi
 
 		if [ -w "${directory}" ]
@@ -1188,7 +1188,7 @@ checkDirectoryPermissions()
 
 		if [ -r "${directory}" ]
 		then
-			directory_permission="$(( directory_permission + 2.0.1-beta10 ))"
+			directory_permission="$(( directory_permission + 2#0100 ))"
 		fi
 	else
 		directory_permission="$(( 2#1010 ))"
