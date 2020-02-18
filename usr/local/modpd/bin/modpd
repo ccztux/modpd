@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-02-07
+#						2020-02-18
 #
-#  Version				1.0.3-alpha8
+#  Version				1.0.3-beta1
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -1585,11 +1585,11 @@ then
 	script_pid="${$}"
 	script_argc="${#}"
 	script_name="${0##*/}"
-	script_version="1.0.3-alpha8"
+	script_version="1.0.3-beta1"
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/modpd"
-	script_last_modification_date="2020-02-07"
+	script_last_modification_date="2020-02-18"
 	script_minimal_required_bash_version="3"
 	script_license="GNU GPLv3"
 	script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"

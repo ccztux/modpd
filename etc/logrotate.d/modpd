@@ -9,9 +9,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-02-07
+#						2020-02-18
 #
-#  Version				1.0.3-alpha8
+#  Version				1.0.3-beta1
 #
 #  Description:			logrotate config file for modpd (Monitoring Obsessing Data Processor Daemon)
 #
