@@ -153,7 +153,7 @@ int modpd_event_handler(int callback_type, void *data) {
 	char temp_buffer[32768];
 	char output[32768];
 	char modpd_fifo[34] = "/usr/local/modpd/var/rw/modpd.cmd";
-	char separator[20] = "<==##modpd##==>";
+	char separator[20] = "<=#modpd#=>";
    	int modpd_fifo_fd = 0;
 
 	/* what type of event/data do we have? */
@@ -178,7 +178,7 @@ int modpd_event_handler(int callback_type, void *data) {
 						strcat(output, hostdata->perf_data);
 					}
 
-					snprintf(temp_buffer, sizeof(temp_buffer) - 1, "host%s%s%sNULL%s%d%s%s%s\n", separator, hostdata->host_name, separator, separator, hostdata->state, separator, output, separator);
+					snprintf(temp_buffer, sizeof(temp_buffer) - 1, "%s%sNULL%s%d%s%s\n", hostdata->host_name, separator, separator, hostdata->state, separator, output);
 					temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
    					modpd_fifo_fd = open(modpd_fifo, O_WRONLY|O_NONBLOCK);
 
@@ -213,7 +213,7 @@ int modpd_event_handler(int callback_type, void *data) {
 						strcat(output, servicedata->perf_data);
 					}
 
-					snprintf(temp_buffer, sizeof(temp_buffer) - 1, "service%s%s%s%s%s%d%s%s%s\n", separator, servicedata->host_name, separator, servicedata->service_description, separator, servicedata->state, separator, output, separator);
+					snprintf(temp_buffer, sizeof(temp_buffer) - 1, "%s%s%s%s%d%s%s\n", servicedata->host_name, separator, servicedata->service_description, separator, servicedata->state, separator, output);
 					temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
    					modpd_fifo_fd = open(modpd_fifo, O_WRONLY|O_NONBLOCK);
 
