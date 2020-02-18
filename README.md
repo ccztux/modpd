@@ -336,4 +336,45 @@ statistic_interval="300"
 
 
 # Example log:
-tbd...
+```
+2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 1.0.3-alpha7 starting... (PID=1677)
+2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | We are using config file: '/usr/local/modpd/etc/modpd.conf'.
+2020-02-18 10:14:45 |   1677 |                     getUser | Get user which starts the script...
+2020-02-18 10:14:45 |   1677 |                     getUser | modpd was started as user: 'nagios'.
+2020-02-18 10:14:45 |   1677 |            checkBashVersion | Checking bash version...
+2020-02-18 10:14:45 |   1677 |            checkBashVersion | Bash version: '4' meets requirements.
+2020-02-18 10:14:45 |   1677 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
+2020-02-18 10:14:45 |   1677 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read/writeable...
+2020-02-18 10:14:45 |   1677 |                   checkLock | Lock file doesnt exist.
+2020-02-18 10:14:45 |   1677 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running).
+2020-02-18 10:14:45 |   1677 |                     setLock | Check if script lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
+2020-02-18 10:14:45 |   1677 |                     setLock | Script lock directory exists and permissions are ok.
+2020-02-18 10:14:45 |   1677 |                     setLock | Setting lock...
+2020-02-18 10:14:45 |   1677 |                     setLock | Setting lock was successful.
+2020-02-18 10:14:45 |   1677 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-02-18 10:14:45 |   1677 |              checkNamedPipe | Named pipe doesnt exist.
+2020-02-18 10:14:45 |   1677 |             createNamedPipe | Creating named pipe...
+2020-02-18 10:14:45 |   1677 |             createNamedPipe | Creating named pipe was successful.
+2020-02-18 10:14:45 |   1677 |             buildJobCommand | Building job command...
+2020-02-18 10:14:45 |   1677 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https:/
+/nrdpuser:[HIDDEN FOR SECURITY]@172.20.102.45:443/nrdp'.
+2020-02-18 10:14:45 |   1677 |                       _main | Ready to handle jobs...
+2020-02-18 10:19:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '300' seconds
+2020-02-18 10:19:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-18 10:19:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '7804', handled service checks: '4400', invalid datasets received: '0'.
+2020-02-18 10:24:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '600' seconds
+2020-02-18 10:24:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '60', successful processed jobs: '60', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-18 10:24:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10255', handled service checks: '7525', invalid datasets received: '0'.
+2020-02-18 10:29:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '900' seconds
+2020-02-18 10:29:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '57', successful processed jobs: '57', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-18 10:29:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10233', handled service checks: '7425', invalid datasets received: '0'.
+2020-02-18 10:34:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1200' seconds
+2020-02-18 10:34:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '57', successful processed jobs: '57', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-18 10:34:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10626', handled service checks: '7575', invalid datasets received: '0'.
+2020-02-18 10:39:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1500' seconds
+2020-02-18 10:39:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '53', successful processed jobs: '53', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-18 10:39:46 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10578', handled service checks: '7500', invalid datasets received: '0'.
+2020-02-18 10:44:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1800' seconds
+2020-02-18 10:44:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-18 10:44:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10350', handled service checks: '7463', invalid datasets received: '0'.
+```
