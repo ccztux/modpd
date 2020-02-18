@@ -337,7 +337,7 @@ statistic_interval="300"
 
 # Example log:
 ```
-2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 1.0.3-alpha7 starting... (PID=1677)
+2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 1.0.3-beta1 starting... (PID=1677)
 2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | We are using config file: '/usr/local/modpd/etc/modpd.conf'.
 2020-02-18 10:14:45 |   1677 |                     getUser | Get user which starts the script...
 2020-02-18 10:14:45 |   1677 |                     getUser | modpd was started as user: 'nagios'.
