@@ -255,7 +255,7 @@ case "${1}" in
 		do_restart
 		;;
 	*)
-		echo "Usage: ${0} {start|stop|reload|restart}" >&2
+		echo "Usage: ${0} {start|stop|status|reload|restart}" >&2
 		exit 3
 		;;
 esac
