@@ -123,13 +123,35 @@ chmod 644 /etc/sysconfig/modpd
 ```
 
 
-Copy the client you want to use (send_nsca | send_nrdp.php) to the libexec directory of modpd:
+Copy the client you want to use (*send_nsca* | *send_nrdp.php*) to the libexec directory of modpd:
+send_nrdp.php:
+[Official NRDP Documentation](https://github.com/NagiosEnterprises/nrdp)
 ```
-cp -av /path/where/your/client/exists /usr/local/modpd/libexec/
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
+tar -xvzf nrdp.latest.tar.gz
+cd NagiosEnterprises-nrdp-*
+cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
+chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
+```
+
+send_nsca:
+[Official NSCA Documentation](https://github.com/NagiosEnterprises/nsca)
+```
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
+tar -xvzf nsca.latest.tar.gz
+cd NagiosEnterprises-nsca-*
+./configure
+make send_nsca
+cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
+chown nagios:nagios /usr/local/modpd/libexec/send_nsca
+cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
 ```
 
 
-Copy the sample config file:
+
+Copy the sample modpd daemon config file:
 ```
 cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
