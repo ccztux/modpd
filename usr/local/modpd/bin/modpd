@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-02-18
 #
-#  Version				2.0.1-beta1
+#  Version				2.0.0
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -118,13 +118,14 @@ signalHandler()
 	local signal="${1:-}"
 	local bash_lineno="${2:-}"
 	local bash_command="${3:-}"
+	local uptime=
 	local rc=
 
 	case "${signal}" in
 		SIGUSR1)
-			if [ "${statistic_enabled}" == "1" ]
+			if [ "${stats_enabled}" == "1" ]
 			then
-				printStatistic
+				logStats
 			fi
 
 			resetCounters
@@ -194,7 +195,7 @@ signalHandler()
 		EXIT)
 			if [ "${script_config_file_included}" -eq "1" ]
 			then
-				printStatistic
+				logStats
 
 				logHandler "Caught: '${signal}', exiting script..."
 
@@ -222,8 +223,10 @@ signalHandler()
 					logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 				fi
 
+				uptime="$(secondsToTime "${SECONDS}")"
+
 				logHandler "Exitcode: '${script_exit_code}'."
-				logHandler "${script_name} was running: '${SECONDS}' seconds."
+				logHandler "${script_name} was running: ${uptime}."
 				logHandler "Bye, bye..."
 			fi
 
@@ -401,11 +404,25 @@ printScriptInfos()
 	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
 }
 
-printStatistic()
+secondsToTime()
 {
-	logHandler "- Statistic data - ${script_name} is running: '${SECONDS}' seconds"
-	logHandler "- Statistic data - Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
-	logHandler "- Statistic data - Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
+	local seconds_to_convert="${1:-}"
+	local days="$(( seconds_to_convert / (3600 * 24) ))"
+	local hours="$(( (seconds_to_convert / 3600) % 24 ))"
+	local minutes="$(( (seconds_to_convert / 60) % 60 ))"
+	local seconds="$(( seconds_to_convert % 60 ))"
+
+	printf "%s days, %s hours, %s minutes, %s seconds\\n" "${days}" "${hours}" "${minutes}" "${seconds}"
+}
+
+logStats()
+{
+	local uptime="$(secondsToTime "${SECONDS}")"
+
+	logHandler "---- Stats for the last ${stats_interval} seconds ----"
+	logHandler "${script_name} is running: ${uptime}"
+	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
+	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
 }
 
 resetCounters()
@@ -419,17 +436,17 @@ resetCounters()
 	script_invalid_data_counter="0"
 }
 
-printStatisticWatchdog()
+logStatsWatchdog()
 {
-	local statistic_interval_helper="$(( SECONDS + statistic_interval ))"
+	local stats_interval_helper="$(( SECONDS + stats_interval ))"
 
 	while true
 	do
-		if [ "${statistic_interval_helper}" -le "${SECONDS}" ]
+		if [ "${stats_interval_helper}" -le "${SECONDS}" ]
 		then
 			# shellcheck disable=SC2154
 			${kill_bin} -SIGUSR1 "${script_pid}"
-			statistic_interval_helper="$(( SECONDS + statistic_interval ))"
+			stats_interval_helper="$(( SECONDS + stats_interval ))"
 		fi
 
 		# shellcheck disable=SC2154
@@ -479,16 +496,16 @@ reloadConfig()
 {
 	local rc=
 
-	if  [ -n "${script_statistic_watchdog_pid}" ]
+	if  [ -n "${script_stats_watchdog_pid}" ]
 	then
-		${kill_bin} -s SIGTERM "${script_statistic_watchdog_pid}"
+		${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}"
 	fi
 
 	includeConfig
 	rc="${?}"
 
-	printStatisticWatchdog &
-	script_statistic_watchdog_pid="${!}"
+	logStatsWatchdog &
+	script_stats_watchdog_pid="${!}"
 
 	if [ "${rc}" == "0" ]
 	then
@@ -1552,8 +1569,8 @@ _main()
 	getUser
 	checkBashVersion
 	checkAlreadyRunningInstance
-	printStatisticWatchdog &
-	script_statistic_watchdog_pid="${!}"
+	logStatsWatchdog &
+	script_stats_watchdog_pid="${!}"
 	createNamedPipe
 	setProxy
 	buildJobCommand
@@ -1582,7 +1599,7 @@ then
 	script_pid="${$}"
 	script_argc="${#}"
 	script_name="${0##*/}"
-	script_version="2.0.1-beta1"
+	script_version="2.0.0"
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/modpd"
@@ -1595,7 +1612,7 @@ then
 	script_config_file_included="0"
 	script_log_requirements_ok="0"
 	script_exit_code="255"
-	script_statistic_watchdog_pid=
+	script_stats_watchdog_pid=
 	script_job_pid_1=
 	script_job_pid_2=
 	script_shutdown_in_progress="0"
@@ -1654,9 +1671,9 @@ then
 
 
 
-	#-------------------------
-	# Jump into main function:
-	#-------------------------
+	#--------------------------
+	# Jump into _main function:
+	#--------------------------
 
 	_main "${@}"
 	exit
