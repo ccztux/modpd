@@ -57,7 +57,7 @@ and then Nagios waits, till every obsessing command was executed successfully or
 
 
 # Installation:
-
+## Download the latest sources of modpd:
 Download the latest tarball and extract it:
 ```bash
 cd /tmp
@@ -67,6 +67,7 @@ cd ccztux-modpd-*
 ```
 
 
+## Installation of the modpd NEB module part:
 Build the modpd NEB module:
 ```bash
 make
@@ -109,6 +110,7 @@ grep -i modpd /usr/local/nagios/var/nagios.log
 
 
 
+## Installation of the modpd daemon part:
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
@@ -126,37 +128,6 @@ chmod 755 /etc/init.d/modpd
 chown root:root /etc/sysconfig/modpd
 chmod 644 /etc/sysconfig/modpd
 ```
-
-
-Copy the client you want to use (**send_nsca** or **send_nrdp.php**) to the libexec directory of modpd:
-
-send_nrdp.php:
-
-[Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
-```
-cd /tmp
-wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
-tar -xvzf nrdp.latest.tar.gz
-cd NagiosEnterprises-nrdp-*
-cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
-chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
-```
-
-send_nsca:
-
-[Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
-```
-cd /tmp
-wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
-tar -xvzf nsca.latest.tar.gz
-cd NagiosEnterprises-nsca-*
-./configure
-make send_nsca
-cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
-chown nagios:nagios /usr/local/modpd/libexec/send_nsca
-cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
-```
-
 
 
 Copy the sample modpd daemon config file:
@@ -195,6 +166,34 @@ Check for which runlevels modpd is activated:
 chkconfig --list modpd
 ```
 
+
+## Installation of the clients:
+### send_nrdp.php:
+
+[Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
+```
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
+tar -xvzf nrdp.latest.tar.gz
+cd NagiosEnterprises-nrdp-*
+cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
+chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
+```
+
+### send_nsca:
+
+[Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
+```
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
+tar -xvzf nsca.latest.tar.gz
+cd NagiosEnterprises-nsca-*
+./configure
+make send_nsca
+cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
+chown nagios:nagios /usr/local/modpd/libexec/send_nsca
+cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
+```
 
 
 # Example help output:
