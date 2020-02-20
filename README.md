@@ -138,7 +138,7 @@ cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
 
 
-Edit the config:
+Edit the daemon config to meet your requirements:
 ```bash
 vim /usr/local/modpd/etc/modpd.conf
 ```
@@ -169,7 +169,7 @@ chkconfig --list modpd
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2020-02-18
+Last modification:      2020-02-20
 Version:                2.1.0-beta1
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
@@ -182,11 +182,99 @@ OPTIONS:
 
 
 
-# Configuration variables (default):
+# Default sample config:
 ```bash
-#---------
-# Logging:
-#---------
+#=====================================================
+#
+# Modify the following parameters to your requirements
+#
+#=====================================================
+
+
+#-------------------
+# Obsessing settings
+#-------------------
+
+# define the obsessing interface
+# (valid values: nrdp|nsca)
+obsessing_interface="nrdp"
+
+# define the host, where check results should be sent to
+obsessing_host="10.0.0.31"
+
+# define the port, where the obsessing daemon is listening on
+obsessing_port="443"
+
+
+
+#--------------------------------------------------------------------
+# NRDP specific settings (Needed in case obsessing_interface is nrdp)
+#--------------------------------------------------------------------
+
+# define the connection protocol
+# (valid values: http|https)
+nrdp_protocol="https"
+
+# define the url path of the nrdp server
+nrdp_url_path="/nrdp"
+
+# define the nrdp token
+nrdp_token="12345678"
+
+# define the username, if nrdp basic auth is activated
+nrdp_username="nrdpuser"
+
+# define the password of the user you have defined in variable: nrdp_username with which we sould connect
+nrdp_password="mySecret"
+
+
+
+#--------------------------------------------------------------------
+# NSCA specific settings (Needed in case obsessing_interface is nsca)
+#--------------------------------------------------------------------
+
+# define the path to the config file of send_nsca binary
+nsca_config_file="/usr/local/nagios/etc/send_nsca.cfg"
+
+
+
+#---------------------------------------------------------------------------------------
+# Proxy settings (Needed in case obsessing_interface is nrdp and a proxy should be used)
+#---------------------------------------------------------------------------------------
+
+# enable proxy
+proxy_enabled="0"
+
+# username to authenticate on proxy server
+proxy_username="ccztux"
+
+# password to authenticate on proxy server
+proxy_password="mySecret"
+
+# proxy protocol
+# (valid values: http|https)
+proxy_protocol="https"
+
+# proxy ip or hostname
+proxy_ip="10.0.0.10"
+
+# proxy port
+proxy_port="3128"
+
+
+
+
+
+
+#================================================================
+#
+# ONLY MODIFY THE FOLLOWING PARAMETERS, IF YOU KNOW, WHAT YOU DO!
+#
+#================================================================
+
+#--------
+# Logging
+#--------
 
 # enable log to file
 # (valid values: 1|0)
@@ -214,18 +302,18 @@ log_invalid_data="1"
 
 
 
-#------------
-# Named pipe:
-#------------
+#----------------
+# Named pipe path
+#----------------
 
 # file name of named pipe
 named_pipe_filename="${script_base_path}/var/rw/modpd.cmd"
 
 
 
-#--------------
-# Job settings:
-#--------------
+#-------------
+# Job settings
+#-------------
 
 # enable job timeout
 job_timeout_enabled="1"
@@ -236,8 +324,8 @@ job_timeout="8"
 # job execution interval in seconds
 job_exec_interval="4"
 
-# separator to separate job data (ONLY MODIFY THIS IF YOU KNOW WHAT YOU DO!!!)
-job_data_separator="<==##modpd##==>"
+# separator to separate job data
+job_data_separator="<=#modpd#=>"
 
 # job max bulk size
 job_max_bulk_size="50"
@@ -256,131 +344,59 @@ job_command_log_ok="0"
 
 
 
-#--------------------
-# Obsessing settings:
-#--------------------
-
-# define the obsessing interface
-# (valid values: nrdp|nsca)
-obsessing_interface="nrdp"
-
-# define the host, where check results should be sent to
-obsessing_host="10.0.0.31"
-
-# define the port, where the obsessing daemon is listening on
-obsessing_port="443"
-
-
-
-#------------------------
-# NRDP specific settings:
-#------------------------
-
-# define the connection protocol
-# (valid values: http|https)
-nrdp_protocol="https"
-
-# define the url path of the nrdp server
-nrdp_url_path="/nrdp"
-
-# define the nrdp token
-nrdp_token="12345678"
-
-# define the username, if nrdp basic auth is activated
-nrdp_username="nrdpuser"
-
-# define the password of the user you have defined in variable: nrdp_username with which we sould connect
-nrdp_password="mySecret"
-
-
-
-#------------------------
-# NSCA specific settings:
-#------------------------
-
-# define the path to the config file of send_nsca binary
-nsca_config_file="/usr/local/nagios/etc/send_nsca.cfg"
-
-
-
-#----------------
-# Proxy settings:
-#----------------
-
-# enable proxy
-proxy_enabled="0"
-
-# username to authenticate on proxy server
-proxy_username="ccztux"
-
-# password to authenticate on proxy server
-proxy_password="mySecret"
-
-# proxy protocol
-# (valid values: http|https)
-proxy_protocol="https"
-
-# proxy ip or hostname
-proxy_ip="10.0.0.10"
-
-# proxy port
-proxy_port="3128"
-
-
-
-#-----------
-# Statistic:
-#-----------
+#------
+# Stats
+#------
 
 # enable statistic logging
-statistic_enabled="1"
+stats_enabled="1"
 
 # interval in seconds on which the statistic should be logged
-statistic_interval="300"
+stats_interval="300"
 ```
 
 
 
 # Example log:
 ```
-2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 2.1.0-beta1 starting... (PID=1677)
-2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | We are using config file: '/usr/local/modpd/etc/modpd.conf'.
-2020-02-18 10:14:45 |   1677 |                     getUser | Get user which starts the script...
-2020-02-18 10:14:45 |   1677 |                     getUser | modpd was started as user: 'nagios'.
-2020-02-18 10:14:45 |   1677 |            checkBashVersion | Checking bash version...
-2020-02-18 10:14:45 |   1677 |            checkBashVersion | Bash version: '4' meets requirements.
-2020-02-18 10:14:45 |   1677 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
-2020-02-18 10:14:45 |   1677 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read/writeable...
-2020-02-18 10:14:45 |   1677 |                   checkLock | Lock file doesnt exist.
-2020-02-18 10:14:45 |   1677 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running).
-2020-02-18 10:14:45 |   1677 |                     setLock | Check if script lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
-2020-02-18 10:14:45 |   1677 |                     setLock | Script lock directory exists and permissions are ok.
-2020-02-18 10:14:45 |   1677 |                     setLock | Setting lock...
-2020-02-18 10:14:45 |   1677 |                     setLock | Setting lock was successful.
-2020-02-18 10:14:45 |   1677 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
-2020-02-18 10:14:45 |   1677 |              checkNamedPipe | Named pipe doesnt exist.
-2020-02-18 10:14:45 |   1677 |             createNamedPipe | Creating named pipe...
-2020-02-18 10:14:45 |   1677 |             createNamedPipe | Creating named pipe was successful.
-2020-02-18 10:14:45 |   1677 |             buildJobCommand | Building job command...
-2020-02-18 10:14:45 |   1677 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https:/
+2020-02-20 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 2.1.0-beta1 starting... (PID=1677)
+2020-02-20 10:14:45 |   1677 | checkLogHandlerRequirements | We are using config file: '/usr/local/modpd/etc/modpd.conf'.
+2020-02-20 10:14:45 |   1677 |                     getUser | Get user which starts the script...
+2020-02-20 10:14:45 |   1677 |                     getUser | modpd was started as user: 'nagios'.
+2020-02-20 10:14:45 |   1677 |            checkBashVersion | Checking bash version...
+2020-02-20 10:14:45 |   1677 |            checkBashVersion | Bash version: '4' meets requirements.
+2020-02-20 10:14:45 |   1677 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
+2020-02-20 10:14:45 |   1677 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read/writeable...
+2020-02-20 10:14:45 |   1677 |                   checkLock | Lock file doesnt exist.
+2020-02-20 10:14:45 |   1677 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running).
+2020-02-20 10:14:45 |   1677 |                     setLock | Check if script lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
+2020-02-20 10:14:45 |   1677 |                     setLock | Script lock directory exists and permissions are ok.
+2020-02-20 10:14:45 |   1677 |                     setLock | Setting lock...
+2020-02-20 10:14:45 |   1677 |                     setLock | Setting lock was successful.
+2020-02-20 10:14:45 |   1677 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-02-20 10:14:45 |   1677 |              checkNamedPipe | Named pipe doesnt exist.
+2020-02-20 10:14:45 |   1677 |             createNamedPipe | Creating named pipe...
+2020-02-20 10:14:45 |   1677 |             createNamedPipe | Creating named pipe was successful.
+2020-02-20 10:14:45 |   1677 |             buildJobCommand | Building job command...
+2020-02-20 10:14:45 |   1677 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https:/
 /nrdpuser:[HIDDEN FOR SECURITY]@172.20.102.45:443/nrdp'.
-2020-02-18 10:14:45 |   1677 |                       _main | Ready to handle jobs...
-2020-02-18 10:19:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '300' seconds
-2020-02-18 10:19:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-18 10:19:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '7804', handled service checks: '4400', invalid datasets received: '0'.
-2020-02-18 10:24:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '600' seconds
-2020-02-18 10:24:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '60', successful processed jobs: '60', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-18 10:24:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10255', handled service checks: '7525', invalid datasets received: '0'.
-2020-02-18 10:29:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '900' seconds
-2020-02-18 10:29:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '57', successful processed jobs: '57', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-18 10:29:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10233', handled service checks: '7425', invalid datasets received: '0'.
-2020-02-18 10:34:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1200' seconds
-2020-02-18 10:34:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '57', successful processed jobs: '57', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-18 10:34:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10626', handled service checks: '7575', invalid datasets received: '0'.
-2020-02-18 10:39:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1500' seconds
-2020-02-18 10:39:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '53', successful processed jobs: '53', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-18 10:39:46 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10578', handled service checks: '7500', invalid datasets received: '0'.
-2020-02-18 10:44:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1800' seconds
-2020-02-18 10:44:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-18 10:44:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10350', handled service checks: '7463', invalid datasets received: '0'.
+2020-02-20 10:14:45 |   1677 |                       _main | Ready to handle jobs...
+2020-02-20 10:19:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '300' seconds
+2020-02-20 10:19:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-20 10:19:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '7804', handled service checks: '4400', invalid datasets received: '0'.
+2020-02-20 10:24:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '600' seconds
+2020-02-20 10:24:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '60', successful processed jobs: '60', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-20 10:24:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10255', handled service checks: '7525', invalid datasets received: '0'.
+2020-02-20 10:29:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '900' seconds
+2020-02-20 10:29:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '57', successful processed jobs: '57', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-20 10:29:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10233', handled service checks: '7425', invalid datasets received: '0'.
+2020-02-20 10:34:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1200' seconds
+2020-02-20 10:34:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '57', successful processed jobs: '57', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-20 10:34:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10626', handled service checks: '7575', invalid datasets received: '0'.
+2020-02-20 10:39:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1500' seconds
+2020-02-20 10:39:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '53', successful processed jobs: '53', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-20 10:39:46 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10578', handled service checks: '7500', invalid datasets received: '0'.
+2020-02-20 10:44:45 |   1677 |              printStatistic | - Statistic data - modpd is running: '1800' seconds
+2020-02-20 10:44:45 |   1677 |              printStatistic | - Statistic data - Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-02-20 10:44:45 |   1677 |              printStatistic | - Statistic data - Handled host checks: '10350', handled service checks: '7463', invalid datasets received: '0'.
 ```

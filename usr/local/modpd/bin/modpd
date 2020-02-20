@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-02-18
+#						2020-02-20
 #
 #  Version				2.0.0
 #
@@ -36,9 +36,9 @@
 #========================================================================================================
 
 
-#--------------------------------
-# Print error messages to stderr:
-#--------------------------------
+#-------------------------------
+# Print error messages to stderr
+#-------------------------------
 
 eprintf()
 {
@@ -47,9 +47,9 @@ eprintf()
 
 
 
-#-------
-# Traps:
-#-------
+#------
+# Traps
+#------
 
 if ! trap 'signalHandler SIGUSR1' SIGUSR1
 then
@@ -109,9 +109,9 @@ fi
 
 
 
-#---------------
-# signalHandler:
-#---------------
+#--------------
+# signalHandler
+#--------------
 
 signalHandler()
 {
@@ -374,9 +374,9 @@ setRequiredBashOptions()
 
 
 
-#-------------------
-# Various Functions:
-#-------------------
+#------------------
+# Various functions
+#------------------
 
 printUsage()
 {
@@ -626,7 +626,7 @@ includeConfig()
 
 	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_regular_file_is_not_empty ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ]
 	then
-		# shellcheck source=/scripts/usr/local/modpd/etc/modpd.conf
+		# shellcheck source=/scripts/usr/local/modpd/etc/modpd.sample.conf
 		if source "${script_config_file}"
 		then
 			script_config_file_included="1"
@@ -1080,9 +1080,9 @@ checkNamedPipeExists()
 checkNamedPipePermissions()
 {
 	# file doesnt exist:	rc=10
-	# read allowed:		rc=4|5|6|7
-	# write allowed:	rc=2|3|6|7
-	# execute allowed:	rc=1|3|5|7
+	# read allowed:			rc=4|5|6|7
+	# write allowed:		rc=2|3|6|7
+	# execute allowed:		rc=1|3|5|7
 	# read/write allowed:	rc=6|7
 
 	local file="${1:-}"
@@ -1130,9 +1130,9 @@ checkRegularFileExists()
 checkFilePermissions()
 {
 	# file doesnt exist:	rc=10
-	# read allowed:		rc=4|5|6|7
-	# write allowed:	rc=2|3|6|7
-	# execute allowed:	rc=1|3|5|7
+	# read allowed:			rc=4|5|6|7
+	# write allowed:		rc=2|3|6|7
+	# execute allowed:		rc=1|3|5|7
 	# read/write allowed:	rc=6|7
 
 	local file="${1:-}"
@@ -1180,9 +1180,9 @@ checkDirectoryExists()
 checkDirectoryPermissions()
 {
 	# directory doesnt exist:	rc=10
-	# read allowed:			rc=4|5|6|7
-	# write allowed:		rc=2|3|6|7
-	# execute allowed:		rc=1|3|5|7
+	# read allowed:				rc=4|5|6|7
+	# write allowed:			rc=2|3|6|7
+	# execute allowed:			rc=1|3|5|7
 
 	local directory="${1:-}"
 	local rc=
@@ -1556,9 +1556,9 @@ dataProcessor()
 
 _main()
 {
-	#------
-	# Main:
-	#------
+	#-----
+	# Main
+	#-----
 
 	checkCliOptions
 	setRequiredVariables
@@ -1586,15 +1586,15 @@ _main()
 
 
 
-#-------
-# Start:
-#-------
+#------
+# Start
+#------
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
-	#-----------------------
-	# Script info variables:
-	#-----------------------
+	#----------------------
+	# Script info variables
+	#----------------------
 
 	script_pid="${$}"
 	script_argc="${#}"
@@ -1603,7 +1603,7 @@ then
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017 ${script_author}, all rights reserved"
 	script_project_website="https://github.com/ccztux/modpd"
-	script_last_modification_date="2020-02-18"
+	script_last_modification_date="2020-02-20"
 	script_minimal_required_bash_version="3"
 	script_license="GNU GPLv2"
 	script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
@@ -1627,9 +1627,9 @@ then
 
 
 
-	#-----------------
-	# Get CLI options:
-	#-----------------
+	#----------------
+	# Get CLI options
+	#----------------
 
 	OPTERR="0"
 
@@ -1671,9 +1671,9 @@ then
 
 
 
-	#--------------------------
-	# Jump into _main function:
-	#--------------------------
+	#-------------------------
+	# Jump into _main function
+	#-------------------------
 
 	_main "${@}"
 	exit
