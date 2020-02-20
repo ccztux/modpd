@@ -167,7 +167,7 @@ chkconfig --list modpd
 ```
 
 
-## Installation of the clients
+## Installation of the clients (of your choice)
 ### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
