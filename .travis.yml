@@ -11,7 +11,7 @@ before_install:
 script:
   - docker run koalaman/shellcheck:stable --version
   - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --external-sources /scripts/usr/local/modpd/bin/modpd
-  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/modpd/etc/modpd.conf
+  - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always /scripts/usr/local/modpd/etc/modpd.sample.conf
   - docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --external-sources /scripts/etc/init.d/modpd
 
 matrix:
