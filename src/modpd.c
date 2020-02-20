@@ -4,14 +4,14 @@
 *						2017-05-14
 *						http://linuxinside.at
 *
-*  Copyright:			Copyright © 2017 Christian Zettel (ccztux), all rights reserved
+*  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
 *
 *  Project website:		https://github.com/ccztux/modpd
 *
 *  Last Modification:	Christian Zettel (ccztux)
 *						2020-02-20
 *
-*  Version				2.0.0
+*  Version				2.1.0-beta1
 *
 *  Description:			NEB module to write obsessing data to unix socket
 *						Based on example: nagioscore/module/helloworld.c
@@ -82,13 +82,13 @@ int nebmodule_init(int flags, char *args, nebmodule *handle)
 	/* set some info - this is completely optional, as Nagios doesn't do anything with this data */
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "modpd");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_AUTHOR, "Christian Zettel (ccztux)");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright (c) 2017 Christian Zettel");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.0");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "2.1.0-beta1");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_DESC, "Obsessing NEB Module.");
 
 	/* log module info to the Nagios log file */
-	write_to_all_logs("modpd: Copyright (c) 2017 Christian Zettel (ccztux), Version: 2.0.0", NSLOG_INFO_MESSAGE);
+	write_to_all_logs("modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.0-beta1", NSLOG_INFO_MESSAGE);
 
 	/* log a message to the Nagios log file */
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: Starting...\n");

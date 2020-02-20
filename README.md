@@ -128,7 +128,7 @@ chmod 644 /etc/sysconfig/modpd
 ```
 
 
-Copy the client you want to use (**send_nsca** | **send_nrdp.php**) to the libexec directory of modpd:
+Copy the client you want to use (**send_nsca** or **send_nrdp.php**) to the libexec directory of modpd:
 
 send_nrdp.php:
 
