@@ -11,7 +11,7 @@
 *  Last Modification:	Christian Zettel (ccztux)
 *						2020-02-18
 *
-*  Version				2.0.1-beta1
+*  Version				2.0.0
 *
 *  Description:			NEB module to write obsessing data to unix socket
 *						Based on example: nagioscore/module/helloworld.c
@@ -55,20 +55,26 @@ NEB_API_VERSION(CURRENT_NEB_API_VERSION);
 
 void *modpd_module_handle = NULL;
 
-void modpd_status_message(void);
+void log_modpd_stats(void);
 int modpd_event_handler(int, void *);
 
 unsigned int host_cmds_ok_counter = 0;
 unsigned int host_cmds_nok_counter = 0;
 unsigned int service_cmds_ok_counter = 0;
 unsigned int service_cmds_nok_counter = 0;
+time_t start_time;
+time_t last_stats_logged;
 
 
 /* this function gets called when the module is loaded by the event broker */
-int nebmodule_init(int flags, char *args, nebmodule *handle) {
+int nebmodule_init(int flags, char *args, nebmodule *handle)
+{
 	char temp_buffer[1024];
+	unsigned int log_stats_interval = 300;
 	time_t current_time;
-	unsigned int interval;
+
+	/* set the start time */
+	time(&start_time);
 
 	/* save our handle */
 	modpd_module_handle = handle;
@@ -77,76 +83,103 @@ int nebmodule_init(int flags, char *args, nebmodule *handle) {
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "modpd");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_AUTHOR, "Christian Zettel (ccztux)");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright (c) 2017 Christian Zettel");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.1-beta1");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.0");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_DESC, "Obsessing NEB Module.");
 
 	/* log module info to the Nagios log file */
-	write_to_all_logs("modpd: Copyright (c) 2017 Christian Zettel (ccztux), Version: 2.0.1-beta1", NSLOG_INFO_MESSAGE);
+	write_to_all_logs("modpd: Copyright (c) 2017 Christian Zettel (ccztux), Version: 2.0.0", NSLOG_INFO_MESSAGE);
 
 	/* log a message to the Nagios log file */
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: Starting...\n");
 	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
 	write_to_all_logs(temp_buffer, NSLOG_INFO_MESSAGE);
 
-	/* log a status message every 15 minutes (how's that for annoying? :-)) */
+	/* log a status message every 5 minutes (how's that for annoying? :-)) */
 	time(&current_time);
-	interval = 300;
-	schedule_new_event(EVENT_USER_FUNCTION, TRUE, current_time + interval, TRUE, interval, NULL, TRUE, (void *)modpd_status_message, NULL, 0);
+	schedule_new_event(EVENT_USER_FUNCTION, TRUE, current_time + log_stats_interval, TRUE, log_stats_interval, NULL, TRUE, (void *)log_modpd_stats, NULL, 0);
 
 	/* register to be notified of certain events... */
 	neb_register_callback(NEBCALLBACK_HOST_CHECK_DATA, modpd_module_handle, 0, modpd_event_handler);
 	neb_register_callback(NEBCALLBACK_SERVICE_CHECK_DATA, modpd_module_handle, 0, modpd_event_handler);
 
 	return 0;
-	}
+}
 
 
 /* this function gets called when the module is unloaded by the event broker */
-int nebmodule_deinit(int flags, int reason) {
+int nebmodule_deinit(int flags, int reason)
+{
 	char temp_buffer[1024];
+	int days, hours, minutes, seconds;
+	time_t current_time;
+	unsigned int timediff;
+
+	time(&current_time);
+	timediff = current_time - start_time;
 
 	/* deregister for all events we previously registered for... */
 	neb_deregister_callback(NEBCALLBACK_HOST_CHECK_DATA, modpd_event_handler);
 	neb_deregister_callback(NEBCALLBACK_SERVICE_CHECK_DATA, modpd_event_handler);
 
-	/* write statistic data to the Nagios log file */
-	modpd_status_message();
+	/* write stats data to the Nagios log file */
+	log_modpd_stats();
+
+	get_time_breakdown(timediff, &days, &hours, &minutes, &seconds);
+
+	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: The modpd NEB module was running %dd %dh %dm %ds", days, hours, minutes, seconds);
+	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
+	write_to_all_logs(temp_buffer, NSLOG_INFO_MESSAGE);
 
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: Bye, bye...\n");
 	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
 	write_to_all_logs(temp_buffer, NSLOG_INFO_MESSAGE);
 
 	return 0;
-	}
+}
 
 
 /* gets called every X minutes by an event in the scheduling queue */
-void modpd_status_message() {
+void log_modpd_stats()
+{
 	char temp_buffer[1024];
 	unsigned int host_cmds_total_counter = 0;
 	unsigned int service_cmds_total_counter = 0;
+	unsigned int timediff;
+	time_t current_time;
+
+	time(&current_time);
+
+	if (last_stats_logged == '\x0') {
+		timediff = current_time - start_time;
+	} else {
+		timediff = current_time - last_stats_logged;
+	}
 
 	host_cmds_total_counter = host_cmds_ok_counter + host_cmds_nok_counter;
 	service_cmds_total_counter = service_cmds_ok_counter + service_cmds_nok_counter;
 
 	/* log a message to the Nagios log file */
-	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: Processed data statistic: Hosts: %u (OK: %u/NOK: %u), Services: %u (OK: %u/NOK: %u).\n", host_cmds_total_counter, host_cmds_ok_counter, host_cmds_nok_counter, service_cmds_total_counter, service_cmds_ok_counter, service_cmds_nok_counter);
+	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: *** Stats of processed checks for the last %u seconds: Hosts: %u (OK: %u/NOK: %u), Services: %u (OK: %u/NOK: %u) ***\n", timediff, host_cmds_total_counter, host_cmds_ok_counter, host_cmds_nok_counter, service_cmds_total_counter, service_cmds_ok_counter, service_cmds_nok_counter);
 	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
 	write_to_all_logs(temp_buffer, NSLOG_INFO_MESSAGE);
 
-	/* reset status variables */
+	/* reset stats variables */
 	host_cmds_ok_counter = 0;
 	host_cmds_nok_counter = 0;
 	service_cmds_ok_counter = 0;
 	service_cmds_nok_counter = 0;
 
+	/* set the timestamp of the last stats logged */
+	time(&last_stats_logged);
+
 	return;
-	}
+}
 
 
 /* handle data from Nagios daemon */
-int modpd_event_handler(int callback_type, void *data) {
+int modpd_event_handler(int callback_type, void *data)
+{
 	nebstruct_host_check_data *hostdata = NULL;
 	nebstruct_service_check_data *servicedata = NULL;
 	host *host = NULL;
@@ -154,12 +187,11 @@ int modpd_event_handler(int callback_type, void *data) {
 	char temp_buffer[32768];
 	char output[32768];
 	char modpd_fifo[34] = "/usr/local/modpd/var/rw/modpd.cmd";
-	char separator[20] = "<=#modpd#=>";
+	char separator[12] = "<=#modpd#=>";
    	int modpd_fifo_fd = 0;
 
 	/* what type of event/data do we have? */
 	switch(callback_type) {
-
 		case NEBCALLBACK_HOST_CHECK_DATA:
 			if ((hostdata = (nebstruct_host_check_data *) data)) {
 				host = find_host(hostdata->host_name);
@@ -235,4 +267,4 @@ int modpd_event_handler(int callback_type, void *data) {
 		}
 
 	return 0;
-	}
+}

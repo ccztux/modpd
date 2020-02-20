@@ -1,7 +1,7 @@
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/master?label=shellcheck%28master%29)](https://travis-ci.org/ccztux/modpd)
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/devel?label=shellcheck%28devel%29)](https://travis-ci.org/ccztux/modpd)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ccztux/modpd?label=latest%20release)](https://github.com/ccztux/modpd/releases/latest)
-[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/modpd/releases/tag/2.0.1-beta1)
+[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/modpd/releases/tag/2.1.0-beta1)
 [![GitHub](https://img.shields.io/github/license/ccztux/modpd?color=yellowgreen)](https://github.com/ccztux/modpd/blob/master/LICENSE)
 
 
@@ -164,7 +164,7 @@ Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
 Last modification:      2020-02-18
-Version:                2.0.1-beta1
+Version:                2.1.0-beta1
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
@@ -337,7 +337,7 @@ statistic_interval="300"
 
 # Example log:
 ```
-2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 2.0.1-beta1 starting... (PID=1677)
+2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 2.1.0-beta1 starting... (PID=1677)
 2020-02-18 10:14:45 |   1677 | checkLogHandlerRequirements | We are using config file: '/usr/local/modpd/etc/modpd.conf'.
 2020-02-18 10:14:45 |   1677 |                     getUser | Get user which starts the script...
 2020-02-18 10:14:45 |   1677 |                     getUser | modpd was started as user: 'nagios'.
