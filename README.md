@@ -9,7 +9,12 @@
 # modpd
 (**M**onitoring **O**bsessing **D**ata **P**rocessor **D**aemon)
 
-You can use modpd with send_nrdp.php or send_nsca. It increases the performance of an existing Nagios 3.x.x installation greatly, because the obsessing commands will be executed by modpd and not by the nagios process itself. Nagios executes the obsessing command after every check, where obsessing is activated and then Nagios waits, till every obsessing command was executed successfully or timed out.
+modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
+it to a named pip. The daemon part reads the data from the named pipe and sends the check results
+via NRDP or NSCA to another Nagios® server. It increases the performance of an existing Nagios 3.x.x
+installation greatly, because the obsessing commands will be executed by modpd and not by the nagios
+process itself. Nagios executes the obsessing command after every check, where obsessing is activated
+and then Nagios waits, till every obsessing command was executed successfully or timed out.
 
 
 
@@ -126,7 +131,8 @@ chmod 644 /etc/sysconfig/modpd
 Copy the client you want to use (**send_nsca** | **send_nrdp.php**) to the libexec directory of modpd:
 
 send_nrdp.php:
-[Official NRDP Documentation](https://github.com/NagiosEnterprises/nrdp)
+
+[Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 ```
 cd /tmp
 wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
@@ -138,7 +144,7 @@ chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 
 send_nsca:
 
-[Official NSCA Documentation](https://github.com/NagiosEnterprises/nsca)
+[Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 ```
 cd /tmp
 wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
