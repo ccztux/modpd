@@ -107,16 +107,13 @@ grep -i modpd /usr/local/nagios/var/nagios.log
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
-cp -av ./etc/logrotate.d/modpd /etc/logrotate.d/
-cp -av ./etc/init.d/modpd /etc/init.d/
-cp -av ./etc/sysconfig/modpd /etc/sysconfig/
+cp -av ./etc/ /etc/
 ```
 
 
 Change the file ownership:
 ```bash
-chown root:root /usr/local/modpd/
-chown -R nagios:nagios /usr/local/modpd/*
+chown -R nagios:nagios /usr/local/modpd/
 chown root:root /etc/logrotate.d/modpd
 chmod 644 /etc/logrotate.d/modpd
 chown root:root /etc/init.d/modpd
@@ -138,7 +135,7 @@ cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
 
 
-Edit the daemon config to meet your requirements:
+Edit the modpd daemon config to meet your requirements:
 ```bash
 vim /usr/local/modpd/etc/modpd.conf
 ```
@@ -147,6 +144,12 @@ vim /usr/local/modpd/etc/modpd.conf
 Start modpd:
 ```bash
 service modpd start
+```
+
+
+Check if the modpd daemon is running:
+```bash
+service modpd status
 ```
 
 

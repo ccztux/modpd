@@ -417,7 +417,8 @@ secondsToTime()
 
 logStats()
 {
-	local uptime="$(secondsToTime "${SECONDS}")"
+	local uptime=
+	uptime="$(secondsToTime "${SECONDS}")"
 
 	logHandler "---- Stats for the last ${stats_interval} seconds ----"
 	logHandler "${script_name} is running: ${uptime}"
