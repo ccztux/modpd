@@ -10,11 +10,11 @@
 (**M**onitoring **O**bsessing **D**ata **P**rocessor **D**aemon)
 
 modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
-it to a named pip. The daemon part reads the data from the named pipe and sends the check results
-via NRDP or NSCA to another Nagios® server. It increases the performance of an existing Nagios 3.x.x
-installation greatly, because the obsessing commands will be executed by modpd and not by the nagios
-process itself. Nagios executes the obsessing command after every check, where obsessing is activated
-and then Nagios waits, till every obsessing command was executed successfully or timed out.
+it to a named pipe. The daemon part reads the data from the named pipe and sends the check results
+via NRDP or NSCA to another Nagios® server. It increases the performance of an existing Nagios® 3.x.x
+installation greatly, because the obsessing commands will be executed by modpd and not by the Nagios®
+process itself. Nagios® executes the obsessing command after every check, where obsessing is activated
+and then Nagios® waits, till every obsessing command was executed successfully or timed out.
 
 
 
@@ -27,8 +27,8 @@ and then Nagios waits, till every obsessing command was executed successfully or
 [Nagios®](https://www.nagios.org/) is a registered trademark
 
 
-# Required binaries by modpd (the daemon part)
-## It requires the following binaries:
+# Required binaries
+## Required by the daemon part of modpd
 - **bash** (version >= 3)
 - **whoami** to check the user who has started modpd
 - **pgrep** to check if an instance of modpd is already running
@@ -41,7 +41,7 @@ and then Nagios waits, till every obsessing command was executed successfully or
 
 
 
-## Optionally used binaries:
+## Optionally binaries which depends on configured features
 - **logger** to log to the system log
 - **systemd-cat** to log to the system journal
 - **timeout** to start the obsessing jobs with a timeout value
@@ -49,11 +49,11 @@ and then Nagios waits, till every obsessing command was executed successfully or
 
 
 
-# Required binaries for building the modpd NEB module
+## Required for building, compiling and installing of the modpd NEB module
 - **make** to build the modpd NEB module
 - **gcc** to compile the modpd NEB module
 - **install** to install the modpd NEB module
-- **strip** to strip the modpd NEB module
+- **strip** to strip the modpd NEB binary
 
 
 # Installation:
@@ -76,7 +76,7 @@ make install
 
 
 
-Add the modpd NEB module to your main nagios config file:
+Add the modpd NEB module to your main Nagios® config file:
 ```bash
 printf 'broker_module=/usr/local/nagios/include/modpd.o\n' >> /usr/local/nagios/etc/nagios.cfg
 ```
@@ -103,7 +103,7 @@ service nagios status
 
 
 
-Check if the modpd NEB module was loaded by nagios:
+Check if the modpd NEB module was loaded by Nagios®:
 ```bash
 grep -i modpd /usr/local/nagios/var/nagios.log
 ```
