@@ -119,7 +119,6 @@ signalHandler()
 	local bash_lineno="${2:-}"
 	local bash_command="${3:-}"
 	local uptime=
-	local rc=
 
 	case "${signal}" in
 		SIGUSR1)
@@ -151,13 +150,10 @@ signalHandler()
 		SIGHUP)
 			if [ "${script_shutdown_in_progress}" != "1" ]
 			then
-				logHandler "Caught: '${signal}', preparing for config reload..."
+				logHandler "Caught: '${signal}', reloading..."
 			fi
 
-			reloadConfig
-			rc="${?}"
-
-			if [ "${rc}" == "0" ]
+			if reloadHandler
 			then
 				logHandler "Config reload was successful."
 			else
@@ -203,18 +199,12 @@ signalHandler()
 				then
 					if [ "${script_another_instance_is_running}" != "1" ]
 					then
-						checkNamedPipe
-						rc="${?}"
-
-						if [ "${rc}" == "0" ]
+						if checkNamedPipe
 						then
 							removeNamedPipe
 						fi
 
-						checkLock
-						rc="${?}"
-
-						if [ "${rc}" == "0" ]
+						if checkLock
 						then
 							removeLock
 						fi
@@ -493,50 +483,54 @@ setRequiredVariables()
 	script_log_file="${script_log_directory}/${script_name}.log"
 }
 
-reloadConfig()
+reloadHandler()
 {
-	local rc=
+	if ! includeConfig
+	then
+		return 1
+	fi
 
 	if  [ -n "${script_stats_watchdog_pid}" ]
 	then
-		${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}"
+		if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}"
+		then
+			${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}"
+		fi
 	fi
 
-	includeConfig
-	rc="${?}"
-
-	logStatsWatchdog &
-	script_stats_watchdog_pid="${!}"
-
-	if [ "${rc}" == "0" ]
+	if ! logStatsWatchdog &
 	then
-		logHandlerSetConfig
-		rc="${?}"
-
-		if [ "${rc}" == "0" ]
-		then
-			setProxy
-			rc="${?}"
-
-			if [ "${rc}" == "0" ]
-			then
-				buildJobCommand
-				rc="${?}"
-
-				if [ "${rc}" == "0" ]
-				then
-					return 0
-				else
-					return 1
-				fi
-			else
-				return 2
-			fi
-		else
-			return 3
-		fi
+		return 2
 	else
+		script_stats_watchdog_pid="${!}"
+	fi
+
+	# check if we need additional binaries because of an updated config
+	if ! checkRequiredBinaries
+	then
+		return 3
+	fi
+
+	# set the new config for the logHandler function
+	if ! logHandlerSetConfig
+	then
 		return 4
+	fi
+
+	# get the longest name of functions for field calling function
+	if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
+	then
+		calculateFunctionNameLength
+	fi
+
+	if ! setProxy
+	then
+		return 5
+	fi
+
+	if ! buildJobCommand
+	then
+		return 6
 	fi
 }
 
@@ -556,7 +550,6 @@ checkBin()
 
 checkRequiredBinaries()
 {
-	local rc=
 	local required_binaries=()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
@@ -793,7 +786,7 @@ checkLogHandlerRequirements()
 	fi
 
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-	logHandler "We are using config file: '${script_config_file}'."
+	logHandler "We are using the config file: '${script_config_file}'."
 }
 
 logHandlerStdinHelper()
