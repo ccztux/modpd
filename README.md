@@ -123,7 +123,8 @@ chmod 644 /etc/sysconfig/modpd
 ```
 
 
-Copy the client you want to use (*send_nsca* | *send_nrdp.php*) to the libexec directory of modpd:
+Copy the client you want to use (**send_nsca** | **send_nrdp.php**) to the libexec directory of modpd:
+
 send_nrdp.php:
 [Official NRDP Documentation](https://github.com/NagiosEnterprises/nrdp)
 ```
@@ -136,6 +137,7 @@ chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 ```
 
 send_nsca:
+
 [Official NSCA Documentation](https://github.com/NagiosEnterprises/nsca)
 ```
 cd /tmp
