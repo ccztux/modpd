@@ -131,7 +131,7 @@ chmod 644 /etc/sysconfig/modpd
 
 
 Copy the sample modpd daemon config file:
-```
+```bash
 cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
 
@@ -174,7 +174,7 @@ chkconfig --list modpd
 
 
 Download the latest tarball and extract it:
-```
+```bash
 cd /tmp
 wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
 tar -xvzf nrdp.latest.tar.gz
@@ -183,13 +183,13 @@ cd NagiosEnterprises-nrdp-*
 
 
 Copy the send_nrdp.php script:
-```
+```bash
 cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
 ```
 
 
 Change the file ownership:
-```
+```bash
 chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 ```
 
@@ -199,7 +199,7 @@ chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
 Download the latest tarball and extract it:
-```
+```bash
 cd /tmp
 wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
 tar -xvzf nsca.latest.tar.gz
@@ -208,28 +208,34 @@ cd NagiosEnterprises-nsca-*
 
 
 Build the send_nsca binary:
-```
+```bash
 ./configure
 make send_nsca
 ```
 
 
 Copy the files:
-```
+```bash
 cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
 cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
 ```
 
 
 Change the file ownerships:
-```
+```bash
 chown nagios:nagios /usr/local/modpd/libexec/send_nsca
 chown nagios:nagios /usr/local/nagios/etc/send_nsca.cfg
 ```
 
 
-# Example help output:
+Edit the send_nsca config to meet your requirements:
+```bash
+vim /usr/local/nagios/etc/send_nsca.cfg
 ```
+
+
+# Example help output:
+```bash
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
