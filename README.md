@@ -118,7 +118,7 @@ cp -av ./etc/ /etc/
 ```
 
 
-Change the file ownership:
+Change the file ownerships:
 ```bash
 chown -R nagios:nagios /usr/local/modpd/
 chown root:root /etc/logrotate.d/modpd
@@ -142,7 +142,7 @@ vim /usr/local/modpd/etc/modpd.conf
 ```
 
 
-Start modpd:
+Start the modpd daemon:
 ```bash
 service modpd start
 ```
@@ -171,28 +171,60 @@ chkconfig --list modpd
 ### send_nrdp.php:
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
+
+
+Download the latest tarball and extract it:
 ```
 cd /tmp
 wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
 tar -xvzf nrdp.latest.tar.gz
 cd NagiosEnterprises-nrdp-*
+```
+
+
+Copy the send_nrdp.php script:
+```
 cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
+```
+
+
+Change the file ownership:
+```
 chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 ```
+
 
 ### send_nsca:
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
+
+Download the latest tarball and extract it:
 ```
 cd /tmp
 wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
 tar -xvzf nsca.latest.tar.gz
 cd NagiosEnterprises-nsca-*
+```
+
+
+Build the send_nsca binary:
+```
 ./configure
 make send_nsca
+```
+
+
+Copy the files:
+```
 cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
-chown nagios:nagios /usr/local/modpd/libexec/send_nsca
 cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
+```
+
+
+Change the file ownerships:
+```
+chown nagios:nagios /usr/local/modpd/libexec/send_nsca
+chown nagios:nagios /usr/local/nagios/etc/send_nsca.cfg
 ```
 
 
