@@ -9,7 +9,12 @@
 # modpd
 (**M**onitoring **O**bsessing **D**ata **P**rocessor **D**aemon)
 
-You can use modpd with send_nrdp.php or send_nsca. It increases the performance of an existing Nagios 3.x.x installation greatly, because the obsessing commands will be executed by modpd and not by the nagios process itself. Nagios executes the obsessing command after every check, where obsessing is activated and then Nagios waits, till every obsessing command was executed successfully or timed out.
+modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
+it to a named pip. The daemon part reads the data from the named pipe and sends the check results
+via NRDP or NSCA to another Nagios® server. It increases the performance of an existing Nagios 3.x.x
+installation greatly, because the obsessing commands will be executed by modpd and not by the nagios
+process itself. Nagios executes the obsessing command after every check, where obsessing is activated
+and then Nagios waits, till every obsessing command was executed successfully or timed out.
 
 
 
@@ -107,16 +112,13 @@ grep -i modpd /usr/local/nagios/var/nagios.log
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
-cp -av ./etc/logrotate.d/modpd /etc/logrotate.d/
-cp -av ./etc/init.d/modpd /etc/init.d/
-cp -av ./etc/sysconfig/modpd /etc/sysconfig/
+cp -av ./etc/ /etc/
 ```
 
 
 Change the file ownership:
 ```bash
-chown root:root /usr/local/modpd/
-chown -R nagios:nagios /usr/local/modpd/*
+chown -R nagios:nagios /usr/local/modpd/
 chown root:root /etc/logrotate.d/modpd
 chmod 644 /etc/logrotate.d/modpd
 chown root:root /etc/init.d/modpd
@@ -126,19 +128,44 @@ chmod 644 /etc/sysconfig/modpd
 ```
 
 
-Copy the client you want to use (send_nsca | send_nrdp.php) to the libexec directory of modpd:
+Copy the client you want to use (**send_nsca** or **send_nrdp.php**) to the libexec directory of modpd:
+
+send_nrdp.php:
+
+[Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 ```
-cp -av /path/where/your/client/exists /usr/local/modpd/libexec/
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
+tar -xvzf nrdp.latest.tar.gz
+cd NagiosEnterprises-nrdp-*
+cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
+chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
+```
+
+send_nsca:
+
+[Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
+```
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
+tar -xvzf nsca.latest.tar.gz
+cd NagiosEnterprises-nsca-*
+./configure
+make send_nsca
+cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
+chown nagios:nagios /usr/local/modpd/libexec/send_nsca
+cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
 ```
 
 
-Copy the sample config file:
+
+Copy the sample modpd daemon config file:
 ```
 cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
 
 
-Edit the daemon config to meet your requirements:
+Edit the modpd daemon config to meet your requirements:
 ```bash
 vim /usr/local/modpd/etc/modpd.conf
 ```
@@ -147,6 +174,12 @@ vim /usr/local/modpd/etc/modpd.conf
 Start modpd:
 ```bash
 service modpd start
+```
+
+
+Check if the modpd daemon is running:
+```bash
+service modpd status
 ```
 
 
