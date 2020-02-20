@@ -132,6 +132,12 @@ cp -av /path/where/your/client/exists /usr/local/modpd/libexec/
 ```
 
 
+Copy the sample config file:
+```
+cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+```
+
+
 Edit the config:
 ```bash
 vim /usr/local/modpd/etc/modpd.conf
