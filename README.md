@@ -41,7 +41,7 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 
 
 
-## Optionally binaries which depends on configured features
+## Optionally used binaries which depends on configured features
 - **logger** to log to the system log
 - **systemd-cat** to log to the system journal
 - **timeout** to start the obsessing jobs with a timeout value
@@ -49,15 +49,15 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 
 
 
-## Required for building, compiling and installing of the modpd NEB module
+## Required for building, compiling and installing the modpd NEB module
 - **make** to build the modpd NEB module
 - **gcc** to compile the modpd NEB module
 - **install** to install the modpd NEB module
 - **strip** to strip the modpd NEB binary
 
 
-# Installation:
-## Download the latest sources of modpd:
+# Installation
+## Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
 cd /tmp
@@ -67,7 +67,7 @@ cd ccztux-modpd-*
 ```
 
 
-## Installation of the modpd NEB module part:
+## Installation of the modpd NEB module part
 Build the modpd NEB module:
 ```bash
 make
@@ -110,7 +110,7 @@ grep -i modpd /usr/local/nagios/var/nagios.log
 
 
 
-## Installation of the modpd daemon part:
+## Installation of the modpd daemon part
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
@@ -167,8 +167,8 @@ chkconfig --list modpd
 ```
 
 
-## Installation of the clients:
-### send_nrdp.php:
+## Installation of the clients
+### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 
@@ -194,7 +194,7 @@ chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 ```
 
 
-### send_nsca:
+### send_nsca
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
@@ -207,7 +207,7 @@ cd NagiosEnterprises-nsca-*
 ```
 
 
-Build the send_nsca binary:
+Build and compile the send_nsca binary:
 ```bash
 ./configure
 make send_nsca
@@ -234,7 +234,7 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 ```
 
 
-# Example help output:
+# Example help output
 ```bash
 Usage: modpd OPTIONS
 
@@ -252,7 +252,7 @@ OPTIONS:
 
 
 
-# Default sample config:
+# Default sample config
 ```bash
 #=====================================================
 #
@@ -427,7 +427,7 @@ stats_interval="300"
 
 
 
-# Example log:
+# Example log
 ```
 2020-02-20 10:14:45 |   1677 | checkLogHandlerRequirements | modpd 2.1.0-beta1 starting... (PID=1677)
 2020-02-20 10:14:45 |   1677 | checkLogHandlerRequirements | We are using config file: '/usr/local/modpd/etc/modpd.conf'.
