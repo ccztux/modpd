@@ -260,7 +260,6 @@ OPTIONS:
 #
 #=====================================================
 
-
 #-------------------
 # Obsessing settings
 #-------------------
@@ -418,10 +417,10 @@ job_command_log_ok="0"
 # Stats
 #------
 
-# enable statistic logging
+# enable stats logging
 stats_enabled="1"
 
-# interval in seconds on which the statistic should be logged
+# interval in seconds when the stats should be logged
 stats_interval="300"
 ```
 
