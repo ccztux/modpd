@@ -499,7 +499,7 @@ Stopping modpd                                             [  OK  ]
 
 
 ## modpd NEB module log snippet
-```bash
+```
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
 [1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.0-beta1
 [1582272717] modpd: Starting...
