@@ -1,7 +1,7 @@
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/master?label=shellcheck%28master%29)](https://travis-ci.org/ccztux/modpd)
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/devel?label=shellcheck%28devel%29)](https://travis-ci.org/ccztux/modpd)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ccztux/modpd?label=latest%20release)](https://github.com/ccztux/modpd/releases/latest)
-[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/modpd/releases/tag/2.1.0)
+[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/modpd/releases/tag/2.1.1-beta1)
 [![GitHub](https://img.shields.io/github/license/ccztux/modpd?color=yellowgreen)](https://github.com/ccztux/modpd/blob/master/LICENSE)
 
 
@@ -240,7 +240,7 @@ Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
 Last modification:      2020-02-20
-Version:                2.1.0
+Version:                2.1.1-beta1
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
@@ -436,7 +436,7 @@ modpd (PID 7498) is running                                [  OK  ]
 Stopping modpd                                             [  OK  ]
 
 [root@lab01]:~# grep 7498 /usr/local/modpd/var/log/modpd.log
-2020-02-21 09:26:16 |   7498 | checkLogHandlerRequirements | modpd 2.1.0 starting... (PID=7498)
+2020-02-21 09:26:16 |   7498 | checkLogHandlerRequirements | modpd 2.1.1-beta1 starting... (PID=7498)
 2020-02-21 09:26:16 |   7498 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'.
 2020-02-21 09:26:16 |   7498 |                     getUser | Get user which starts the script...
 2020-02-21 09:26:16 |   7498 |                     getUser | modpd was started as user: 'nagios'.
@@ -500,7 +500,7 @@ Stopping modpd                                             [  OK  ]
 ## modpd NEB module log snippet
 ```
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.0
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.1-beta1
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 [1582273017] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10278 (OK: 10278/NOK: 0), Services: 7430 (OK: 7430/NOK: 0) ***

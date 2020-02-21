@@ -11,7 +11,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-02-20
 #
-#  Version				2.1.0
+#  Version				2.1.1-beta1
 #
 #  Description:			Makefile for the modpd NEB module
 #
