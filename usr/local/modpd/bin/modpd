@@ -402,7 +402,7 @@ secondsToTime()
 	local minutes="$(( (seconds_to_convert / 60) % 60 ))"
 	local seconds="$(( seconds_to_convert % 60 ))"
 
-	printf "%s days, %s hours, %s minutes, %s seconds\\n" "${days}" "${hours}" "${minutes}" "${seconds}"
+	printf "%sd %sh %sm %ss\\n" "${days}" "${hours}" "${minutes}" "${seconds}"
 }
 
 logStats()
