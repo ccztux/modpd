@@ -408,12 +408,24 @@ secondsToTime()
 logStats()
 {
 	local uptime=
+	local timediff=
+	local current_time=
 	uptime="$(secondsToTime "${SECONDS}")"
+	current_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
 
-	logHandler "---- Stats for the last ${stats_interval} seconds ----"
+	if [ -z "${last_stats_logged}" ]
+	then
+		timediff="$(( current_time - script_start_time ))"
+	else
+		timediff="$(( current_time - last_stats_logged ))"
+	fi
+
+	logHandler "---- Stats for the last ${timediff} seconds ----"
 	logHandler "${script_name} is running: ${uptime}"
 	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
 	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
+
+	last_stats_logged="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
 }
 
 resetCounters()
@@ -775,6 +787,8 @@ checkLogDir()
 
 checkLogHandlerRequirements()
 {
+	script_start_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+
 	if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
 	then
 		calculateFunctionNameLength
@@ -1605,11 +1619,12 @@ then
 	script_bypass_exit_routines="0"
 	script_config_file_included="0"
 	script_log_requirements_ok="0"
+	script_shutdown_in_progress="0"
+	script_start_time=
 	script_exit_code="255"
 	script_stats_watchdog_pid=
 	script_job_pid_1=
 	script_job_pid_2=
-	script_shutdown_in_progress="0"
 	script_host_counter="0"
 	script_service_counter="0"
 	script_invalid_data_counter="0"
