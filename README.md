@@ -247,6 +247,12 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
 
+# Upgrading modpd
+1. Follow the [installation guide](https://github.com/ccztux/modpd#Installation) and overwrite all existing files
+2. Merge possible changes of the new ```modpd.sample.conf``` with you productive one ```/usr/local/modpd/etc/modpd.conf```
+using the tool of your choice like vimdiff
+
+
 # Example help output
 ```bash
 Usage: modpd OPTIONS
@@ -262,13 +268,6 @@ OPTIONS:
    -c           Path to config file. (Default: /usr/local/modpd/etc/modpd.conf)
    -v           Shows detailed version information.
 ```
-
-
-# Upgrading modpd
-1. Follow the [installation guide](https://github.com/ccztux/modpd#Installation) and overwrite all existing files
-2. Merge possible changes of the new ```modpd.sample.conf``` with you productive one ```/usr/local/modpd/etc/modpd.conf```
-using the tool of your choice like vimdiff
-
 
 
 # Default sample config
