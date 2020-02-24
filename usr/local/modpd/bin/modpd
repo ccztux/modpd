@@ -1084,7 +1084,7 @@ checkNamedPipePermissions()
 			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
-		file_permission="$(( file_permission + 2#1010 ))"
+		file_permission="$(( 2#1010 ))"
 	fi
 
 	return "${file_permission}"
@@ -1134,7 +1134,7 @@ checkFilePermissions()
 			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
-		file_permission="$(( file_permission + 2#1010 ))"
+		file_permission="$(( 2#1010 ))"
 	fi
 
 	return "${file_permission}"
@@ -1183,7 +1183,7 @@ checkDirectoryPermissions()
 			directory_permission="$(( directory_permission + 2#0100 ))"
 		fi
 	else
-		directory_permission="$(( directory_permission + 2#1010 ))"
+		directory_permission="$(( 2#1010 ))"
 	fi
 
 	return "${directory_permission}"
