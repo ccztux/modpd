@@ -264,6 +264,12 @@ OPTIONS:
 ```
 
 
+# Upgrading modpd
+1. Follow the [installation guide](https://github.com/ccztux/modpd#Installation) and overwrite all existing files
+2. Merge possible changes of the new ```modpd.sample.conf``` with you productive one ```/usr/local/modpd/etc/modpd.conf```
+using the tool of your choice like vimdiff
+
+
 
 # Default sample config
 ```bash
