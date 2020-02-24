@@ -57,7 +57,7 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 
 
 # Installation
-## Nagios® site with active checks
+## Installation on the Nagios® site with active checks
 ### Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
@@ -235,8 +235,8 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 ```
 
 
-## Nagios® site with passive checks
-### Installation of the server (of your choice)
+## Installation on the Nagios® site with passive checks
+### Installation of the server software (of your choice)
 #### NRDP
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
