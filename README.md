@@ -57,7 +57,8 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 
 
 # Installation
-## Download the latest sources of modpd
+## Installation on the Nagios® site with active checks
+### Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
 cd /tmp
@@ -67,7 +68,7 @@ cd ccztux-modpd-*
 ```
 
 
-## Installation of the modpd NEB module part
+### Installation of the modpd NEB module part
 Build the modpd NEB module:
 ```bash
 make
@@ -110,7 +111,7 @@ grep -i modpd /usr/local/nagios/var/nagios.log
 
 
 
-## Installation of the modpd daemon part
+### Installation of the modpd daemon part
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
@@ -167,8 +168,8 @@ chkconfig --list modpd
 ```
 
 
-## Installation of the clients (of your choice)
-### send_nrdp.php
+### Installation of the clients (of your choice)
+#### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 
@@ -194,7 +195,7 @@ chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 ```
 
 
-### send_nsca
+#### send_nsca
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
@@ -232,6 +233,18 @@ Edit the send_nsca config to meet your requirements:
 ```bash
 vim /usr/local/nagios/etc/send_nsca.cfg
 ```
+
+
+## Installation on the Nagios® site with passive checks
+### Installation of the server software (of your choice)
+#### NRDP
+
+[Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
+
+
+#### NSCA
+
+[Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
 
 # Example help output
