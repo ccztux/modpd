@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-02-24
 #
-#  Version				2.1.1
+#  Version				2.1.2
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -1084,7 +1084,7 @@ checkNamedPipePermissions()
 			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
-		file_permission="$(( 2#1010 ))"
+		file_permission="$(( 2.1.20 ))"
 	fi
 
 	return "${file_permission}"
@@ -1134,7 +1134,7 @@ checkFilePermissions()
 			file_permission="$(( file_permission + 2#0100 ))"
 		fi
 	else
-		file_permission="$(( 2#1010 ))"
+		file_permission="$(( 2.1.20 ))"
 	fi
 
 	return "${file_permission}"
@@ -1183,7 +1183,7 @@ checkDirectoryPermissions()
 			directory_permission="$(( directory_permission + 2#0100 ))"
 		fi
 	else
-		directory_permission="$(( 2#1010 ))"
+		directory_permission="$(( 2.1.20 ))"
 	fi
 
 	return "${directory_permission}"
@@ -1574,7 +1574,7 @@ then
 	script_pid="${$}"
 	script_argc="${#}"
 	script_name="${0##*/}"
-	script_version="2.1.1"
+	script_version="2.1.2"
 	script_author="Christian Zettel (ccztux)"
 	script_copyright="Copyright © 2017-2020 ${script_author} (ccztux), all rights reserved"
 	script_project_website="https://github.com/ccztux/modpd"
