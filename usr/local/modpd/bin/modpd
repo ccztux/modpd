@@ -103,7 +103,8 @@ propagateSignalToChilds()
 {
 	local signal="${1}"
 
-	${kill_bin} -"${signal}" -"${script_pid}"
+	# shellcheck disable=SC2154
+	${kill_bin:=kill} -"${signal}" -"${script_pid}"
 }
 
 
@@ -414,7 +415,7 @@ logStatsWatchdog()
 		if [ "${stats_interval_helper}" -le "${SECONDS}" ]
 		then
 			# shellcheck disable=SC2154
-			${kill_bin} -SIGUSR1 "${script_pid}"
+			${kill_bin:=kill} -SIGUSR1 "${script_pid}"
 			stats_interval_helper="$(( SECONDS + stats_interval ))"
 		fi
 
