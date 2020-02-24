@@ -130,28 +130,17 @@ signalHandler()
 			resetCounters
 			;;
 		SIGTERM)
-			if [ "${script_shutdown_in_progress}" != "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
+			logHandler "Caught: '${signal}', preparing for exiting..."
 			script_exit_code="143"
 			exit
 			;;
 		SIGINT)
-			if [ "${script_shutdown_in_progress}" != "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
+			logHandler "Caught: '${signal}', preparing for exiting..."
 			script_exit_code="130"
 			exit
 			;;
 		SIGHUP)
-			if [ "${script_shutdown_in_progress}" != "1" ]
-			then
-				logHandler "Caught: '${signal}', reloading..."
-			fi
+			logHandler "Caught: '${signal}', reloading..."
 
 			if reloadHandler
 			then
@@ -161,30 +150,17 @@ signalHandler()
 			fi
 			;;
 		SIGABRT)
-			if [ "${script_shutdown_in_progress}" != "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
+			logHandler "Caught: '${signal}', preparing for exiting..."
 			script_exit_code="134"
 			exit
 			;;
 		SIGQUIT)
-			if [ "${script_shutdown_in_progress}" != "1" ]
-			then
-				logHandler "Caught: '${signal}', preparing for exiting..."
-			fi
-
-
+			logHandler "Caught: '${signal}', preparing for exiting..."
 			script_exit_code="129"
 			exit
 			;;
 		ERR)
-			if [ "${script_shutdown_in_progress}" != "1" ]
-			then
-				logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'."
-			fi
-
+			logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'."
 			script_exit_code="1"
 			exit
 			;;
@@ -220,16 +196,7 @@ signalHandler()
 				logHandler "Bye, bye..."
 			fi
 
-			if [ -n "${kill_bin:-}" ]
-			then
-				if [ "${signal}" != "EXIT" ]
-				then
-					${kill_bin} -s "${signal}" -- -"${script_pid}"
-				else
-					script_shutdown_in_progress="1"
-					${kill_bin} -s SIGTERM -- -"${script_pid}"
-				fi
-			fi
+			${kill_bin:=kill} -s SIGTERM -- -"${script_pid}"
 
 			exit ${script_exit_code}
 			;;
@@ -1619,7 +1586,6 @@ then
 	script_bypass_exit_routines="0"
 	script_config_file_included="0"
 	script_log_requirements_ok="0"
-	script_shutdown_in_progress="0"
 	script_start_time=
 	script_exit_code="255"
 	script_stats_watchdog_pid=
