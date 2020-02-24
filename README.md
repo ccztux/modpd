@@ -247,6 +247,15 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
 
+# Upgrading modpd
+1. Follow the guide [Installation on the Nagios® site with active checks](https://github.com/ccztux/modpd#installation-on-the-nagios-site-with-active-checks) and overwrite all existing files
+2. Merge possible changes between the new sample config ```/usr/local/modpd/etc/modpd.sample.conf``` and your productive one ```/usr/local/modpd/etc/modpd.conf``` using the tool of your choice like ```vimdiff```.
+3. Restart nagios ```service nagios restart```
+4. Check if nagios is running ```service nagios status```
+5. Restart the modpd daemon ```service modpd restart```
+6. Check if the modpd daemon is running ```service modpd status```
+
+
 # Example help output
 ```bash
 Usage: modpd OPTIONS
@@ -262,7 +271,6 @@ OPTIONS:
    -c           Path to config file. (Default: /usr/local/modpd/etc/modpd.conf)
    -v           Shows detailed version information.
 ```
-
 
 
 # Default sample config
