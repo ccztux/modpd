@@ -79,20 +79,6 @@ then
 	exit 247
 fi
 
-if ! trap 'signalHandler SIGABRT' SIGABRT
-then
-	eprintf "Setting trap for signal: 'SIGABRT' was not successful."
-	eprintf "Terminating..."
-	exit 247
-fi
-
-if ! trap 'signalHandler SIGQUIT' SIGQUIT
-then
-	eprintf "Setting trap for signal: 'SIGQUIT' was not successful."
-	eprintf "Terminating..."
-	exit 247
-fi
-
 if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
 then
 	eprintf "Setting trap for signal: 'ERR' was not successful."
@@ -106,6 +92,19 @@ then
 	eprintf "Terminating..."
 	exit 247
 fi
+
+
+
+#------------------------
+# propagateSignalToChilds
+#------------------------
+
+propagateSignalToChilds()
+{
+	local signal="${1}"
+
+	${kill_bin} -"${signal}" -"${script_pid}"
+}
 
 
 
@@ -131,11 +130,19 @@ signalHandler()
 			;;
 		SIGTERM)
 			logHandler "Caught: '${signal}', preparing for exiting..."
+
+			# propagate signal to all childs
+			propagateSignalToChilds "${signal}"
+
 			script_exit_code="143"
 			exit
 			;;
 		SIGINT)
 			logHandler "Caught: '${signal}', preparing for exiting..."
+
+			# propagate signal to all childs
+			propagateSignalToChilds "${signal}"
+
 			script_exit_code="130"
 			exit
 			;;
@@ -148,16 +155,6 @@ signalHandler()
 			else
 				logHandler "Config reload was not successful."
 			fi
-			;;
-		SIGABRT)
-			logHandler "Caught: '${signal}', preparing for exiting..."
-			script_exit_code="134"
-			exit
-			;;
-		SIGQUIT)
-			logHandler "Caught: '${signal}', preparing for exiting..."
-			script_exit_code="129"
-			exit
 			;;
 		ERR)
 			logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'."
@@ -196,12 +193,14 @@ signalHandler()
 				logHandler "Bye, bye..."
 			fi
 
-			${kill_bin:=kill} -s SIGTERM -- -"${script_pid}"
-
 			exit ${script_exit_code}
 			;;
 		*)
 			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
+
+			# propagate signal to all childs
+			propagateSignalToChilds "${signal}"
+
 			return 1
 			;;
 	esac
