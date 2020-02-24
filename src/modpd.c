@@ -143,23 +143,35 @@ int nebmodule_deinit(int flags, int reason)
 void log_modpd_stats()
 {
 	char temp_buffer[1024];
+	int days, hours, minutes, seconds;
 	unsigned int host_cmds_total_counter = 0;
 	unsigned int service_cmds_total_counter = 0;
+	unsigned int uptime;
 	unsigned int timediff;
 	time_t current_time;
 
+	/* calculation of the modpd NEB module uptime */
 	time(&current_time);
+	uptime = current_time - start_time;
+	get_time_breakdown(uptime, &days, &hours, &minutes, &seconds);
 
+	/* log our uptime to the Nagios log file */
+	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: The modpd NEB module is running %dd %dh %dm %ds", days, hours, minutes, seconds);
+	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
+	write_to_all_logs(temp_buffer, NSLOG_INFO_MESSAGE);
+
+	/* calculation of stats data */
+	host_cmds_total_counter = host_cmds_ok_counter + host_cmds_nok_counter;
+	service_cmds_total_counter = service_cmds_ok_counter + service_cmds_nok_counter;
+
+	/* calculation of the timediff between now and the last time stats were logged */
 	if (last_stats_logged == '\x0') {
 		timediff = current_time - start_time;
 	} else {
 		timediff = current_time - last_stats_logged;
 	}
 
-	host_cmds_total_counter = host_cmds_ok_counter + host_cmds_nok_counter;
-	service_cmds_total_counter = service_cmds_ok_counter + service_cmds_nok_counter;
-
-	/* log a message to the Nagios log file */
+	/* log the stats to the Nagios log file */
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: *** Stats of processed checks for the last %u seconds: Hosts: %u (OK: %u/NOK: %u), Services: %u (OK: %u/NOK: %u) ***\n", timediff, host_cmds_total_counter, host_cmds_ok_counter, host_cmds_nok_counter, service_cmds_total_counter, service_cmds_ok_counter, service_cmds_nok_counter);
 	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
 	write_to_all_logs(temp_buffer, NSLOG_INFO_MESSAGE);
