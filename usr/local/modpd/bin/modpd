@@ -380,7 +380,7 @@ logStats()
 	uptime="$(secondsToTime "${SECONDS}")"
 	current_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
 
-	if [ -z "${last_stats_logged}" ]
+	if [ -z "${last_stats_logged:-}" ]
 	then
 		timediff="$(( current_time - script_start_time ))"
 	else
@@ -1379,44 +1379,53 @@ _main()
 
 
 
+#----------------------
+# Script info variables
+#----------------------
+
+script_pid="${$}"
+script_argc="${#}"
+script_name="${0##*/}"
+script_version="2.1.3"
+script_author="Christian Zettel (ccztux)"
+script_copyright="Copyright © 2017-2020 ${script_author} (ccztux), all rights reserved"
+script_project_website="https://github.com/ccztux/modpd"
+script_last_modification_date="2020-02-24"
+script_minimal_required_bash_version="3"
+script_license="GNU GPLv2"
+script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
+script_another_instance_is_running="0"
+script_bypass_exit_routines="0"
+script_config_file_included="0"
+script_log_requirements_ok="0"
+script_start_time=
+script_exit_code="255"
+script_stats_watchdog_pid=
+script_job_pid_1=
+script_job_pid_2=
+script_host_counter="0"
+script_service_counter="0"
+script_invalid_data_counter="0"
+script_job_counter_total="0"
+script_job_counter_ok="0"
+script_job_counter_nok="0"
+script_job_counter_timeout="0"
+script_job_data=()
+
+
+
 #------
 # Start
 #------
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
-	#----------------------
-	# Script info variables
-	#----------------------
+	#-------------------------------------
+	# Set required bash and shell options:
+	#-------------------------------------
 
-	script_pid="${$}"
-	script_argc="${#}"
-	script_name="${0##*/}"
-	script_version="2.1.3"
-	script_author="Christian Zettel (ccztux)"
-	script_copyright="Copyright © 2017-2020 ${script_author} (ccztux), all rights reserved"
-	script_project_website="https://github.com/ccztux/modpd"
-	script_last_modification_date="2020-02-24"
-	script_minimal_required_bash_version="3"
-	script_license="GNU GPLv2"
-	script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
-	script_another_instance_is_running="0"
-	script_bypass_exit_routines="0"
-	script_config_file_included="0"
-	script_log_requirements_ok="0"
-	script_start_time=
-	script_exit_code="255"
-	script_stats_watchdog_pid=
-	script_job_pid_1=
-	script_job_pid_2=
-	script_host_counter="0"
-	script_service_counter="0"
-	script_invalid_data_counter="0"
-	script_job_counter_total="0"
-	script_job_counter_ok="0"
-	script_job_counter_nok="0"
-	script_job_counter_timeout="0"
-	script_job_data=()
+	setRequiredShellOptions
+	setRequiredBashOptions
 
 
 
@@ -1471,6 +1480,11 @@ then
 	_main "${@}"
 	exit
 else
-	logHandler "\\nThis is NOT a bash library. Execute it directly!\\n\\n"
-	exit 1
+	#--------------------------------------------------------
+	# In case of an include attempt, write output and return:
+	#--------------------------------------------------------
+
+	trap - ERR
+	logHandler "\\n${BASH_SOURCE[0]##*/} is NOT a bash library. Execute it directly!\\n"
+	return 1
 fi
