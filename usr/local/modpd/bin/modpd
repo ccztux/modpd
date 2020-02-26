@@ -130,7 +130,7 @@ signalHandler()
 			resetCounters
 			;;
 		SIGTERM)
-			logHandler "Caught: '${signal}', preparing for exiting..."
+			logHandler "Caught: '${signal}', preparing for shutdown..."
 
 			# propagate signal to all childs
 			propagateSignalToChilds "${signal}"
@@ -139,7 +139,7 @@ signalHandler()
 			exit
 			;;
 		SIGINT)
-			logHandler "Caught: '${signal}', preparing for exiting..."
+			logHandler "Caught: '${signal}', preparing for shutdown..."
 
 			# propagate signal to all childs
 			propagateSignalToChilds "${signal}"
@@ -152,13 +152,13 @@ signalHandler()
 
 			if reloadHandler
 			then
-				logHandler "Config reload was successful."
+				logHandler "Config reload was successful"
 			else
-				logHandler "Config reload was not successful."
+				logHandler "Config reload was not successful"
 			fi
 			;;
 		ERR)
-			logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'."
+			logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'"
 			script_exit_code="1"
 			exit
 			;;
@@ -167,7 +167,7 @@ signalHandler()
 			then
 				logStats
 
-				logHandler "Caught: '${signal}', exiting script..."
+				logHandler "Caught: '${signal}', shutting down..."
 
 				if [ "${script_bypass_exit_routines}" != "1" ]
 				then
@@ -189,8 +189,8 @@ signalHandler()
 
 				uptime="$(secondsToTime "${SECONDS}")"
 
-				logHandler "Exitcode: '${script_exit_code}'."
-				logHandler "${script_name} was running: ${uptime}."
+				logHandler "Exitcode: '${script_exit_code}'"
+				logHandler "${script_name} was running: ${uptime}"
 				logHandler "Bye, bye..."
 			fi
 
@@ -389,8 +389,8 @@ logStats()
 
 	logHandler "---- Stats for the last ${timediff} seconds ----"
 	logHandler "${script_name} is running: ${uptime}"
-	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'."
-	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'."
+	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'"
+	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'"
 
 	last_stats_logged="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
 }
@@ -582,12 +582,12 @@ checkRequiredBinaries()
 		binaries_not_found_helper="${binaries_not_found[*]}"
 		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
 
-		logHandler "Required binaries: '${binaries_not_found_helper}' not found, exiting."
+		logHandler "Required binaries: '${binaries_not_found_helper}' not found, terminating"
 		script_exit_code="127"
 		exit
 	elif [ "${#binaries_not_found[@]}" -eq "1" ]
 	then
-		logHandler "Required binary: '${binaries_not_found[*]}' not found, exiting."
+		logHandler "Required binary: '${binaries_not_found[*]}' not found, terminating"
 		script_exit_code="127"
 		exit
 	fi
@@ -604,7 +604,7 @@ includeConfig()
 		then
 			script_config_file_included="1"
 		else
-			logHandler "Including config file: '${script_config_file}' was not successful."
+			logHandler "Including config file: '${script_config_file}' was not successful"
 			logHandler "Terminating..."
 
 			script_bypass_exit_routines="1"
@@ -613,7 +613,7 @@ includeConfig()
 		fi
 	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 	then
-		logHandler "Config file: '${script_config_file}' does not exist."
+		logHandler "Config file: '${script_config_file}' does not exist"
 		logHandler "Terminating..."
 
 		script_bypass_exit_routines="1"
@@ -621,7 +621,7 @@ includeConfig()
 		exit
 	elif [ "$(( file_permission & b_regular_file_is_not_empty ))" -eq "0" ]
 	then
-		logHandler "Config file: '${script_config_file}' exists, but is empty."
+		logHandler "Config file: '${script_config_file}' exists, but is empty"
 		logHandler "Terminating..."
 
 		script_bypass_exit_routines="1"
@@ -629,7 +629,7 @@ includeConfig()
 		exit
 	elif [ "$(( file_permission & b_permission_read ))" -eq "0" ]
 	then
-		logHandler "Config file: '${script_config_file}' exists, but it is not readable."
+		logHandler "Config file: '${script_config_file}' exists, but it is not readable"
 		logHandler "Terminating..."
 
 		script_bypass_exit_routines="1"
@@ -720,7 +720,7 @@ checkLogDir()
 
 		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -eq "0" ]
 		then
-			logHandler "Log file exists but we dont have write permissions, exiting."
+			logHandler "Log file exists but we dont have write permissions, terminating"
 			script_bypass_exit_routines="1"
 			script_exit_code="30"
 			exit
@@ -730,22 +730,22 @@ checkLogDir()
 		fi
 	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 	then
-		logHandler "Log directory doesnt exist."
+		logHandler "Log directory doesnt exist"
 		logHandler "Creating log directory..."
 
 		# shellcheck disable=SC2154
 		if ${mkdir_bin} -p "${script_log_directory}" 2>&1 | logHandler
 		then
-			logHandler "Creating log directory was successful."
+			logHandler "Creating log directory was successful"
 			script_log_requirements_ok="1"
 		else
-			logHandler "Creating log directory was not successful."
+			logHandler "Creating log directory was not successful"
 			script_bypass_exit_routines="1"
 			script_exit_code="31"
 			exit
 		fi
 	else
-		logHandler "Log directory exists but permissions are not ok, exiting."
+		logHandler "Log directory exists but permissions are not ok, terminating"
 		script_bypass_exit_routines="1"
 		script_exit_code="32"
 		exit
@@ -767,7 +767,7 @@ checkLogHandlerRequirements()
 	fi
 
 	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-	logHandler "We are using the config file: '${script_config_file}'."
+	logHandler "We are using the config file: '${script_config_file}'"
 }
 
 logHandlerStdinHelper()
@@ -866,14 +866,14 @@ checkLock()
 
 	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 	then
-		logHandler "Lock file exists and it is read/writeable."
+		logHandler "Lock file exists and it is read/writeable"
 		return 0
 	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 	then
-		logHandler "Lock file doesnt exist."
+		logHandler "Lock file doesnt exist"
 		return 1
 	else
-		logHandler "Lock file exists, but it is not read/writeable."
+		logHandler "Lock file exists, but it is not read/writeable"
 		return 2
 	fi
 }
@@ -886,23 +886,23 @@ setLock()
 
 	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 	then
-		logHandler "Script lock directory exists and permissions are ok."
+		logHandler "Script lock directory exists and permissions are ok"
 	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 	then
-		logHandler "Script lock directory doesnt exist."
+		logHandler "Script lock directory doesnt exist"
 		logHandler "Creating script lock directory..."
 
 		# shellcheck disable=SC2154
 		if ${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
 		then
-			logHandler "Creating script lock directory was successful."
+			logHandler "Creating script lock directory was successful"
 		else
-			logHandler "Creating script lock directory was not successful."
+			logHandler "Creating script lock directory was not successful"
 			script_exit_code="40"
 			exit
 		fi
 	else
-		logHandler "Script lock directory exists but permissions are not ok, exiting."
+		logHandler "Script lock directory exists but permissions are not ok, terminating"
 		script_exit_code="41"
 		exit
 	fi
@@ -911,9 +911,9 @@ setLock()
 
 	if printf "%d" "${script_pid}" >"${script_lock_file}"
 	then
-		logHandler "Setting lock was successful."
+		logHandler "Setting lock was successful"
 	else
-		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
+		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock"
 		script_exit_code="42"
 		exit
 	fi
@@ -926,9 +926,9 @@ removeLock()
 	# shellcheck disable=SC2154
 	if ${rm_bin} "${script_lock_file}" 2>&1 | logHandler
 	then
-		logHandler "Removing lock was successful."
+		logHandler "Removing lock was successful"
 	else
-		logHandler "Removing lock was not successful."
+		logHandler "Removing lock was not successful"
 		script_exit_code="50"
 		exit
 	fi
@@ -966,7 +966,7 @@ setProxy()
 		export FTP_PROXY="${proxy}"
 		export SOCKS_PROXY="${proxy}"
 
-		logHandler "We build the following proxy config: '${proxy}'."
+		logHandler "We build the following proxy config: '${proxy}'"
 	fi
 }
 
@@ -1025,19 +1025,19 @@ checkBashVersion()
 
 	if [ -z "${BASH_VERSINFO[0]}" ]
 	then
-		logHandler "Could not determine bash version, exiting."
+		logHandler "Could not determine bash version, terminating"
 		script_exit_code="60"
 		exit
 	else
 		if [ "${BASH_VERSINFO[0]}" -lt "${script_minimal_required_bash_version}" ]
 		then
-			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating"
 
 			script_bypass_exit_routines="1"
 			script_exit_code="61"
 			exit
 		else
-			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements"
 		fi
 	fi
 }
@@ -1056,7 +1056,7 @@ getExecUser()
 		script_exec_user="$(${whoami_bin})"
 	fi
 
-	logHandler "${script_name} was started as user: '${script_exec_user}'."
+	logHandler "${script_name} was started as user: '${script_exec_user}'"
 }
 
 checkAlreadyRunningInstance()
@@ -1092,24 +1092,24 @@ checkAlreadyRunningInstance()
 
 	if [ "${rc}" != "0" ] && [ -z "${running_script_pids[*]:-}" ]
 	then
-		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)."
+		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)"
 		setLock
 	elif [ "${rc}" == "0" ] && [ -z "${running_script_pids[*]:-}" ]
 	then
-		logHandler "No other instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally."
+		logHandler "No other instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally"
 		logHandler "We try to remove the old, leftover lockfile..."
 
 		removeLock
 	elif [ "${rc}" == "0" ] && [ -n "${running_script_pids[*]:-}" ]
 	then
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)."
+		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)"
 
 		script_another_instance_is_running="1"
 		script_exit_code="70"
 		exit
 	elif [ "${rc}" != "0" ] && [ -n "${running_script_pids[*]:-}" ]
 	then
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)."
+		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)"
 
 		script_another_instance_is_running="1"
 		script_exit_code="71"
@@ -1126,9 +1126,9 @@ createNamedPipe()
 		# shellcheck disable=SC2154
 		if ${mkfifo_bin} "${named_pipe_filename}" 2>&1 | logHandler
 		then
-			logHandler "Creating named pipe was successful."
+			logHandler "Creating named pipe was successful"
 		else
-			logHandler "Creating named pipe was not successful, exiting."
+			logHandler "Creating named pipe was not successful, terminating"
 			script_exit_code="80"
 			exit
 		fi
@@ -1144,12 +1144,12 @@ removeNamedPipe()
 	# shellcheck disable=SC2154
 	if ${rm_bin} "${named_pipe_filename}" 2>&1 | logHandler
 	then
-		logHandler "Removing named pipe was successful."
+		logHandler "Removing named pipe was successful"
 
 		exec 3>&-
 		exec 3<&-
 	else
-		logHandler "Removing named pipe was not successful, exiting."
+		logHandler "Removing named pipe was not successful, terminating"
 		script_exit_code="90"
 		exit
 	fi
@@ -1163,14 +1163,14 @@ checkNamedPipe()
 
 	if [ "$(( file_permission & b_is_named_pipe ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 	then
-		logHandler "Named pipe exists and it is read/writeable."
+		logHandler "Named pipe exists and it is read/writeable"
 		return 1
 	elif [ "$(( file_permission & b_is_named_pipe ))" -eq "0" ]
 	then
-		logHandler "Named pipe doesnt exist."
+		logHandler "Named pipe doesnt exist"
 		return 0
 	else
-		logHandler "Named pipe exists, but it is not read/writeable, exiting."
+		logHandler "Named pipe exists, but it is not read/writeable, terminating"
 		script_exit_code="100"
 		exit
 	fi
@@ -1201,13 +1201,13 @@ buildJobCommand()
 			job_command="${job_command} ${script_libexec_directory}/send_nsca -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
 			;;
 		*)
-			logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', exiting."
+			logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', terminating"
 			script_exit_code="110"
 			exit
 			;;
 	esac
 
-	logHandler "We build the following job command: '${job_command}'."
+	logHandler "We build the following job command: '${job_command}'"
 }
 
 jobExec()
@@ -1240,7 +1240,7 @@ counterHandler()
 
 		if [ "${job_command_log_ok}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' was successful."
+			logHandler "Command: '${job_command}' was successful"
 		fi
 	elif [ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
 	then
@@ -1248,14 +1248,14 @@ counterHandler()
 
 		if [ "${job_command_log_timeout}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' timed out."
+			logHandler "Command: '${job_command}' timed out"
 		fi
 	else
 		script_job_counter_nok="$(( script_job_counter_nok + 1 ))"
 
 		if [ "${job_command_log_nok}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' was not successful."
+			logHandler "Command: '${job_command}' was not successful"
 		fi
 	fi
 }
@@ -1327,7 +1327,7 @@ dataProcessor()
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
-				logHandler "Invalid dataset received: '${REPLY}'."
+				logHandler "Invalid dataset received: '${REPLY}'"
 			fi
 		fi
 
@@ -1368,7 +1368,7 @@ _main()
 		dataProcessor
 		logHandler "Data processor left in main loop, maybe the named pipe '${named_pipe_filename}' doesnt exist"
 		# shellcheck disable=SC2154
-		${sleep_bin} 5
+		${sleep_bin} 10
 	done
 }
 
