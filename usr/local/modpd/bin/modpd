@@ -1212,7 +1212,7 @@ checkBashVersion()
 	fi
 }
 
-getUser()
+getExecUser()
 {
 	local script_exec_user=
 
@@ -1538,7 +1538,7 @@ _main()
 	checkRequiredBinaries
 	logHandlerSetConfig
 	checkLogHandlerRequirements
-	getUser
+	getExecUser
 	checkBashVersion
 	checkAlreadyRunningInstance
 	logStatsWatchdog &
