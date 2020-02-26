@@ -1407,10 +1407,7 @@ jobExec()
 			printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" > /dev/null 2>&1 | logHandler
 			;;
 		nsca)
-			for data in "${script_job_data[@]}"
-			do
-				printf "%s\\n\\x17" "${data}"
-			done | eval "${job_command}" > /dev/null 2>&1 | logHandler
+			printf "%s\\n\\x17" "${script_job_data[@]}" | eval "${job_command}" > /dev/null 2>&1 | logHandler
 			;;
 	esac
 
