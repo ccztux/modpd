@@ -430,7 +430,7 @@ checkCliOptions()
 	then
 		printUsage
 		script_bypass_exit_routines="1"
-		script_exit_code="30"
+		script_exit_code="10"
 		exit
 	fi
 }
@@ -722,7 +722,7 @@ checkLogDir()
 		then
 			logHandler "Log file exists but we dont have write permissions, exiting."
 			script_bypass_exit_routines="1"
-			script_exit_code="10"
+			script_exit_code="30"
 			exit
 		else
 			script_log_requirements_ok="1"
@@ -741,13 +741,13 @@ checkLogDir()
 		else
 			logHandler "Creating log directory was not successful."
 			script_bypass_exit_routines="1"
-			script_exit_code="11"
+			script_exit_code="31"
 			exit
 		fi
 	else
 		logHandler "Log directory exists but permissions are not ok, exiting."
 		script_bypass_exit_routines="1"
-		script_exit_code="12"
+		script_exit_code="32"
 		exit
 	fi
 }
@@ -898,12 +898,12 @@ setLock()
 			logHandler "Creating script lock directory was successful."
 		else
 			logHandler "Creating script lock directory was not successful."
-			script_exit_code="50"
+			script_exit_code="40"
 			exit
 		fi
 	else
 		logHandler "Script lock directory exists but permissions are not ok, exiting."
-		script_exit_code="51"
+		script_exit_code="41"
 		exit
 	fi
 
@@ -914,7 +914,7 @@ setLock()
 		logHandler "Setting lock was successful."
 	else
 		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock."
-		script_exit_code="52"
+		script_exit_code="42"
 		exit
 	fi
 }
@@ -929,7 +929,7 @@ removeLock()
 		logHandler "Removing lock was successful."
 	else
 		logHandler "Removing lock was not successful."
-		script_exit_code="60"
+		script_exit_code="50"
 		exit
 	fi
 }
@@ -1026,7 +1026,7 @@ checkBashVersion()
 	if [ -z "${BASH_VERSINFO[0]}" ]
 	then
 		logHandler "Could not determine bash version, exiting."
-		script_exit_code="70"
+		script_exit_code="60"
 		exit
 	else
 		if [ "${BASH_VERSINFO[0]}" -lt "${script_minimal_required_bash_version}" ]
@@ -1034,7 +1034,7 @@ checkBashVersion()
 			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating."
 
 			script_bypass_exit_routines="1"
-			script_exit_code="71"
+			script_exit_code="61"
 			exit
 		else
 			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements."
@@ -1105,14 +1105,14 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="80"
+		script_exit_code="70"
 		exit
 	elif [ "${rc}" != "0" ] && [ -n "${running_script_pids[*]:-}" ]
 	then
 		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)."
 
 		script_another_instance_is_running="1"
-		script_exit_code="81"
+		script_exit_code="71"
 		exit
 	fi
 }
@@ -1129,7 +1129,7 @@ createNamedPipe()
 			logHandler "Creating named pipe was successful."
 		else
 			logHandler "Creating named pipe was not successful, exiting."
-			script_exit_code="90"
+			script_exit_code="80"
 			exit
 		fi
 	fi
@@ -1150,7 +1150,7 @@ removeNamedPipe()
 		exec 3<&-
 	else
 		logHandler "Removing named pipe was not successful, exiting."
-		script_exit_code="100"
+		script_exit_code="90"
 		exit
 	fi
 }
@@ -1171,7 +1171,7 @@ checkNamedPipe()
 		return 0
 	else
 		logHandler "Named pipe exists, but it is not read/writeable, exiting."
-		script_exit_code="110"
+		script_exit_code="100"
 		exit
 	fi
 }
@@ -1202,7 +1202,7 @@ buildJobCommand()
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', exiting."
-			script_exit_code="120"
+			script_exit_code="110"
 			exit
 			;;
 	esac
@@ -1428,7 +1428,7 @@ then
 			h)
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="170"
+				script_exit_code="200"
 				exit
 				;;
 			c)
@@ -1437,21 +1437,21 @@ then
 			v)
 				printScriptInfos
 				script_bypass_exit_routines="1"
-				script_exit_code="171"
+				script_exit_code="201"
 				exit
 				;;
 			\?)
 				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="172"
+				script_exit_code="202"
 				exit
 				;;
 			:)
 				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
 				printUsage
 				script_bypass_exit_routines="1"
-				script_exit_code="173"
+				script_exit_code="203"
 				exit
 				;;
 		esac
