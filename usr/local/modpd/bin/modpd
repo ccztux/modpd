@@ -173,7 +173,7 @@ signalHandler()
 				then
 					if [ "${script_another_instance_is_running}" != "1" ]
 					then
-						if checkNamedPipe
+						if ! checkNamedPipe
 						then
 							removeNamedPipe
 						fi
@@ -1164,11 +1164,11 @@ checkNamedPipe()
 	if [ "$(( file_permission & b_is_named_pipe ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 	then
 		logHandler "Named pipe exists and it is read/writeable."
-		return 0
+		return 1
 	elif [ "$(( file_permission & b_is_named_pipe ))" -eq "0" ]
 	then
 		logHandler "Named pipe doesnt exist."
-		return 1
+		return 0
 	else
 		logHandler "Named pipe exists, but it is not read/writeable, exiting."
 		script_exit_code="110"
@@ -1366,7 +1366,9 @@ _main()
 	while true
 	do
 		dataProcessor
-		logHandler "Data processor left in main loop..."
+		logHandler "Data processor left in main loop, maybe the named pipe '${named_pipe_filename}' doesnt exist"
+		# shellcheck disable=SC2154
+		${sleep_bin} 5
 	done
 }
 
