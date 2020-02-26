@@ -1366,9 +1366,14 @@ _main()
 	while true
 	do
 		dataProcessor
-		logHandler "Data processor left in main loop, maybe the named pipe '${named_pipe_filename}' doesnt exist"
+
+		if [ "$(( SECONDS % 60 ))" == "0" ]
+		then
+			logHandler "Data processor left in main loop, maybe the named pipe '${named_pipe_filename}' doesnt exist"
+		fi
+
 		# shellcheck disable=SC2154
-		${sleep_bin} 10
+		${sleep_bin} 2
 	done
 }
 
