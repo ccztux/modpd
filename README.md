@@ -31,6 +31,7 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 ## Required binaries to install modpd
 - **wget** to download the latest release of modpd
 - **tar** to untar the downloaded package of modpd
+- **cp** to copy the files
 
 
 ## Required by the daemon part of modpd
@@ -83,7 +84,9 @@ make install
 
 
 Add the modpd NEB module with the editor of your choice to your main Nagios® config file
+
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```):
+
 **Skip this step in case of an update!**
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
@@ -92,7 +95,9 @@ broker_module=/usr/local/nagios/include/modpd.o
 
 
 Set the eventbroker options with the editor of your choice in your main nagios config file
+
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```):
+
 **Skip this step in case of an update!**
 ```bash
 event_broker_options=-1
