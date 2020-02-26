@@ -860,72 +860,56 @@ logHandler()
 
 checkLock()
 {
-	local rc=
+	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read and writeable..."
 
-	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read/writeable..."
+	checkFileParameters "${script_lock_file}"
 
-	checkFilePermissions "${script_lock_file}"
-	rc="${?}"
-
-	case "${rc}" in
-		6|7)
-			logHandler "Lock file exists and it is read/writeable."
-			return 0
-			;;
-		10)
-			logHandler "Lock file doesnt exist."
-			return 1
-			;;
-		*)
-			logHandler "Lock file exists, but it is not read/writeable."
-			return 2
-			;;
-	esac
+	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
+	then
+		logHandler "Lock file exists and it is read/writeable."
+		return 0
+	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
+	then
+		logHandler "Lock file doesnt exist."
+		return 1
+	else
+		logHandler "Lock file exists, but it is not read/writeable."
+		return 2
+	fi
 }
 
 setLock()
 {
-	local rc=
-
 	logHandler "Check if script lock directory: '${script_lock_directory}' exists and permissions to set lock are ok..."
 
-	checkDirectoryPermissions "${script_lock_directory}"
-	rc="${?}"
+	checkFileParameters "${script_lock_directory}"
 
-	case "${rc}" in
-		3|7)
-			logHandler "Script lock directory exists and permissions are ok."
-			;;
-		10)
-			logHandler "Script lock directory doesnt exist."
-			logHandler "Creating script lock directory..."
+	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
+	then
+		logHandler "Script lock directory exists and permissions are ok."
+	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
+	then
+		logHandler "Script lock directory doesnt exist."
+		logHandler "Creating script lock directory..."
 
-			# shellcheck disable=SC2154
-			${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
-			rc="${PIPESTATUS[0]}"
-
-			if [ "${rc}" == "0" ]
-			then
-				logHandler "Creating script lock directory was successful."
-			else
-				logHandler "Creating script lock directory was not successful, exiting."
-				script_exit_code="50"
-				exit
-			fi
-			;;
-		*)
-			logHandler "Script lock directory exists, but permissions are not ok, exiting."
-			script_exit_code="51"
+		# shellcheck disable=SC2154
+		if ${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
+		then
+			logHandler "Creating script lock directory was successful."
+		else
+			logHandler "Creating script lock directory was not successful."
+			script_exit_code="50"
 			exit
-			;;
-	esac
+		fi
+	else
+		logHandler "Script lock directory exists but permissions are not ok, exiting."
+		script_exit_code="51"
+		exit
+	fi
 
 	logHandler "Setting lock..."
 
-	printf "%s\\n" "${script_pid}" > "${script_lock_file}"
-	rc="${?}"
-
-	if [ "${rc}" == "0" ]
+	if printf "%d" "${script_pid}" >"${script_lock_file}"
 	then
 		logHandler "Setting lock was successful."
 	else
@@ -937,15 +921,10 @@ setLock()
 
 removeLock()
 {
-	local rc=
-
 	logHandler "Removing lock..."
 
 	# shellcheck disable=SC2154
-	${rm_bin} "${script_lock_file}" 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
-
-	if [ "${rc}" == "0" ]
+	if ${rm_bin} "${script_lock_file}" 2>&1 | logHandler
 	then
 		logHandler "Removing lock was successful."
 	else
@@ -1038,155 +1017,6 @@ checkFileParameters()
 			file_permission="$(( file_permission | b_is_named_pipe ))"
 		fi
 	fi
-}
-
-checkNamedPipeExists()
-{
-	local file="${1:-}"
-
-	if [ -p "${file}" ]
-	then
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkNamedPipePermissions()
-{
-	# file doesnt exist:	rc=10
-	# read allowed:			rc=4|5|6|7
-	# write allowed:		rc=2|3|6|7
-	# execute allowed:		rc=1|3|5|7
-	# read/write allowed:	rc=6|7
-
-	local file="${1:-}"
-	local rc=
-	local file_permission=
-
-	checkNamedPipeExists "${file}"
-	rc="${?}"
-
-	if [ "${rc}" == "0" ]
-	then
-		if [ -x "${file}" ]
-		then
-			file_permission="$(( file_permission + 2#0001 ))"
-		fi
-
-		if [ -w "${file}" ]
-		then
-			file_permission="$(( file_permission + 2#0010 ))"
-		fi
-
-		if [ -r "${file}" ]
-		then
-			file_permission="$(( file_permission + 2#0100 ))"
-		fi
-	else
-		file_permission="$(( 2#1010 ))"
-	fi
-
-	return "${file_permission}"
-}
-
-checkRegularFileExists()
-{
-	local file="${1:-}"
-
-	if [ -f "${file}" ]
-	then
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkFilePermissions()
-{
-	# file doesnt exist:	rc=10
-	# read allowed:			rc=4|5|6|7
-	# write allowed:		rc=2|3|6|7
-	# execute allowed:		rc=1|3|5|7
-	# read/write allowed:	rc=6|7
-
-	local file="${1:-}"
-	local rc=
-	local file_permission=
-
-	checkRegularFileExists "${file}"
-	rc="${?}"
-
-	if [ "${rc}" == "0" ]
-	then
-		if [ -x "${file}" ]
-		then
-			file_permission="$(( file_permission + 2#0001 ))"
-		fi
-
-		if [ -w "${file}" ]
-		then
-			file_permission="$(( file_permission + 2#0010 ))"
-		fi
-
-		if [ -r "${file}" ]
-		then
-			file_permission="$(( file_permission + 2#0100 ))"
-		fi
-	else
-		file_permission="$(( 2#1010 ))"
-	fi
-
-	return "${file_permission}"
-}
-
-checkDirectoryExists()
-{
-	local directory="${1:-}"
-
-	if [ -d "${directory}" ]
-	then
-		return 0
-	else
-		return 1
-	fi
-}
-
-checkDirectoryPermissions()
-{
-	# directory doesnt exist:	rc=10
-	# read allowed:				rc=4|5|6|7
-	# write allowed:			rc=2|3|6|7
-	# execute allowed:			rc=1|3|5|7
-
-	local directory="${1:-}"
-	local rc=
-	local directory_permission=
-
-	checkDirectoryExists "${directory}"
-	rc="${?}"
-
-	if [ "${rc}" == "0" ]
-	then
-		if [ -x "${directory}" ]
-		then
-			directory_permission="$(( directory_permission + 2#0001 ))"
-		fi
-
-		if [ -w "${directory}" ]
-		then
-			directory_permission="$(( directory_permission + 2#0010 ))"
-		fi
-
-		if [ -r "${directory}" ]
-		then
-			directory_permission="$(( directory_permission + 2#0100 ))"
-		fi
-	else
-		directory_permission="$(( 2#1010 ))"
-	fi
-
-	return "${directory_permission}"
 }
 
 checkBashVersion()
@@ -1289,20 +1119,12 @@ checkAlreadyRunningInstance()
 
 createNamedPipe()
 {
-	local rc=
-
-	checkNamedPipe
-	rc="${?}"
-
-	if [ "${rc}" == "1" ]
+	if checkNamedPipe
 	then
 		logHandler "Creating named pipe..."
 
 		# shellcheck disable=SC2154
-		${mkfifo_bin} "${named_pipe_filename}" 2>&1 | logHandler
-		rc="${PIPESTATUS[0]}"
-
-		if [ "${rc}" == "0" ]
+		if ${mkfifo_bin} "${named_pipe_filename}" 2>&1 | logHandler
 		then
 			logHandler "Creating named pipe was successful."
 		else
@@ -1317,15 +1139,10 @@ createNamedPipe()
 
 removeNamedPipe()
 {
-	local rc=
-
 	logHandler "Remove named pipe..."
 
 	# shellcheck disable=SC2154
-	${rm_bin} "${named_pipe_filename}" 2>&1 | logHandler
-	rc="${PIPESTATUS[0]}"
-
-	if [ "${rc}" == "0" ]
+	if ${rm_bin} "${named_pipe_filename}" 2>&1 | logHandler
 	then
 		logHandler "Removing named pipe was successful."
 
@@ -1340,28 +1157,23 @@ removeNamedPipe()
 
 checkNamedPipe()
 {
-	local rc=
-
 	logHandler "Check if named pipe: '${named_pipe_filename}' exists and if it is read/writeable..."
 
-	checkNamedPipePermissions "${named_pipe_filename}"
-	rc="${?}"
+	checkFileParameters "${named_pipe_filename}"
 
-	case "${rc}" in
-		6|7)
-			logHandler "Named pipe exists and it is read/writeable."
-			return 0
-			;;
-		10)
-			logHandler "Named pipe doesnt exist."
-			return 1
-			;;
-		*)
-			logHandler "Named pipe exists, but it is not read/writeable, exiting."
-			script_exit_code="110"
-			exit
-			;;
-	esac
+	if [ "$(( file_permission & b_is_named_pipe ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
+	then
+		logHandler "Named pipe exists and it is read/writeable."
+		return 0
+	elif [ "$(( file_permission & b_is_named_pipe ))" -eq "0" ]
+	then
+		logHandler "Named pipe doesnt exist."
+		return 1
+	else
+		logHandler "Named pipe exists, but it is not read/writeable, exiting."
+		script_exit_code="110"
+		exit
+	fi
 }
 
 buildJobCommand()
@@ -1404,10 +1216,10 @@ jobExec()
 
 	case "${obsessing_interface:-}" in
 		nrdp)
-			printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" > /dev/null 2>&1 | logHandler
+			printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" >/dev/null 2>&1 | logHandler
 			;;
 		nsca)
-			printf "%s\\n\\x17" "${script_job_data[@]}" | eval "${job_command}" > /dev/null 2>&1 | logHandler
+			printf "%s\\n\\x17" "${script_job_data[@]}" | eval "${job_command}" >/dev/null 2>&1 | logHandler
 			;;
 	esac
 
