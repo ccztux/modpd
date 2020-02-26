@@ -121,7 +121,7 @@ service nagios status
 Check if the modpd NEB module was loaded by Nagios®:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.2
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.3
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -189,7 +189,6 @@ chkconfig --list modpd
 #### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
-
 
 Download the latest tarball and extract it:
 ```bash
