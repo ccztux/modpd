@@ -1500,14 +1500,16 @@ dataProcessor()
 	do
 		if [[ "${REPLY}" =~ ${regex} ]]
 		then
-			if [ "${BASH_REMATCH[3]}" == "NULL" ]
-			then
-				script_host_counter="$(( script_host_counter + 1 ))"
-				script_job_data+=("${BASH_REMATCH[1]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}")
-			else
-				script_service_counter="$(( script_service_counter + 1 ))"
-				script_job_data+=("${BASH_REMATCH[1]}"$'\t'"${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}")
-			fi
+			case "${BASH_REMATCH[3]}" in
+				NULL)
+					script_host_counter="$(( script_host_counter + 1 ))"
+					script_job_data+=("${BASH_REMATCH[1]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}")
+					;;
+				*)
+					script_service_counter="$(( script_service_counter + 1 ))"
+					script_job_data+=("${BASH_REMATCH[1]}"$'\t'"${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}")
+					;;
+			esac
 		else
 			script_invalid_data_counter="$(( script_invalid_data_counter + 1 ))"
 
