@@ -32,6 +32,8 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 - **wget** to download the latest release of modpd
 - **tar** to untar the downloaded package of modpd
 - **cp** to copy the files
+- **chown** to change the ownership of files
+- **chmod** to change the permission of files
 
 
 ## Required by the daemon part of modpd
