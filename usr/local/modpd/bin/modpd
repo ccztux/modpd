@@ -159,14 +159,14 @@ signalHandler()
 			fi
 			;;
 		ERR)
-			logHandler "Caught: '${signal}', in file: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
+			logHandler "Caught: '${signal}', in: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
 			script_exit_code="1"
 			exit
 			;;
 		EXIT)
 			if [ "${script_config_file_included}" -eq "1" ]
 			then
-				if [ "${script_log_requirements_ok}" -ne "0" ]
+				if [ "${script_log_requirements_ok}" -eq "1" ]
 				then
 					logStats
 				fi
@@ -202,11 +202,7 @@ signalHandler()
 			;;
 		*)
 			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
-
-			# propagate signal to all childs
-			propagateSignalToChilds "${signal}"
-
-			return 1
+			return 0
 			;;
 	esac
 }
@@ -477,9 +473,16 @@ reloadHandler()
 	then
 		if [ -n "${script_stats_watchdog_pid}" ]
 		then
-			if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}"
+			logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
+
+			if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}" | logHandler
 			then
-				${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}"
+				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was not successfull"
+				logHandler "Hardkilling logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
+
+				${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}" | logHandler
+			else
+				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was successfull"
 			fi
 		fi
 
@@ -488,6 +491,7 @@ reloadHandler()
 			return 2
 		else
 			script_stats_watchdog_pid="${!}"
+			logHandler "logStatsWatchdog started as subprocess with pid: '${script_stats_watchdog_pid}'"
 		fi
 	fi
 
@@ -654,7 +658,7 @@ calculateFunctionNameLength()
 	while IFS='' read -r
 	do
 		function_names+=("${REPLY}")
-	done < <(declare -F)
+	done <<< "$(declare -F)"
 
 	for function in "${function_names[@]//declare -f /}"
 	do
@@ -1369,8 +1373,11 @@ _main()
 
 	if [ "${stats_enabled}" == "1" ]
 	then
-		logStatsWatchdog &
-		script_stats_watchdog_pid="${!}"
+		if logStatsWatchdog &
+		then
+			script_stats_watchdog_pid="${!}"
+			logHandler "logStatsWatchdog started as subprocess with pid: '${script_stats_watchdog_pid}'"
+		fi
 	fi
 
 	createNamedPipe
