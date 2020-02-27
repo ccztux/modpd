@@ -79,12 +79,13 @@ then
 	exit 247
 fi
 
-if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
-then
-	eprintf "Setting trap for signal: 'ERR' was not successful."
-	eprintf "Terminating..."
-	exit 247
-fi
+# deactivated, needs analyzing of some thrown errors
+#if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+#then
+#	eprintf "Setting trap for signal: 'ERR' was not successful."
+#	eprintf "Terminating..."
+#	exit 247
+#fi
 
 if ! trap 'signalHandler "EXIT"' EXIT
 then
@@ -116,8 +117,9 @@ propagateSignalToChilds()
 signalHandler()
 {
 	local signal="${1:-}"
-	local bash_lineno="${2:-}"
-	local bash_command="${3:-}"
+	local bash_source="${2:-}"
+	local bash_lineno="${3:-}"
+	local bash_command="${4:-}"
 	local uptime=
 
 	case "${signal}" in
@@ -125,9 +127,8 @@ signalHandler()
 			if [ "${stats_enabled}" == "1" ]
 			then
 				logStats
+				resetCounters
 			fi
-
-			resetCounters
 			;;
 		SIGTERM)
 			logHandler "Caught: '${signal}', preparing for shutdown..."
@@ -158,14 +159,17 @@ signalHandler()
 			fi
 			;;
 		ERR)
-			logHandler "Caught: '${signal}', at line number: '${bash_lineno}', command: '${bash_command}'"
+			logHandler "Caught: '${signal}', in file: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
 			script_exit_code="1"
 			exit
 			;;
 		EXIT)
 			if [ "${script_config_file_included}" -eq "1" ]
 			then
-				logStats
+				if [ "${script_log_requirements_ok}" -ne "0" ]
+				then
+					logStats
+				fi
 
 				logHandler "Caught: '${signal}', shutting down..."
 
@@ -469,19 +473,22 @@ reloadHandler()
 		return 1
 	fi
 
-	if  [ -n "${script_stats_watchdog_pid}" ]
+	if [ "${stats_enabled}" == "1" ]
 	then
-		if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}"
+		if [ -n "${script_stats_watchdog_pid}" ]
 		then
-			${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}"
+			if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}"
+			then
+				${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}"
+			fi
 		fi
-	fi
 
-	if ! logStatsWatchdog &
-	then
-		return 2
-	else
-		script_stats_watchdog_pid="${!}"
+		if ! logStatsWatchdog &
+		then
+			return 2
+		else
+			script_stats_watchdog_pid="${!}"
+		fi
 	fi
 
 	# check if we need additional binaries because of an updated config
@@ -1355,8 +1362,13 @@ _main()
 	getExecUser
 	checkBashVersion
 	checkAlreadyRunningInstance
-	logStatsWatchdog &
-	script_stats_watchdog_pid="${!}"
+
+	if [ "${stats_enabled}" == "1" ]
+	then
+		logStatsWatchdog &
+		script_stats_watchdog_pid="${!}"
+	fi
+
 	createNamedPipe
 	setProxy
 	buildJobCommand
@@ -1480,9 +1492,9 @@ then
 	_main "${@}"
 	exit
 else
-	#--------------------------------------------------------
-	# In case of an include attempt, write output and return:
-	#--------------------------------------------------------
+	#-------------------------------------------------------
+	# In case of an include attempt, write output and return
+	#-------------------------------------------------------
 
 	trap - ERR
 	logHandler "\\n${BASH_SOURCE[0]##*/} is NOT a bash library. Execute it directly!\\n"
