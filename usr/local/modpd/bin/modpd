@@ -79,13 +79,12 @@ then
 	exit 247
 fi
 
-# deactivated, needs analyzing of some thrown errors
-#if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
-#then
-#	eprintf "Setting trap for signal: 'ERR' was not successful."
-#	eprintf "Terminating..."
-#	exit 247
-#fi
+if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+then
+	eprintf "Setting trap for signal: 'ERR' was not successful."
+	eprintf "Terminating..."
+	exit 247
+fi
 
 if ! trap 'signalHandler "EXIT"' EXIT
 then
@@ -160,8 +159,9 @@ signalHandler()
 			;;
 		ERR)
 			logHandler "Caught: '${signal}', in: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
-			script_exit_code="1"
-			exit
+			# deactivated, needs analyzing of some thrown errors
+			#script_exit_code="1"
+			#exit
 			;;
 		EXIT)
 			if [ "${script_config_file_included}" -eq "1" ]
@@ -191,6 +191,9 @@ signalHandler()
 					logHandler "We hope you are informed better now. :P This was a lazy job. :)"
 				fi
 
+				# propagate signal to all childs
+				propagateSignalToChilds "SIGTERM"
+
 				uptime="$(secondsToTime "${SECONDS}")"
 
 				logHandler "Exitcode: '${script_exit_code}'"
@@ -201,7 +204,7 @@ signalHandler()
 			exit ${script_exit_code}
 			;;
 		*)
-			logHandler "Caught: '${signal}' in function: '${FUNCNAME[0]}', but dont know what to do with it..."
+			logHandler "Caught: '${signal}', but no handler defined"
 			return 0
 			;;
 	esac
@@ -475,14 +478,14 @@ reloadHandler()
 		then
 			logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
 
-			if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}" | logHandler
+			if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}" 2>&1 | logHandler
 			then
-				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was not successfull"
+				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was not successful"
 				logHandler "Hardkilling logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
 
-				${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}" | logHandler
+				${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}" 2>&1 | logHandler
 			else
-				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was successfull"
+				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was successful"
 			fi
 		fi
 
@@ -1231,10 +1234,10 @@ jobExec()
 
 	case "${obsessing_interface:-}" in
 		nrdp)
-			printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" >/dev/null 2>&1 | logHandler
+			printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 			;;
 		nsca)
-			printf "%s\\n\\x17" "${script_job_data[@]}" | eval "${job_command}" >/dev/null 2>&1 | logHandler
+			printf "%s\\n\\x17" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 			;;
 	esac
 
