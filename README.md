@@ -279,7 +279,11 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
+<<<<<<< HEAD
 Last modification:      2020-02-26
+=======
+Last modification:      2020-03-09
+>>>>>>> 77-code-cleanup-and-review
 Version:                2.1.3
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
@@ -528,6 +532,7 @@ modpd (PID 23925) is running                                [  OK  ]
 Stopping modpd                                             [  OK  ]
 
 [root@lab01]:~# grep 23925 /usr/local/modpd/var/log/modpd.log
+<<<<<<< HEAD
 2020-02-26 09:32:55 |  23925 | checkLogHandlerRequirements | modpd 2.1.1 starting... (PID=23925)
 2020-02-26 09:32:55 |  23925 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'.
 2020-02-26 09:32:55 |  23925 |                     getUser | Get user which starts the script...
@@ -618,6 +623,98 @@ Stopping modpd                                             [  OK  ]
 2020-02-26 10:42:48 |  23925 |               signalHandler | Exitcode: '143'.
 2020-02-26 10:42:48 |  23925 |               signalHandler | modpd was running: 0d 1h 9m 53s.
 2020-02-26 10:42:48 |  23925 |               signalHandler | Bye, bye...
+=======
+2020-03-09 09:32:55 |  23925 | checkLogHandlerRequirements | modpd 2.1.1 starting... (PID=23925)
+2020-03-09 09:32:55 |  23925 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'.
+2020-03-09 09:32:55 |  23925 |                     getUser | Get user which starts the script...
+2020-03-09 09:32:55 |  23925 |                     getUser | modpd was started as user: 'nagios'.
+2020-03-09 09:32:55 |  23925 |            checkBashVersion | Checking bash version...
+2020-03-09 09:32:55 |  23925 |            checkBashVersion | Bash version: '4' meets requirements.
+2020-03-09 09:32:55 |  23925 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
+2020-03-09 09:32:55 |  23925 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read/writeable...
+2020-03-09 09:32:55 |  23925 |                   checkLock | Lock file doesnt exist.
+2020-03-09 09:32:55 |  23925 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running).
+2020-03-09 09:32:55 |  23925 |                     setLock | Check if script lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
+2020-03-09 09:32:55 |  23925 |                     setLock | Script lock directory exists and permissions are ok.
+2020-03-09 09:32:55 |  23925 |                     setLock | Setting lock...
+2020-03-09 09:32:55 |  23925 |                     setLock | Setting lock was successful.
+2020-03-09 09:32:55 |  23925 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-03-09 09:32:55 |  23925 |              checkNamedPipe | Named pipe doesnt exist.
+2020-03-09 09:32:55 |  23925 |             createNamedPipe | Creating named pipe...
+2020-03-09 09:32:55 |  23925 |             createNamedPipe | Creating named pipe was successful.
+2020-03-09 09:32:55 |  23925 |             buildJobCommand | Building job command...
+2020-03-09 09:32:55 |  23925 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@172.20.102.45:443/nrdp'.
+2020-03-09 09:32:55 |  23925 |                       _main | Ready to handle jobs...
+2020-03-09 09:37:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 09:37:55 |  23925 |                    logStats | modpd is running: 0d 0h 5m 0s
+2020-03-09 09:37:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 09:37:55 |  23925 |                    logStats | Handled host checks: '10276', handled service checks: '7500', invalid datasets received: '0'.
+2020-03-09 09:42:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 09:42:55 |  23925 |                    logStats | modpd is running: 0d 0h 10m 0s
+2020-03-09 09:42:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 09:42:55 |  23925 |                    logStats | Handled host checks: '10570', handled service checks: '7500', invalid datasets received: '0'.
+2020-03-09 09:47:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 09:47:55 |  23925 |                    logStats | modpd is running: 0d 0h 15m 0s
+2020-03-09 09:47:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 09:47:55 |  23925 |                    logStats | Handled host checks: '10263', handled service checks: '7517', invalid datasets received: '0'.
+2020-03-09 09:52:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 09:52:55 |  23925 |                    logStats | modpd is running: 0d 0h 20m 0s
+2020-03-09 09:52:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 09:52:55 |  23925 |                    logStats | Handled host checks: '10616', handled service checks: '7483', invalid datasets received: '0'.
+2020-03-09 09:57:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 09:57:55 |  23925 |                    logStats | modpd is running: 0d 0h 25m 0s
+2020-03-09 09:57:55 |  23925 |                    logStats | Total processed jobs: '52', successful processed jobs: '52', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 09:57:55 |  23925 |                    logStats | Handled host checks: '10446', handled service checks: '7556', invalid datasets received: '0'.
+2020-03-09 10:02:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 10:02:55 |  23925 |                    logStats | modpd is running: 0d 0h 30m 0s
+2020-03-09 10:02:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:02:55 |  23925 |                    logStats | Handled host checks: '9819', handled service checks: '7444', invalid datasets received: '0'.
+2020-03-09 10:07:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 10:07:55 |  23925 |                    logStats | modpd is running: 0d 0h 35m 0s
+2020-03-09 10:07:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:07:55 |  23925 |                    logStats | Handled host checks: '8381', handled service checks: '7506', invalid datasets received: '0'.
+2020-03-09 10:12:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 10:12:55 |  23925 |                    logStats | modpd is running: 0d 0h 40m 0s
+2020-03-09 10:12:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:12:55 |  23925 |                    logStats | Handled host checks: '8431', handled service checks: '7494', invalid datasets received: '0'.
+2020-03-09 10:17:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 10:17:55 |  23925 |                    logStats | modpd is running: 0d 0h 45m 0s
+2020-03-09 10:17:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:17:55 |  23925 |                    logStats | Handled host checks: '10034', handled service checks: '7575', invalid datasets received: '0'.
+2020-03-09 10:22:56 |  23925 |                    logStats | ---- Stats for the last 301 seconds ----
+2020-03-09 10:22:56 |  23925 |                    logStats | modpd is running: 0d 0h 50m 0s
+2020-03-09 10:22:56 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:22:56 |  23925 |                    logStats | Handled host checks: '10330', handled service checks: '7425', invalid datasets received: '0'.
+2020-03-09 10:27:55 |  23925 |                    logStats | ---- Stats for the last 299 seconds ----
+2020-03-09 10:27:55 |  23925 |                    logStats | modpd is running: 0d 0h 55m 0s
+2020-03-09 10:27:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:27:55 |  23925 |                    logStats | Handled host checks: '10255', handled service checks: '7523', invalid datasets received: '0'.
+2020-03-09 10:32:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 10:32:55 |  23925 |                    logStats | modpd is running: 0d 1h 0m 0s
+2020-03-09 10:32:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:32:55 |  23925 |                    logStats | Handled host checks: '10779', handled service checks: '7477', invalid datasets received: '0'.
+2020-03-09 10:37:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-09 10:37:55 |  23925 |                    logStats | modpd is running: 0d 1h 5m 0s
+2020-03-09 10:37:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:37:55 |  23925 |                    logStats | Handled host checks: '10431', handled service checks: '7575', invalid datasets received: '0'.
+2020-03-09 10:42:48 |  23925 |               signalHandler | Caught: 'SIGTERM', preparing for exiting...
+2020-03-09 10:42:48 |  23925 |                    logStats | ---- Stats for the last 293 seconds ----
+2020-03-09 10:42:48 |  23925 |                    logStats | modpd is running: 0d 1h 9m 53s
+2020-03-09 10:42:48 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
+2020-03-09 10:42:48 |  23925 |                    logStats | Handled host checks: '10021', handled service checks: '7275', invalid datasets received: '0'.
+2020-03-09 10:42:48 |  23925 |               signalHandler | Caught: 'EXIT', exiting script...
+2020-03-09 10:42:48 |  23925 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-03-09 10:42:48 |  23925 |              checkNamedPipe | Named pipe exists and it is read/writeable.
+2020-03-09 10:42:48 |  23925 |             removeNamedPipe | Remove named pipe...
+2020-03-09 10:42:48 |  23925 |             removeNamedPipe | Removing named pipe was successful.
+2020-03-09 10:42:48 |  23925 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read/writeable...
+2020-03-09 10:42:48 |  23925 |                   checkLock | Lock file exists and it is read/writeable.
+2020-03-09 10:42:48 |  23925 |                  removeLock | Removing lock...
+2020-03-09 10:42:48 |  23925 |                  removeLock | Removing lock was successful.
+2020-03-09 10:42:48 |  23925 |               signalHandler | Exitcode: '143'.
+2020-03-09 10:42:48 |  23925 |               signalHandler | modpd was running: 0d 1h 9m 53s.
+2020-03-09 10:42:48 |  23925 |               signalHandler | Bye, bye...
+>>>>>>> 77-code-cleanup-and-review
 ```
 
 
