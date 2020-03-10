@@ -527,7 +527,7 @@ modpd (PID 23467) is running                                [  OK  ]
 [root@lab01]:~# service modpd stop
 Stopping modpd                                             [  OK  ]
 
-[root@lab01]:~# grep 23925 /usr/local/modpd/var/log/modpd.log
+[root@lab01]:~# grep 23467 /usr/local/modpd/var/log/modpd.log
 2020-03-10 13:57:02 |  23467 | checkLogHandlerRequirements | modpd 2.1.3 starting... (PID=23467)
 2020-03-10 13:57:02 |  23467 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'
 2020-03-10 13:57:02 |  23467 |                 getExecUser | Get user which starts the script...
