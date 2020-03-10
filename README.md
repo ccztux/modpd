@@ -1,7 +1,7 @@
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/master?label=shellcheck%28master%29)](https://travis-ci.org/ccztux/modpd)
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/devel?label=shellcheck%28devel%29)](https://travis-ci.org/ccztux/modpd)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ccztux/modpd?label=latest%20release)](https://github.com/ccztux/modpd/releases/latest)
-[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/modpd/releases/tag/2.1.2)
+[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20pre-release)](https://github.com/ccztux/modpd/releases/tag/2.1.3)
 [![GitHub](https://img.shields.io/github/license/ccztux/modpd?color=yellowgreen)](https://github.com/ccztux/modpd/blob/master/LICENSE)
 
 
@@ -28,6 +28,14 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 
 
 # Required binaries
+## Required binaries to install modpd
+- **wget** to download the latest release of modpd
+- **tar** to untar the downloaded package of modpd
+- **cp** to copy the files
+- **chown** to change the ownership of files
+- **chmod** to change the permission of files
+
+
 ## Required by the daemon part of modpd
 - **bash** (version >= 3)
 - **whoami** to check the user who has started modpd
@@ -38,7 +46,7 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 - **mkfifo** to create the named_pipe_filename
 - **kill** to send signals to modpd
 - **sleep** to do nothing :)
-
+- **logrotate** to rotate modpd's logfile
 
 
 ## Optionally used binaries which depends on configured features
@@ -48,12 +56,12 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 - **php** in case obsessing_interface is nrdp
 
 
-
 ## Required for building, compiling and installing the modpd NEB module
 - **make** to build the modpd NEB module
 - **gcc** to compile the modpd NEB module
 - **install** to install the modpd NEB module
 - **strip** to strip the modpd NEB binary
+
 
 
 # Installation
@@ -77,14 +85,22 @@ make install
 
 
 
-Add the modpd NEB module with the editor of your choice to your main Nagios® config file (Default: ```/usr/local/nagios/etc/nagios.cfg```):
+Add the modpd NEB module with the editor of your choice to your main Nagios® config file:
+
+(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+
+**Skip this step in case of an update!**
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
 ```
 
 
 
-Set the eventbroker options with the editor of your choice in your main nagios config file (Default: ```/usr/local/nagios/etc/nagios.cfg```):
+Set the eventbroker options with the editor of your choice in your main nagios config file:
+
+(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+
+**Skip this step in case of an update!**
 ```bash
 event_broker_options=-1
 ```
@@ -106,7 +122,10 @@ service nagios status
 
 Check if the modpd NEB module was loaded by Nagios®:
 ```bash
-grep -i modpd /usr/local/nagios/var/nagios.log
+[root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.3
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
 
 
@@ -172,7 +191,6 @@ chkconfig --list modpd
 #### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
-
 
 Download the latest tarball and extract it:
 ```bash
@@ -247,7 +265,7 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
 
-# Upgrading modpd
+# Update modpd
 1. Follow the guide [Installation on the Nagios® site with active checks](https://github.com/ccztux/modpd#installation-on-the-nagios-site-with-active-checks) and overwrite all existing files
 2. Merge possible changes between the new sample config ```/usr/local/modpd/etc/modpd.sample.conf``` and your productive one ```/usr/local/modpd/etc/modpd.conf``` using the tool of your choice like ```vimdiff```.
 3. Restart nagios ```service nagios restart```
@@ -261,8 +279,8 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2020-02-24
-Version:                2.1.2
+Last modification:      2020-03-10
+Version:                2.1.3
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
@@ -275,11 +293,64 @@ OPTIONS:
 
 # Default sample config
 ```bash
-#=====================================================
+#!/usr/bin/env bash
+
+#========================================================================================================
 #
-# Modify the following parameters to your requirements
+#  Author:				Christian Zettel (ccztux)
+#						2017-05-14
+#						http://linuxinside.at
 #
-#=====================================================
+#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+#
+#  Project website:		https://github.com/ccztux/modpd
+#
+#  Last Modification:	Christian Zettel (ccztux)
+#						2020-03-10
+#
+#  Version				2.1.3
+#
+#  Description:			Config file for modpd (Monitoring Obsessing Data Processor Daemon)
+#
+#  License:				GNU GPLv2
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#========================================================================================================
+
+# shellcheck disable=SC2034
+# shellcheck disable=SC2154
+
+
+#---------------------------------------------------
+# In case of direct execution, write output and exit
+#---------------------------------------------------
+
+if [ "${BASH_SOURCE[0]}" == "${0}" ]
+then
+	printf "\\n%s is a bash config file. Dont execute it directly!\\n\\n" "${0##*/}"
+	exit 1
+fi
+
+
+
+#==========================================================
+#
+# Modify the following parameters to meet your requirements
+#
+#==========================================================
 
 #-------------------
 # Obsessing settings
@@ -451,120 +522,88 @@ stats_interval="300"
 ## modpd daemon log snippet
 ```
 [root@lab01]:~# service modpd status
-modpd (PID 23925) is running                                [  OK  ]
+modpd (PID 23467) is running                                [  OK  ]
 
 [root@lab01]:~# service modpd stop
 Stopping modpd                                             [  OK  ]
 
 [root@lab01]:~# grep 23925 /usr/local/modpd/var/log/modpd.log
-2020-02-24 09:32:55 |  23925 | checkLogHandlerRequirements | modpd 2.1.1 starting... (PID=23925)
-2020-02-24 09:32:55 |  23925 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'.
-2020-02-24 09:32:55 |  23925 |                     getUser | Get user which starts the script...
-2020-02-24 09:32:55 |  23925 |                     getUser | modpd was started as user: 'nagios'.
-2020-02-24 09:32:55 |  23925 |            checkBashVersion | Checking bash version...
-2020-02-24 09:32:55 |  23925 |            checkBashVersion | Bash version: '4' meets requirements.
-2020-02-24 09:32:55 |  23925 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
-2020-02-24 09:32:55 |  23925 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read/writeable...
-2020-02-24 09:32:55 |  23925 |                   checkLock | Lock file doesnt exist.
-2020-02-24 09:32:55 |  23925 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running).
-2020-02-24 09:32:55 |  23925 |                     setLock | Check if script lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
-2020-02-24 09:32:55 |  23925 |                     setLock | Script lock directory exists and permissions are ok.
-2020-02-24 09:32:55 |  23925 |                     setLock | Setting lock...
-2020-02-24 09:32:55 |  23925 |                     setLock | Setting lock was successful.
-2020-02-24 09:32:55 |  23925 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
-2020-02-24 09:32:55 |  23925 |              checkNamedPipe | Named pipe doesnt exist.
-2020-02-24 09:32:55 |  23925 |             createNamedPipe | Creating named pipe...
-2020-02-24 09:32:55 |  23925 |             createNamedPipe | Creating named pipe was successful.
-2020-02-24 09:32:55 |  23925 |             buildJobCommand | Building job command...
-2020-02-24 09:32:55 |  23925 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@172.20.102.45:443/nrdp'.
-2020-02-24 09:32:55 |  23925 |                       _main | Ready to handle jobs...
-2020-02-24 09:37:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 09:37:55 |  23925 |                    logStats | modpd is running: 0d 0h 5m 0s
-2020-02-24 09:37:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 09:37:55 |  23925 |                    logStats | Handled host checks: '10276', handled service checks: '7500', invalid datasets received: '0'.
-2020-02-24 09:42:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 09:42:55 |  23925 |                    logStats | modpd is running: 0d 0h 10m 0s
-2020-02-24 09:42:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 09:42:55 |  23925 |                    logStats | Handled host checks: '10570', handled service checks: '7500', invalid datasets received: '0'.
-2020-02-24 09:47:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 09:47:55 |  23925 |                    logStats | modpd is running: 0d 0h 15m 0s
-2020-02-24 09:47:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 09:47:55 |  23925 |                    logStats | Handled host checks: '10263', handled service checks: '7517', invalid datasets received: '0'.
-2020-02-24 09:52:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 09:52:55 |  23925 |                    logStats | modpd is running: 0d 0h 20m 0s
-2020-02-24 09:52:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 09:52:55 |  23925 |                    logStats | Handled host checks: '10616', handled service checks: '7483', invalid datasets received: '0'.
-2020-02-24 09:57:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 09:57:55 |  23925 |                    logStats | modpd is running: 0d 0h 25m 0s
-2020-02-24 09:57:55 |  23925 |                    logStats | Total processed jobs: '52', successful processed jobs: '52', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 09:57:55 |  23925 |                    logStats | Handled host checks: '10446', handled service checks: '7556', invalid datasets received: '0'.
-2020-02-24 10:02:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 10:02:55 |  23925 |                    logStats | modpd is running: 0d 0h 30m 0s
-2020-02-24 10:02:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:02:55 |  23925 |                    logStats | Handled host checks: '9819', handled service checks: '7444', invalid datasets received: '0'.
-2020-02-24 10:07:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 10:07:55 |  23925 |                    logStats | modpd is running: 0d 0h 35m 0s
-2020-02-24 10:07:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:07:55 |  23925 |                    logStats | Handled host checks: '8381', handled service checks: '7506', invalid datasets received: '0'.
-2020-02-24 10:12:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 10:12:55 |  23925 |                    logStats | modpd is running: 0d 0h 40m 0s
-2020-02-24 10:12:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:12:55 |  23925 |                    logStats | Handled host checks: '8431', handled service checks: '7494', invalid datasets received: '0'.
-2020-02-24 10:17:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 10:17:55 |  23925 |                    logStats | modpd is running: 0d 0h 45m 0s
-2020-02-24 10:17:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:17:55 |  23925 |                    logStats | Handled host checks: '10034', handled service checks: '7575', invalid datasets received: '0'.
-2020-02-24 10:22:56 |  23925 |                    logStats | ---- Stats for the last 301 seconds ----
-2020-02-24 10:22:56 |  23925 |                    logStats | modpd is running: 0d 0h 50m 0s
-2020-02-24 10:22:56 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:22:56 |  23925 |                    logStats | Handled host checks: '10330', handled service checks: '7425', invalid datasets received: '0'.
-2020-02-24 10:27:55 |  23925 |                    logStats | ---- Stats for the last 299 seconds ----
-2020-02-24 10:27:55 |  23925 |                    logStats | modpd is running: 0d 0h 55m 0s
-2020-02-24 10:27:55 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:27:55 |  23925 |                    logStats | Handled host checks: '10255', handled service checks: '7523', invalid datasets received: '0'.
-2020-02-24 10:32:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 10:32:55 |  23925 |                    logStats | modpd is running: 0d 1h 0m 0s
-2020-02-24 10:32:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:32:55 |  23925 |                    logStats | Handled host checks: '10779', handled service checks: '7477', invalid datasets received: '0'.
-2020-02-24 10:37:55 |  23925 |                    logStats | ---- Stats for the last 300 seconds ----
-2020-02-24 10:37:55 |  23925 |                    logStats | modpd is running: 0d 1h 5m 0s
-2020-02-24 10:37:55 |  23925 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:37:55 |  23925 |                    logStats | Handled host checks: '10431', handled service checks: '7575', invalid datasets received: '0'.
-2020-02-24 10:42:48 |  23925 |               signalHandler | Caught: 'SIGTERM', preparing for exiting...
-2020-02-24 10:42:48 |  23925 |                    logStats | ---- Stats for the last 293 seconds ----
-2020-02-24 10:42:48 |  23925 |                    logStats | modpd is running: 0d 1h 9m 53s
-2020-02-24 10:42:48 |  23925 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'.
-2020-02-24 10:42:48 |  23925 |                    logStats | Handled host checks: '10021', handled service checks: '7275', invalid datasets received: '0'.
-2020-02-24 10:42:48 |  23925 |               signalHandler | Caught: 'EXIT', exiting script...
-2020-02-24 10:42:48 |  23925 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
-2020-02-24 10:42:48 |  23925 |              checkNamedPipe | Named pipe exists and it is read/writeable.
-2020-02-24 10:42:48 |  23925 |             removeNamedPipe | Remove named pipe...
-2020-02-24 10:42:48 |  23925 |             removeNamedPipe | Removing named pipe was successful.
-2020-02-24 10:42:48 |  23925 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read/writeable...
-2020-02-24 10:42:48 |  23925 |                   checkLock | Lock file exists and it is read/writeable.
-2020-02-24 10:42:48 |  23925 |                  removeLock | Removing lock...
-2020-02-24 10:42:48 |  23925 |                  removeLock | Removing lock was successful.
-2020-02-24 10:42:48 |  23925 |               signalHandler | Exitcode: '143'.
-2020-02-24 10:42:48 |  23925 |               signalHandler | modpd was running: 0d 1h 9m 53s.
-2020-02-24 10:42:48 |  23925 |               signalHandler | Bye, bye...
+2020-03-10 13:57:02 |  23467 | checkLogHandlerRequirements | modpd 2.1.3 starting... (PID=23467)
+2020-03-10 13:57:02 |  23467 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'
+2020-03-10 13:57:02 |  23467 |                 getExecUser | Get user which starts the script...
+2020-03-10 13:57:02 |  23467 |                 getExecUser | modpd was started as user: 'nagios'
+2020-03-10 13:57:02 |  23467 |            checkBashVersion | Checking bash version...
+2020-03-10 13:57:02 |  23467 |            checkBashVersion | Bash version: '4' meets requirements
+2020-03-10 13:57:02 |  23467 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
+2020-03-10 13:57:02 |  23467 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
+2020-03-10 13:57:02 |  23467 |                   checkLock | Lock file doesnt exist
+2020-03-10 13:57:02 |  23467 |               signalHandler | Caught: 'ERR', in: '/usr/local/modpd/bin/modpd', at line number: '892', command: 'return 1'
+2020-03-10 13:57:02 |  23467 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running)
+2020-03-10 13:57:02 |  23467 |                     setLock | Check if script lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
+2020-03-10 13:57:02 |  23467 |                     setLock | Script lock directory exists and permissions are ok
+2020-03-10 13:57:02 |  23467 |                     setLock | Setting lock...
+2020-03-10 13:57:02 |  23467 |                     setLock | Setting lock was successful
+2020-03-10 13:57:02 |  23467 |                       _main | logStatsWatchdog started as subprocess with pid: '23532'
+2020-03-10 13:57:02 |  23467 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-03-10 13:57:02 |  23467 |              checkNamedPipe | Named pipe doesnt exist
+2020-03-10 13:57:02 |  23467 |             createNamedPipe | Creating named pipe...
+2020-03-10 13:57:02 |  23467 |             createNamedPipe | Creating named pipe was successful
+2020-03-10 13:57:02 |  23467 |             buildJobCommand | Building job command...
+2020-03-10 13:57:02 |  23467 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@172.20.102.45:443/nrdp'
+2020-03-10 13:57:02 |  23467 |                       _main | Ready to handle jobs...
+2020-03-10 14:01:38 |  23467 |               signalHandler | Caught: 'ERR', in: '/usr/local/modpd/bin/modpd', at line number: '1237', command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@172.20.102.45:443/nrdp'
+2020-03-10 14:01:38 |  23467 |                     jobExec | /usr/bin/timeout: fork system call failed: Resource temporarily unavailable
+2020-03-10 14:01:38 |  23467 |                     jobExec | /usr/local/modpd/bin/modpd: fork: retry: Resource temporarily unavailable
+2020-03-10 14:01:38 |  23467 |               signalHandler | Caught: 'ERR', in: '/usr/local/modpd/bin/modpd', at line number: '1237', command: 'logHandler'
+2020-03-10 14:01:42 |  23467 |               signalHandler | Caught: 'ERR', in: '/usr/local/modpd/bin/modpd', at line number: '1294', command: 'wait ${script_job_pid_1}'
+2020-03-10 14:01:42 |  23467 |              counterHandler | Command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@172.20.102.45:443/nrdp' was not successful
+2020-03-10 14:02:02 |  23467 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-10 14:02:02 |  23467 |                    logStats | modpd is running: 0d 0h 5m 0s
+2020-03-10 14:02:02 |  23467 |                    logStats | Total processed jobs: '52', successful processed jobs: '51', unsuccessful processed jobs: '1', timed out jobs: '0'
+2020-03-10 14:02:02 |  23467 |                    logStats | Handled host checks: '10400', handled service checks: '7400', invalid datasets received: '0'
+2020-03-10 14:07:02 |  23467 |                    logStats | ---- Stats for the last 300 seconds ----
+2020-03-10 14:07:02 |  23467 |                    logStats | modpd is running: 0d 0h 10m 0s
+2020-03-10 14:07:02 |  23467 |                    logStats | Total processed jobs: '50', successful processed jobs: '50', unsuccessful processed jobs: '0', timed out jobs: '0'
+2020-03-10 14:07:02 |  23467 |                    logStats | Handled host checks: '9663', handled service checks: '7305', invalid datasets received: '0'
+2020-03-10 14:12:03 |  23467 |                    logStats | ---- Stats for the last 301 seconds ----
+2020-03-10 14:12:03 |  23467 |                    logStats | modpd is running: 0d 0h 15m 1s
+2020-03-10 14:12:03 |  23467 |                    logStats | Total processed jobs: '51', successful processed jobs: '51', unsuccessful processed jobs: '0', timed out jobs: '0'
+2020-03-10 14:12:03 |  23467 |                    logStats | Handled host checks: '9883', handled service checks: '7400', invalid datasets received: '0'
+2020-03-10 14:12:52 |  23467 |               signalHandler | Caught: 'SIGTERM', preparing for shutdown...
+2020-03-10 14:12:52 |  23467 |                    logStats | ---- Stats for the last 49 seconds ----
+2020-03-10 14:12:52 |  23467 |                    logStats | modpd is running: 0d 0h 15m 50s
+2020-03-10 14:12:52 |  23467 |                    logStats | Total processed jobs: '10', successful processed jobs: '10', unsuccessful processed jobs: '0', timed out jobs: '0'
+2020-03-10 14:12:52 |  23467 |                    logStats | Handled host checks: '2179', handled service checks: '1275', invalid datasets received: '0'
+2020-03-10 14:12:52 |  23467 |               signalHandler | Caught: 'EXIT', shutting down...
+2020-03-10 14:12:52 |  23467 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-03-10 14:12:52 |  23467 |              checkNamedPipe | Named pipe exists and it is read/writeable
+2020-03-10 14:12:52 |  23467 |             removeNamedPipe | Remove named pipe...
+2020-03-10 14:12:52 |  23467 |             removeNamedPipe | Removing named pipe was successful
+2020-03-10 14:12:52 |  23467 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
+2020-03-10 14:12:52 |  23467 |                   checkLock | Lock file exists and it is read/writeable
+2020-03-10 14:12:52 |  23467 |                  removeLock | Removing lock...
+2020-03-10 14:12:52 |  23467 |                  removeLock | Removing lock was successful
+2020-03-10 14:12:52 |  23467 |               signalHandler | Exitcode: '143'
+2020-03-10 14:12:52 |  23467 |               signalHandler | modpd was running: 0d 0h 15m 50s
+2020-03-10 14:12:52 |  23467 |               signalHandler | Bye, bye...
 ```
 
 
 ## modpd NEB module log snippet
 ```
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.2
-[1582272717] modpd: Starting...
-[1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
-[1582273017] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10278 (OK: 10278/NOK: 0), Services: 7430 (OK: 7430/NOK: 0) ***
-[1582273317] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10149 (OK: 10149/NOK: 0), Services: 7425 (OK: 7425/NOK: 0) ***
-[1582273617] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10631 (OK: 10577/NOK: 54), Services: 7575 (OK: 7549/NOK: 26) ***
-[1582273917] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10323 (OK: 10323/NOK: 0), Services: 7425 (OK: 7425/NOK: 0) ***
-[1582274217] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10277 (OK: 10277/NOK: 0), Services: 7575 (OK: 7575/NOK: 0) ***
-[1582274517] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9073 (OK: 9073/NOK: 0), Services: 7425 (OK: 7425/NOK: 0) ***
-[1582274817] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 8098 (OK: 8098/NOK: 0), Services: 7575 (OK: 7575/NOK: 0) ***
-[1582274893] modpd: *** Stats of processed checks for the last 76 seconds: Hosts: 2566 (OK: 2566/NOK: 0), Services: 1949 (OK: 1949/NOK: 0) ***
-[1582274893] modpd: The modpd NEB module was running 0d 0h 36m 16s
-[1582274893] modpd: Bye, bye...
-[1582274893] Event broker module '/usr/local/nagios/include/modpd.o' deinitialized successfully.
+[1583758622] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.3
+[1583758622] modpd: Starting...
+[1583758622] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
+[1583758922] modpd: The modpd NEB module is running 0d 0h 5m 0s
+[1583758922] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10400 (OK: 10400/NOK: 0), Services: 7400 (OK: 7400/NOK: 0) ***
+[1583759222] modpd: The modpd NEB module is running 0d 0h 10m 0s
+[1583759222] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10037 (OK: 9663/NOK: 374), Services: 7450 (OK: 7305/NOK: 145) ***
+[1583759522] modpd: The modpd NEB module is running 0d 0h 15m 0s
+[1583759522] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10356 (OK: 9883/NOK: 473), Services: 7550 (OK: 7400/NOK: 150) ***
+[1583759574] modpd: The modpd NEB module is running 0d 0h 15m 52s
+[1583759574] modpd: *** Stats of processed checks for the last 52 seconds: Hosts: 2179 (OK: 2179/NOK: 0), Services: 1275 (OK: 1275/NOK: 0) ***
+[1583759574] modpd: The modpd NEB module was running 0d 0h 15m 52s
+[1583759574] modpd: Bye, bye...
+[1583759574] Event broker module '/usr/local/nagios/include/modpd.o' deinitialized successfully.
 ```
