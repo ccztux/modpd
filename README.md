@@ -277,15 +277,15 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 
 
 # Files
-```/etc/init.d/modpd``` init script for the modpd daemon
-```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
-```/etc/sysconfig/modpd``` default configuration values for the modpd init script
-```/usr/local/modpd/bin/modpd``` modpd daemon
-```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
-```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
-```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
-```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
-```/usr/local/nagios/include/modpd.o``` modpd NEB module
+- ```/etc/init.d/modpd``` init script for the modpd daemon
+- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
+- ```/etc/sysconfig/modpd``` default configuration values for the modpd init script
+- ```/usr/local/modpd/bin/modpd``` modpd daemon
+- ```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
+- ```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
+- ```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
+- ```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
+- ```/usr/local/nagios/include/modpd.o``` modpd NEB module
 
 
 
