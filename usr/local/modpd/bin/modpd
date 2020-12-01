@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-03-10
+#						2020-12-01
 #
-#  Version				2.1.3
+#  Version				2.2.0
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -391,6 +391,12 @@ logStats()
 	fi
 
 	logHandler "---- Stats for the last ${timediff} seconds ----"
+
+	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+	fi
+
 	logHandler "${script_name} is running: ${uptime}"
 	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'"
 	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'"
@@ -463,6 +469,9 @@ setRequiredVariables()
 
 	# log file
 	script_log_file="${script_log_directory}/${script_name}.log"
+
+	# debug log file
+	debug_log_file="${script_log_directory}/${script_name}.debug.log"
 }
 
 reloadHandler()
@@ -1194,6 +1203,52 @@ checkNamedPipe()
 	fi
 }
 
+rotationNecessary()
+{
+	local rotation="$(( SECONDS / debug_log_rotation_interval ))"
+
+	if [ "${rotation}" -ge "${script_debug_log_last_rotation}" ]
+	then
+		script_debug_log_last_rotation="$(( rotation + 1 ))"
+		return 0
+	else
+		return 1
+	fi
+}
+
+debugLog()
+{
+	local log_timestamp=
+
+	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+
+		if rotationNecessary
+		then
+			printf "*** START (%s) %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}" > "${debug_log_file}"
+		else
+			printf "*** START - %s - %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}" >> "${debug_log_file}"
+		fi
+
+		if [ "${debug_log_monitoring_data}" == "1" ]
+		then
+			printf "*** START (raw data received from monitoring) ***\\n" >> "${debug_log_file}"
+			printf "%s\\n" "${script_job_raw_data[@]}" >> "${debug_log_file}"
+			printf "*** END (raw data received from monitoring) ***\\n\\n\\n" >> "${debug_log_file}"
+		fi
+
+		if [ "${debug_log_obsessing_data}" == "1" ]
+		then
+			printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}" >> "${debug_log_file}"
+			printf "%s\\n" "${script_job_data[@]}" >> "${debug_log_obsessing_data_log_file}"
+			printf "*** END (raw data prepared to send via %s) ***\\n\\n\\n" "${obsessing_interface}" >> "${debug_log_file}"
+		fi
+
+		printf "*** END %s debug log cycle ***\\n\\n" "${script_name}" >> "${debug_log_file}"
+	fi
+}
+
 buildJobCommand()
 {
 	logHandler "Building job command..."
@@ -1242,6 +1297,8 @@ jobExec()
 	esac
 
 	rc="${PIPESTATUS[1]}"
+
+	debugLog
 
 	return "${rc}"
 }
@@ -1328,6 +1385,8 @@ dataProcessor()
 
 	while read -u 3 -r
 	do
+		script_job_raw_data+=("${REPLY}")
+
 		if [[ "${REPLY}" =~ ${regex} ]]
 		then
 			case "${BASH_REMATCH[3]}" in
@@ -1353,6 +1412,7 @@ dataProcessor()
 		then
 			jobHandler
 			script_job_data=()
+			script_job_raw_data=()
 			job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
 	done
@@ -1412,11 +1472,11 @@ _main()
 script_pid="${$}"
 script_argc="${#}"
 script_name="${0##*/}"
-script_version="2.1.3"
+script_version="2.2.0"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017-2020 ${script_author} (ccztux), all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2020-03-10"
+script_last_modification_date="2020-12-01"
 script_minimal_required_bash_version="3"
 script_license="GNU GPLv2"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
@@ -1437,6 +1497,8 @@ script_job_counter_ok="0"
 script_job_counter_nok="0"
 script_job_counter_timeout="0"
 script_job_data=()
+script_job_raw_data=()
+script_debug_log_last_rotation="1"
 
 
 
