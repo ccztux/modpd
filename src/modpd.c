@@ -199,7 +199,7 @@ int modpd_event_handler(int callback_type, void *data)
 	char temp_buffer[32768];
 	char output[32768];
 	char modpd_fifo[34] = "/usr/local/modpd/var/rw/modpd.cmd";
-	char separator[12] = "<=#modpd#=>";
+	char separator[5] = "\x1e";
    	int modpd_fifo_fd = 0;
 
 	/* what type of event/data do we have? */

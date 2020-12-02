@@ -1256,6 +1256,8 @@ debugLog()
 
 buildJobCommand()
 {
+	local separator="$(printf "%b" "${obsessing_data_separator}")"
+
 	logHandler "Building job command..."
 
 	if [ "${job_timeout_enabled}" == "1" ]
@@ -1269,14 +1271,14 @@ buildJobCommand()
 			if [ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]
 			then
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${separator}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			else
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${separator}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			fi
 			;;
 		nsca)
-			job_command="${job_command} ${script_libexec_directory}/send_nsca -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
+			job_command="${job_command} ${script_libexec_directory}/send_nsca -d \"${separator}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', terminating"
@@ -1386,32 +1388,31 @@ jobHandler()
 dataProcessor()
 {
 	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
-	local regex="^(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)$"
-	local obsessing_separator="$(printf "%b" "${obsessing_separator}")"
+	local separator="$(printf "%b" "${job_data_separator}")"
 
-	while read -u 3 -r
+	while IFS=${separator} read -u 3 -r host_name service_description state_id plugin_output junk
 	do
-		script_job_raw_data+=("${REPLY}")
 
-		if [[ "${REPLY}" =~ ${regex} ]]
+		if [ "${service_description}" != "NULL" ]
 		then
-			case "${BASH_REMATCH[3]}" in
-				NULL)
-					script_host_counter="$(( script_host_counter + 1 ))"
-					script_job_data+=("${BASH_REMATCH[1]}${obsessing_separator}${BASH_REMATCH[5]}${obsessing_separator}${BASH_REMATCH[7]}")
-					;;
-				*)
-					script_service_counter="$(( script_service_counter + 1 ))"
-					script_job_data+=("${BASH_REMATCH[1]}${obsessing_separator}${BASH_REMATCH[3]}${obsessing_separator}${BASH_REMATCH[5]}${obsessing_separator}${BASH_REMATCH[7]}")
-					;;
-			esac
+			script_service_counter="$(( script_service_counter + 1 ))"
+			script_job_data+=("${host_name}${separator}${service_description}${separator}${state_id}${separator}${plugin_output}")
 		else
+			script_host_counter="$(( script_host_counter + 1 ))"
+			script_job_data+=("${host_name}${separator}${state_id}${separator}${plugin_output}")
+		fi
+
+		if [ -n "${junk}" ]
+		then
+			script_job_raw_data+=("${host_name}${separator}${service_description}${separator}${state_id}${separator}${plugin_output}${separator}${junk}")
 			script_invalid_data_counter="$(( script_invalid_data_counter + 1 ))"
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
-				logHandler "Invalid dataset received: '${REPLY}'"
+				logHandler "WARNING: Invalid dataset received! (Output contains job_data_separator: ${job_data_separator}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
 			fi
+		else
+			script_job_raw_data+=("${host_name}${separator}${service_description}${separator}${state_id}${separator}${plugin_output}")
 		fi
 
 		if [ "${job_interval_helper}" -le "${SECONDS}" ]
