@@ -1411,7 +1411,7 @@ dataProcessor()
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
-				logHandler "WARNING: Invalid dataset received! (Output contains monitoring_data_separator: ${monitoring_data_separator}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
+				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${monitoring_data_separator}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
 			fi
 		else
 			script_job_raw_data+=("${host_name}${separator}${service_description}${separator}${state_id}${separator}${plugin_output}")
