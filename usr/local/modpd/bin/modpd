@@ -1224,28 +1224,23 @@ generateDebugLogOutput()
 	then
 		log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 
-		if rotationNecessary
-		then
-			printf "*** START (%s) %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}"
-		else
-			printf "*** START - %s - %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}"
-		fi
+		printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${script_name}"
 
 		if [ "${debug_log_monitoring_data}" == "1" ]
 		then
-				printf "*** START (raw data received from monitoring) ***\\n"
-				printf "%s\\n" "${script_job_raw_data[@]}"
-				printf "*** END (raw data received from monitoring) ***\\n\\n\\n"
+			printf "*** START (raw data received from monitoring) ***\\n\\n"
+			printf "%s\\n" "${script_job_raw_data[@]}"
+			printf "\\n*** END (raw data received from monitoring) ***\\n"
 		fi
 
 		if [ "${debug_log_obsessing_data}" == "1" ]
 		then
 			printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
 			printf "%s\\n" "${script_job_data[@]}"
-			printf "*** END (raw data prepared to send via %s) ***\\n\\n\\n" "${obsessing_interface}"
+			printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
 		fi
 
-		printf "*** END %s debug log cycle ***\\n\\n" "${script_name}"
+		printf "********** END (%s) %s debug log cycle **********\\n\\n" "${log_timestamp}" "${script_name}"
 	fi
 }
 
@@ -1253,7 +1248,7 @@ debugLog()
 {
 	if rotationNecessary
 	then
-		:> "${debug_log_file}"
+		: >| "${debug_log_file}"
 	fi
 
 	generateDebugLogOutput >> "${debug_log_file}"
