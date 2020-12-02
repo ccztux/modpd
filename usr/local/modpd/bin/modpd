@@ -1216,7 +1216,7 @@ rotationNecessary()
 	fi
 }
 
-debugLog()
+generateDebugLogOutput()
 {
 	local log_timestamp=
 
@@ -1226,27 +1226,37 @@ debugLog()
 
 		if rotationNecessary
 		then
-			printf "*** START (%s) %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}" > "${debug_log_file}"
+			printf "*** START (%s) %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}"
 		else
-			printf "*** START - %s - %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}" >> "${debug_log_file}"
+			printf "*** START - %s - %s debug log cycle ***\\n\\n" "${log_timestamp}" "${script_name}"
 		fi
 
 		if [ "${debug_log_monitoring_data}" == "1" ]
 		then
-			printf "*** START (raw data received from monitoring) ***\\n" >> "${debug_log_file}"
-			printf "%s\\n" "${script_job_raw_data[@]}" >> "${debug_log_file}"
-			printf "*** END (raw data received from monitoring) ***\\n\\n\\n" >> "${debug_log_file}"
+				printf "*** START (raw data received from monitoring) ***\\n"
+				printf "%s\\n" "${script_job_raw_data[@]}"
+				printf "*** END (raw data received from monitoring) ***\\n\\n\\n"
 		fi
 
 		if [ "${debug_log_obsessing_data}" == "1" ]
 		then
-			printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}" >> "${debug_log_file}"
-			printf "%s\\n" "${script_job_data[@]}" >> "${debug_log_obsessing_data_log_file}"
-			printf "*** END (raw data prepared to send via %s) ***\\n\\n\\n" "${obsessing_interface}" >> "${debug_log_file}"
+			printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
+			printf "%s\\n" "${script_job_data[@]}"
+			printf "*** END (raw data prepared to send via %s) ***\\n\\n\\n" "${obsessing_interface}"
 		fi
 
-		printf "*** END %s debug log cycle ***\\n\\n" "${script_name}" >> "${debug_log_file}"
+		printf "*** END %s debug log cycle ***\\n\\n" "${script_name}"
 	fi
+}
+
+debugLog()
+{
+	if rotationNecessary
+	then
+		:> "${debug_log_file}"
+	fi
+
+	generateDebugLogOutput >> "${debug_log_file}"
 }
 
 buildJobCommand()
@@ -1348,7 +1358,7 @@ jobHandler()
 		jobExec &
 		script_job_pid_2="${!}"
 
-		wait ${script_job_pid_1}
+		wait "${script_job_pid_1}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_1=
@@ -1357,18 +1367,18 @@ jobHandler()
 		jobExec &
 		script_job_pid_1="${!}"
 
-		wait ${script_job_pid_2}
+		wait "${script_job_pid_2}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_2=
 	elif [ -n "${script_job_pid_1}" ] && [ -n "${script_job_pid_2}" ]
 	then
-		wait ${script_job_pid_1}
+		wait "${script_job_pid_1}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_1=
 
-		wait ${script_job_pid_2}
+		wait "${script_job_pid_2}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_2=
