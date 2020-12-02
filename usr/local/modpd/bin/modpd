@@ -1256,7 +1256,8 @@ debugLog()
 
 buildJobCommand()
 {
-	local separator="$(printf "%b" "${obsessing_data_separator}")"
+	local separator=
+	separator="$(printf "%b" "${obsessing_data_separator}")"
 
 	logHandler "Building job command..."
 
@@ -1388,7 +1389,8 @@ jobHandler()
 dataProcessor()
 {
 	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
-	local separator="$(printf "%b" "${monitoring_data_separator}")"
+	local separator=
+	separator="$(printf "%b" "${monitoring_data_separator}")"
 
 	while IFS=${separator} read -u 3 -r host_name service_description state_id plugin_output junk
 	do
