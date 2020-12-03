@@ -51,13 +51,6 @@ eprintf()
 # Traps
 #------
 
-if ! trap 'signalHandler SIGUSR1' SIGUSR1
-then
-	eprintf "Setting trap for signal: 'SIGUSR1' was not successful."
-	eprintf "Terminating..."
-	exit 247
-fi
-
 if ! trap 'signalHandler SIGTERM' SIGTERM
 then
 	eprintf "Setting trap for signal: 'SIGTERM' was not successful."
@@ -122,13 +115,6 @@ signalHandler()
 	local uptime=
 
 	case "${signal}" in
-		SIGUSR1)
-			if [ "${stats_enabled}" == "1" ]
-			then
-				logStats
-				resetCounters
-			fi
-			;;
 		SIGTERM)
 			logHandler "Caught: '${signal}', preparing for shutdown..."
 
@@ -415,24 +401,6 @@ resetCounters()
 	script_invalid_data_counter="0"
 }
 
-logStatsWatchdog()
-{
-	local stats_interval_helper="$(( SECONDS + stats_interval ))"
-
-	while true
-	do
-		if [ "${stats_interval_helper}" -le "${SECONDS}" ]
-		then
-			# shellcheck disable=SC2154
-			${kill_bin:=kill} -SIGUSR1 "${script_pid}"
-			stats_interval_helper="$(( SECONDS + stats_interval ))"
-		fi
-
-		# shellcheck disable=SC2154
-		${sleep_bin} 1
-	done
-}
-
 checkCliOptions()
 {
 	if [ "${script_argc}" -eq "0" ]
@@ -479,32 +447,6 @@ reloadHandler()
 	if ! includeConfig
 	then
 		return 1
-	fi
-
-	if [ "${stats_enabled}" == "1" ]
-	then
-		if [ -n "${script_stats_watchdog_pid}" ]
-		then
-			logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
-
-			if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}" 2>&1 | logHandler
-			then
-				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was not successful"
-				logHandler "Hardkilling logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
-
-				${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}" 2>&1 | logHandler
-			else
-				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was successful"
-			fi
-		fi
-
-		if ! logStatsWatchdog &
-		then
-			return 2
-		else
-			script_stats_watchdog_pid="${!}"
-			logHandler "logStatsWatchdog started as subprocess with pid: '${script_stats_watchdog_pid}'"
-		fi
 	fi
 
 	# check if we need additional binaries because of an updated config
@@ -1203,13 +1145,14 @@ checkNamedPipe()
 	fi
 }
 
-truncationNecessary()
+timerHandler()
 {
-	local truncation="$(( SECONDS / debug_log_truncate_interval ))"
+	local interval="${1}"
+	local last_result="${2}"
+	local result="$(( SECONDS / interval ))"
 
-	if [ "${truncation}" -ge "${script_debug_log_last_truncation}" ]
+	if [ "${result}" -ge "${last_result}" ]
 	then
-		script_debug_log_last_truncation="$(( truncation + 1 ))"
 		return 0
 	else
 		return 1
@@ -1242,8 +1185,9 @@ generateDebugLogOutput()
 
 debugLog()
 {
-	if truncationNecessary
+	if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
 	then
+		script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
 		: >| "${debug_log_file}"
 	fi
 
@@ -1425,6 +1369,16 @@ dataProcessor()
 			script_job_raw_data=()
 			job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
+
+		if [ "${stats_enabled}" == "1" ]
+		then
+			if timerHandler "${stats_interval}" "${script_timer_last_stats_result}"
+			then
+				script_timer_last_stats_result="$(( script_timer_last_stats_result + 1 ))"
+				logStats
+				resetCounters
+			fi
+		fi
 	done
 }
 
@@ -1443,16 +1397,6 @@ _main()
 	getExecUser
 	checkBashVersion
 	checkAlreadyRunningInstance
-
-	if [ "${stats_enabled}" == "1" ]
-	then
-		if logStatsWatchdog &
-		then
-			script_stats_watchdog_pid="${!}"
-			logHandler "logStatsWatchdog started as subprocess with pid: '${script_stats_watchdog_pid}'"
-		fi
-	fi
-
 	createNamedPipe
 	setProxy
 	buildJobCommand
@@ -1496,7 +1440,6 @@ script_config_file_included="0"
 script_log_requirements_ok="0"
 script_start_time=
 script_exit_code="255"
-script_stats_watchdog_pid=
 script_job_pid_1=
 script_job_pid_2=
 script_host_counter="0"
@@ -1508,7 +1451,8 @@ script_job_counter_nok="0"
 script_job_counter_timeout="0"
 script_job_data=()
 script_job_raw_data=()
-script_debug_log_last_truncation="1"
+script_timer_last_debug_log_truncation_result="1"
+script_timer_last_stats_result="1"
 
 
 
