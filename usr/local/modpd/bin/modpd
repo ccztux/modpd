@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-01
+#						2020-12-03
 #
 #  Version				2.2.0
 #
@@ -349,7 +349,7 @@ printUsage()
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
 	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${script_config_file}"
-	printf "   -e\\t\\tLog bash errors additionally to: %s\\n" "${script_log_file}"
+	printf "   -e\\t\\tError mode. Log bash errors additionally to: %s\\n" "${script_log_file}"
 	printf "     \\t\\tWARNING: This is not intended for use in a production environment!\\n"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
@@ -1455,7 +1455,7 @@ script_version="2.2.0"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017-2020 ${script_author} (ccztux), all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2020-12-01"
+script_last_modification_date="2020-12-03"
 script_minimal_required_bash_version="3"
 script_license="GNU GPLv2"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
