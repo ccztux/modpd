@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-01
+#						2020-12-03
 #
 #  Version				2.2.0
 #
@@ -47,6 +47,19 @@ eprintf()
 
 
 
+#-----------------
+# Check error mode
+#-----------------
+
+if [[ "${@}" =~ ^(.*)-e(.*)$ ]]
+then
+	script_error_mode="1"
+else
+	script_error_mode="0"
+fi
+
+
+
 #------
 # Traps
 #------
@@ -72,11 +85,14 @@ then
 	exit 247
 fi
 
-if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+if [ "${script_error_mode}" == "1" ]
 then
-	eprintf "Setting trap for signal: 'ERR' was not successful."
-	eprintf "Terminating..."
-	exit 247
+	if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+	then
+		eprintf "Setting trap for signal: 'ERR' was not successful."
+		eprintf "Terminating..."
+		exit 247
+	fi
 fi
 
 if ! trap 'signalHandler "EXIT"' EXIT
@@ -145,9 +161,6 @@ signalHandler()
 			;;
 		ERR)
 			logHandler "Caught: '${signal}', in: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
-			# deactivated, needs analyzing of some thrown errors
-			#script_exit_code="1"
-			#exit
 			;;
 		EXIT)
 			if [ "${script_config_file_included}" -eq "1" ]
@@ -336,6 +349,8 @@ printUsage()
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
 	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${script_config_file}"
+	printf "   -e\\t\\tError mode. Log bash errors additionally to: %s\\n" "${script_log_file}"
+	printf "     \\t\\tWARNING: This is not intended for use in a production environment!\\n"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
@@ -377,12 +392,6 @@ logStats()
 	fi
 
 	logHandler "---- Stats for the last ${timediff} seconds ----"
-
-	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
-	then
-		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
-	fi
-
 	logHandler "${script_name} is running: ${uptime}"
 	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'"
 	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'"
@@ -1188,7 +1197,14 @@ debugLog()
 	if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
 	then
 		script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
-		: >| "${debug_log_file}"
+		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+
+		if : >| "${debug_log_file}" | logHandler
+		then
+			logHandler "Truncating the debug logfile was successful"
+		else
+			logHandler "Truncating the debug logfile was not successful"
+		fi
 	fi
 
 	generateDebugLogOutput >> "${debug_log_file}"
@@ -1379,6 +1395,15 @@ dataProcessor()
 				resetCounters
 			fi
 		fi
+
+		if [ "${script_error_mode}" == "1" ]
+		then
+			if timerHandler "${script_error_mode_log_interval}" "${script_timer_last_error_mode_warning_result}"
+			then
+				script_timer_last_error_mode_warning_result="$(( script_timer_last_error_mode_warning_result + 1 ))"
+				logHandler "WARNING: This is not intended for use in a production environment!"
+			fi
+		fi
 	done
 }
 
@@ -1430,7 +1455,7 @@ script_version="2.2.0"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017-2020 ${script_author} (ccztux), all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2020-12-01"
+script_last_modification_date="2020-12-03"
 script_minimal_required_bash_version="3"
 script_license="GNU GPLv2"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
@@ -1439,6 +1464,7 @@ script_bypass_exit_routines="0"
 script_config_file_included="0"
 script_log_requirements_ok="0"
 script_start_time=
+script_error_mode_log_interval="300"
 script_exit_code="255"
 script_job_pid_1=
 script_job_pid_2=
@@ -1453,6 +1479,7 @@ script_job_data=()
 script_job_raw_data=()
 script_timer_last_debug_log_truncation_result="1"
 script_timer_last_stats_result="1"
+script_timer_last_error_mode_warning_result="1"
 
 
 
@@ -1478,7 +1505,7 @@ then
 	OPTERR="0"
 
 	# shellcheck disable=SC2213
-	while getopts ":c:hv" OPTION
+	while getopts ":c:hve" OPTION
 	do
 		case "${OPTION}" in
 			h)
@@ -1489,6 +1516,9 @@ then
 				;;
 			c)
 				script_config_file="${OPTARG}"
+				;;
+			e)
+				script_error_mode="1"
 				;;
 			v)
 				printScriptInfos
