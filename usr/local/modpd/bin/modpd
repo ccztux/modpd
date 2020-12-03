@@ -377,12 +377,6 @@ logStats()
 	fi
 
 	logHandler "---- Stats for the last ${timediff} seconds ----"
-
-	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
-	then
-		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
-	fi
-
 	logHandler "${script_name} is running: ${uptime}"
 	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'"
 	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'"
@@ -1188,7 +1182,14 @@ debugLog()
 	if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
 	then
 		script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
-		: >| "${debug_log_file}"
+		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+
+		if : >| "${debug_log_file}" | logHandler
+		then
+			logHandler "Truncating the debug logfile was successful"
+		else
+			logHandler "Truncating the debug logfile was not successful"
+		fi
 	fi
 
 	generateDebugLogOutput >> "${debug_log_file}"
