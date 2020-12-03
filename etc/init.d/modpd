@@ -120,6 +120,11 @@ do_start()
 
 	if [ "${DAEMON_RETVAL}" != "0" ]
 	then
+		if [ "${error_mode}" == "1" ]
+		then
+			DAEMON_ARGS="${DAEMON_ARGS} -e"
+		fi
+
 		if [ -n "${DAEMON_USER}" ]
 		then
 			runuser "${DAEMON_USER}" -c "setsid ${DAEMON_PATH} ${DAEMON_ARGS} </dev/null >/dev/null 2>&1 &" </dev/null >/dev/null 2>&1
@@ -254,8 +259,12 @@ case "${1}" in
 	restart)
 		do_restart
 		;;
+	start_error_mode)
+		error_mode="1"
+		do_start
+		;;
 	*)
-		echo "Usage: ${0} {start|stop|status|reload|restart}" >&2
+		echo "Usage: ${0} {start|stop|status|reload|restart|start_error_mode}" >&2
 		exit 3
 		;;
 esac
