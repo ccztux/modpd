@@ -1386,7 +1386,7 @@ dataProcessor()
 			script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
 			logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
 
-			if : >| "${debug_log_file}" | logHandler
+			if : >| "${debug_log_file}" 2>&1 | logHandler
 			then
 				logHandler "Truncating the debug logfile was successful"
 			else
