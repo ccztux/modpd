@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-03-10
+#						2020-12-04
 #
-#  Version				2.1.3
+#  Version				2.2.0
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -47,16 +47,27 @@ eprintf()
 
 
 
+#-----------------
+# Check error mode
+#-----------------
+
+script_error_mode="0"
+
+for i in "${@}"
+do
+	if [ "${i}" == "-e" ]
+	then
+		script_error_mode="1"
+	fi
+done
+
+unset i
+
+
+
 #------
 # Traps
 #------
-
-if ! trap 'signalHandler SIGUSR1' SIGUSR1
-then
-	eprintf "Setting trap for signal: 'SIGUSR1' was not successful."
-	eprintf "Terminating..."
-	exit 247
-fi
 
 if ! trap 'signalHandler SIGTERM' SIGTERM
 then
@@ -79,11 +90,14 @@ then
 	exit 247
 fi
 
-if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+if [ "${script_error_mode}" == "1" ]
 then
-	eprintf "Setting trap for signal: 'ERR' was not successful."
-	eprintf "Terminating..."
-	exit 247
+	if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+	then
+		eprintf "Setting trap for signal: 'ERR' was not successful."
+		eprintf "Terminating..."
+		exit 247
+	fi
 fi
 
 if ! trap 'signalHandler "EXIT"' EXIT
@@ -122,13 +136,6 @@ signalHandler()
 	local uptime=
 
 	case "${signal}" in
-		SIGUSR1)
-			if [ "${stats_enabled}" == "1" ]
-			then
-				logStats
-				resetCounters
-			fi
-			;;
 		SIGTERM)
 			logHandler "Caught: '${signal}', preparing for shutdown..."
 
@@ -159,9 +166,6 @@ signalHandler()
 			;;
 		ERR)
 			logHandler "Caught: '${signal}', in: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
-			# deactivated, needs analyzing of some thrown errors
-			#script_exit_code="1"
-			#exit
 			;;
 		EXIT)
 			if [ "${script_config_file_included}" -eq "1" ]
@@ -350,6 +354,8 @@ printUsage()
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
 	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${script_config_file}"
+	printf "   -e\\t\\tError mode. Log bash errors additionally to: %s\\n" "${script_log_file}"
+	printf "     \\t\\tWARNING: This is not intended for use in a production environment!\\n"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
@@ -409,24 +415,6 @@ resetCounters()
 	script_invalid_data_counter="0"
 }
 
-logStatsWatchdog()
-{
-	local stats_interval_helper="$(( SECONDS + stats_interval ))"
-
-	while true
-	do
-		if [ "${stats_interval_helper}" -le "${SECONDS}" ]
-		then
-			# shellcheck disable=SC2154
-			${kill_bin:=kill} -SIGUSR1 "${script_pid}"
-			stats_interval_helper="$(( SECONDS + stats_interval ))"
-		fi
-
-		# shellcheck disable=SC2154
-		${sleep_bin} 1
-	done
-}
-
 checkCliOptions()
 {
 	if [ "${script_argc}" -eq "0" ]
@@ -463,6 +451,9 @@ setRequiredVariables()
 
 	# log file
 	script_log_file="${script_log_directory}/${script_name}.log"
+
+	# debug log file
+	debug_log_file="${script_log_directory}/${script_name}.debug.log"
 }
 
 reloadHandler()
@@ -470,32 +461,6 @@ reloadHandler()
 	if ! includeConfig
 	then
 		return 1
-	fi
-
-	if [ "${stats_enabled}" == "1" ]
-	then
-		if [ -n "${script_stats_watchdog_pid}" ]
-		then
-			logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
-
-			if ! ${kill_bin} -s SIGTERM "${script_stats_watchdog_pid}" 2>&1 | logHandler
-			then
-				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was not successful"
-				logHandler "Hardkilling logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}'..."
-
-				${kill_bin} -s SIGKILL "${script_stats_watchdog_pid}" 2>&1 | logHandler
-			else
-				logHandler "Terminating logStatsWatchdog subprocess with pid: '${script_stats_watchdog_pid}' was successful"
-			fi
-		fi
-
-		if ! logStatsWatchdog &
-		then
-			return 2
-		else
-			script_stats_watchdog_pid="${!}"
-			logHandler "logStatsWatchdog started as subprocess with pid: '${script_stats_watchdog_pid}'"
-		fi
 	fi
 
 	# check if we need additional binaries because of an updated config
@@ -1194,8 +1159,54 @@ checkNamedPipe()
 	fi
 }
 
+timerHandler()
+{
+	local interval="${1}"
+	local last_result="${2}"
+	local result="$(( SECONDS / interval ))"
+
+	if [ "${result}" -ge "${last_result}" ]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+
+generateDebugLogOutput()
+{
+	local log_timestamp=
+	log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+
+	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${script_name}"
+
+	if [ "${debug_log_monitoring_data}" == "1" ]
+	then
+		printf "*** START (raw data received from monitoring) ***\\n\\n"
+		printf "%s\\n" "${script_job_raw_data[@]}"
+		printf "\\n*** END (raw data received from monitoring) ***\\n"
+	fi
+
+	if [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
+		printf "%s\\n" "${script_job_data[@]}"
+		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
+	fi
+
+	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${log_timestamp}" "${script_name}"
+}
+
+debugLog()
+{
+	generateDebugLogOutput >> "${debug_log_file}"
+}
+
 buildJobCommand()
 {
+	local od_sep=
+	od_sep="$(printf "%b" "${obsessing_data_separator}")"
+
 	logHandler "Building job command..."
 
 	if [ "${job_timeout_enabled}" == "1" ]
@@ -1209,14 +1220,14 @@ buildJobCommand()
 			if [ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]
 			then
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			else
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			fi
 			;;
 		nsca)
-			job_command="${job_command} ${script_libexec_directory}/send_nsca -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
+			job_command="${job_command} ${script_libexec_directory}/send_nsca -d \"${od_sep}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', terminating"
@@ -1242,6 +1253,11 @@ jobExec()
 	esac
 
 	rc="${PIPESTATUS[1]}"
+
+	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		debugLog
+	fi
 
 	return "${rc}"
 }
@@ -1291,7 +1307,7 @@ jobHandler()
 		jobExec &
 		script_job_pid_2="${!}"
 
-		wait ${script_job_pid_1}
+		wait "${script_job_pid_1}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_1=
@@ -1300,18 +1316,18 @@ jobHandler()
 		jobExec &
 		script_job_pid_1="${!}"
 
-		wait ${script_job_pid_2}
+		wait "${script_job_pid_2}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_2=
 	elif [ -n "${script_job_pid_1}" ] && [ -n "${script_job_pid_2}" ]
 	then
-		wait ${script_job_pid_1}
+		wait "${script_job_pid_1}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_1=
 
-		wait ${script_job_pid_2}
+		wait "${script_job_pid_2}"
 		rc="${?}"
 		counterHandler "${rc}"
 		script_job_pid_2=
@@ -1324,28 +1340,31 @@ jobHandler()
 dataProcessor()
 {
 	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
-	local regex="^(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)(${job_data_separator})(.+)$"
+	local md_sep=
+	local od_sep=
+	md_sep="$(printf "%b" "${monitoring_data_separator}")"
+	od_sep="$(printf "%b" "${obsessing_data_separator}")"
 
-	while read -u 3 -r
+	while IFS=${md_sep} read -u 3 -r host_name service_description state_id plugin_output junk
 	do
-		if [[ "${REPLY}" =~ ${regex} ]]
+		script_job_raw_data+=("${host_name}${md_sep}${service_description}${md_sep}${state_id}${md_sep}${plugin_output}${md_sep}${junk}")
+
+		if [ "${service_description}" != "NULL" ]
 		then
-			case "${BASH_REMATCH[3]}" in
-				NULL)
-					script_host_counter="$(( script_host_counter + 1 ))"
-					script_job_data+=("${BASH_REMATCH[1]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}")
-					;;
-				*)
-					script_service_counter="$(( script_service_counter + 1 ))"
-					script_job_data+=("${BASH_REMATCH[1]}"$'\t'"${BASH_REMATCH[3]}"$'\t'"${BASH_REMATCH[5]}"$'\t'"${BASH_REMATCH[7]}")
-					;;
-			esac
+			script_service_counter="$(( script_service_counter + 1 ))"
+			script_job_data+=("${host_name}${od_sep}${service_description}${od_sep}${state_id}${od_sep}${plugin_output}")
 		else
+			script_host_counter="$(( script_host_counter + 1 ))"
+			script_job_data+=("${host_name}${od_sep}${state_id}${od_sep}${plugin_output}")
+		fi
+
+		if [ -n "${junk}" ]
+		then
 			script_invalid_data_counter="$(( script_invalid_data_counter + 1 ))"
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
-				logHandler "Invalid dataset received: '${REPLY}'"
+				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
 			fi
 		fi
 
@@ -1353,7 +1372,40 @@ dataProcessor()
 		then
 			jobHandler
 			script_job_data=()
+			script_job_raw_data=()
 			job_interval_helper="$(( SECONDS + job_exec_interval ))"
+		fi
+
+		if [ "${stats_enabled}" == "1" ]
+		then
+			if timerHandler "${stats_interval}" "${script_timer_last_stats_result}"
+			then
+				script_timer_last_stats_result="$(( script_timer_last_stats_result + 1 ))"
+				logStats
+				resetCounters
+			fi
+		fi
+
+		if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
+		then
+			script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
+			logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+
+			if : >| "${debug_log_file}" 2>&1 | logHandler
+			then
+				logHandler "Truncating the debug logfile was successful"
+			else
+				logHandler "Truncating the debug logfile was not successful"
+			fi
+		fi
+
+		if [ "${script_error_mode}" == "1" ]
+		then
+			if timerHandler "${script_error_mode_log_interval}" "${script_timer_last_error_mode_warning_result}"
+			then
+				script_timer_last_error_mode_warning_result="$(( script_timer_last_error_mode_warning_result + 1 ))"
+				logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
+			fi
 		fi
 	done
 }
@@ -1373,16 +1425,6 @@ _main()
 	getExecUser
 	checkBashVersion
 	checkAlreadyRunningInstance
-
-	if [ "${stats_enabled}" == "1" ]
-	then
-		if logStatsWatchdog &
-		then
-			script_stats_watchdog_pid="${!}"
-			logHandler "logStatsWatchdog started as subprocess with pid: '${script_stats_watchdog_pid}'"
-		fi
-	fi
-
 	createNamedPipe
 	setProxy
 	buildJobCommand
@@ -1412,11 +1454,11 @@ _main()
 script_pid="${$}"
 script_argc="${#}"
 script_name="${0##*/}"
-script_version="2.1.3"
+script_version="2.2.0"
 script_author="Christian Zettel (ccztux)"
-script_copyright="Copyright © 2017-2020 ${script_author} (ccztux), all rights reserved"
+script_copyright="Copyright © 2017-2020 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2020-03-10"
+script_last_modification_date="2020-12-04"
 script_minimal_required_bash_version="3"
 script_license="GNU GPLv2"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
@@ -1425,8 +1467,8 @@ script_bypass_exit_routines="0"
 script_config_file_included="0"
 script_log_requirements_ok="0"
 script_start_time=
+script_error_mode_log_interval="300"
 script_exit_code="255"
-script_stats_watchdog_pid=
 script_job_pid_1=
 script_job_pid_2=
 script_host_counter="0"
@@ -1437,6 +1479,10 @@ script_job_counter_ok="0"
 script_job_counter_nok="0"
 script_job_counter_timeout="0"
 script_job_data=()
+script_job_raw_data=()
+script_timer_last_debug_log_truncation_result="1"
+script_timer_last_stats_result="1"
+script_timer_last_error_mode_warning_result="1"
 
 
 
@@ -1462,7 +1508,7 @@ then
 	OPTERR="0"
 
 	# shellcheck disable=SC2213
-	while getopts ":c:hv" OPTION
+	while getopts ":c:hve" OPTION
 	do
 		case "${OPTION}" in
 			h)
@@ -1473,6 +1519,9 @@ then
 				;;
 			c)
 				script_config_file="${OPTARG}"
+				;;
+			e)
+				script_error_mode="1"
 				;;
 			v)
 				printScriptInfos

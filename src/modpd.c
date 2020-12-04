@@ -9,9 +9,9 @@
 *  Project website:		https://github.com/ccztux/modpd
 *
 *  Last Modification:	Christian Zettel (ccztux)
-*						2020-03-10
+*						2020-12-04
 *
-*  Version				2.1.3
+*  Version				2.2.0
 *
 *  Description:			NEB module to write obsessing data to unix socket
 *						Based on example: nagioscore/module/helloworld.c
@@ -83,12 +83,12 @@ int nebmodule_init(int flags, char *args, nebmodule *handle)
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "modpd");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_AUTHOR, "Christian Zettel (ccztux)");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "2.1.3");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "2.2.0");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_DESC, "Obsessing NEB Module.");
 
 	/* log module info to the Nagios log file */
-	write_to_all_logs("modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.1.3", NSLOG_INFO_MESSAGE);
+	write_to_all_logs("modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.2.0", NSLOG_INFO_MESSAGE);
 
 	/* log a message to the Nagios log file */
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: Starting...\n");
@@ -199,7 +199,7 @@ int modpd_event_handler(int callback_type, void *data)
 	char temp_buffer[32768];
 	char output[32768];
 	char modpd_fifo[34] = "/usr/local/modpd/var/rw/modpd.cmd";
-	char separator[12] = "<=#modpd#=>";
+	char separator[5] = "\x1e";
    	int modpd_fifo_fd = 0;
 
 	/* what type of event/data do we have? */
