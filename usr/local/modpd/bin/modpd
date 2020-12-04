@@ -1194,19 +1194,6 @@ generateDebugLogOutput()
 
 debugLog()
 {
-	if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
-	then
-		script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
-		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
-
-		if : >| "${debug_log_file}" | logHandler
-		then
-			logHandler "Truncating the debug logfile was successful"
-		else
-			logHandler "Truncating the debug logfile was not successful"
-		fi
-	fi
-
 	generateDebugLogOutput >> "${debug_log_file}"
 }
 
@@ -1391,6 +1378,19 @@ dataProcessor()
 				script_timer_last_stats_result="$(( script_timer_last_stats_result + 1 ))"
 				logStats
 				resetCounters
+			fi
+		fi
+
+		if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
+		then
+			script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
+			logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+
+			if : >| "${debug_log_file}" | logHandler
+			then
+				logHandler "Truncating the debug logfile was successful"
+			else
+				logHandler "Truncating the debug logfile was not successful"
 			fi
 		fi
 
