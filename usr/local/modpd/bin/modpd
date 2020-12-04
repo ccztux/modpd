@@ -51,12 +51,17 @@ eprintf()
 # Check error mode
 #-----------------
 
-if [[ "${@}" =~ ^(.*)-e(.*)$ ]]
-then
-	script_error_mode="1"
-else
-	script_error_mode="0"
-fi
+script_error_mode="0"
+
+for i in "${@}"
+do
+	if [ "${i}" == "-e" ]
+	then
+		script_error_mode="1"
+	fi
+done
+
+unset i
 
 
 
