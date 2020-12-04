@@ -1399,7 +1399,7 @@ dataProcessor()
 			if timerHandler "${script_error_mode_log_interval}" "${script_timer_last_error_mode_warning_result}"
 			then
 				script_timer_last_error_mode_warning_result="$(( script_timer_last_error_mode_warning_result + 1 ))"
-				logHandler "WARNING: This is not intended for use in a production environment!"
+				logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
 			fi
 		fi
 	done
