@@ -1366,14 +1366,6 @@ dataProcessor()
 			fi
 		fi
 
-		if [ "${job_interval_helper}" -le "${SECONDS}" ]
-		then
-			jobHandler
-			script_job_data=()
-			script_job_raw_data=()
-			job_interval_helper="$(( SECONDS + job_exec_interval ))"
-		fi
-
 		if [ "${stats_enabled}" == "1" ]
 		then
 			if timerHandler "${stats_interval}" "${script_timer_last_stats_result}"
@@ -1412,6 +1404,14 @@ dataProcessor()
 				script_timer_last_error_mode_warning_result="$(( script_timer_last_error_mode_warning_result + 1 ))"
 				logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
 			fi
+		fi
+
+		if [ "${job_interval_helper}" -le "${SECONDS}" ]
+		then
+			jobHandler
+			script_job_data=()
+			script_job_raw_data=()
+			job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
 	done
 }
