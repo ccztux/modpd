@@ -1386,16 +1386,19 @@ dataProcessor()
 			fi
 		fi
 
-		if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
+		if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
 		then
-			script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
-			logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
-
-			if : >| "${debug_log_file}" 2>&1 | logHandler
+			if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
 			then
-				logHandler "Truncating the debug logfile was successful"
-			else
-				logHandler "Truncating the debug logfile was not successful"
+				script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
+				logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+
+				if : >| "${debug_log_file}" 2>&1 | logHandler
+				then
+					logHandler "Truncating the debug logfile was successful"
+				else
+					logHandler "Truncating the debug logfile was not successful"
+				fi
 			fi
 		fi
 
