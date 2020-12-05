@@ -1,6 +1,6 @@
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/master?label=shellcheck%20%28master%29)](https://travis-ci.org/ccztux/modpd)
 [![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/devel?label=shellcheck%20%28devel%29)](https://travis-ci.org/ccztux/modpd)
-[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20%28pre%29-release)](https://github.com/ccztux/modpd/releases/latest)
+[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20%28pre-%29release)](https://github.com/ccztux/modpd/releases/latest)
 [![GitHub issues](https://img.shields.io/github/issues-raw/ccztux/modpd)](https://github.com/ccztux/modpd/issues)
 [![GitHub](https://img.shields.io/github/license/ccztux/modpd?color=yellowgreen)](https://github.com/ccztux/modpd/blob/master/LICENSE)
 
