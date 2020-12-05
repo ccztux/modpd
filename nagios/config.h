@@ -3,7 +3,7 @@
  *
  * Nagios Config Header File
  * Written By: Ethan Galstad (egalstad@nagios.org)
- * Last Modified: 11-02-2008
+ * Last Modified: 11-02.2.18
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
