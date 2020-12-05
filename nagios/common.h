@@ -2,7 +2,7 @@
  *
  * Nagios Common Header File
  * Written By: Ethan Galstad (egalstad@nagios.org)
- * Last Modified: 10-22.2.17
+ * Last Modified: 10-22-2007
  *
  * License:
  *
