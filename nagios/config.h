@@ -29,7 +29,7 @@
 #define _GNU_SOURCE 1
 
 /* Event broker integration */
-#define USE_EVENT_BROKER 
+#define USE_EVENT_BROKER
 
 /* Embed a PERL interpreter into Nagios with optional cache for compiled code (contributed by Stephen Davies) */
 /* #undef EMBEDDEDPERL */
@@ -57,23 +57,23 @@
 /* #undef DEBUG5 */
 
 /* I/O implementations */
-#define USE_XSDDEFAULT 
-#define USE_XCDDEFAULT 
-#define USE_XRDDEFAULT 
-#define USE_XODTEMPLATE 
-#define USE_XPDDEFAULT 
-#define USE_XDDDEFAULT 
+#define USE_XSDDEFAULT
+#define USE_XCDDEFAULT
+#define USE_XRDDEFAULT
+#define USE_XODTEMPLATE
+#define USE_XPDDEFAULT
+#define USE_XDDDEFAULT
 
 
 /***** CGI COMPILE OPTIONS *****/
 /* should we compile and use the statusmap CGI? */
-#define USE_STATUSMAP 
+#define USE_STATUSMAP
 /* should we compile and use the statuswrl CGI? */
-#define USE_STATUSWRL 
+#define USE_STATUSWRL
 /* should we compile and use the trends CGI? */
-#define USE_TRENDS 
+#define USE_TRENDS
 /* should we compile and use the histogram CGI? */
-#define USE_HISTOGRAM 
+#define USE_HISTOGRAM
 
 
 
@@ -105,7 +105,7 @@
 
 /***** MISC DEFINITIONS *****/
 
-#define USE_NANOSLEEP 
+#define USE_NANOSLEEP
 #define STDC_HEADERS 1
 #define HAVE_TM_ZONE 1
 /* #undef HAVE_TZNAME */
@@ -315,7 +315,7 @@
 #ifdef USE_LTDL
 #include <ltdl.h>
 #else
-#define HAVE_DLFCN_H 
+#define HAVE_DLFCN_H
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
 #endif

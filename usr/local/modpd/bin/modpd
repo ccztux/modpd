@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-04
+#						2020-12-06
 #
-#  Version				2.2.0
+#  Version				2.2.1
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -1337,8 +1337,63 @@ jobHandler()
 	fi
 }
 
+validateNagioStateId()
+{
+	local state_id="${1}"
+
+	if [ "${state_id}" == "0" ] || [ "${state_id}" == "1" ] || [ "${state_id}" == "1" ] || [ "${state_id}" == "2" ]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+
+validateData()
+{
+	local host_name="${1}"
+	local service_description="${2}"
+	local state_id="${3}"
+	local plugin_output="${4}"
+	local junk="${5}"
+
+	if [ "${service_description}" != "NULL" ]
+	then
+		script_service_counter="$(( script_service_counter + 1 ))"
+
+		if [ -n "${junk}" ] || [ -z "${host_name}" ] || [ -z "${service_description}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
+		then
+			return 1
+		fi
+
+		if ! validateNagioStateId "${state_id}"
+		then
+			return 1
+		fi
+	else
+		script_host_counter="$(( script_host_counter + 1 ))"
+
+		if [ -n "${junk}" ] ||  [ -z "${host_name}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
+		then
+			return 1
+		fi
+
+		if ! validateNagioStateId "${state_id}"
+		then
+			return 1
+		fi
+	fi
+
+	return 0
+}
+
 dataProcessor()
 {
+	local host_name=
+	local service_description=
+	local state_id=
+	local plugin_output=
+	local junk=
 	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
 	local md_sep=
 	local od_sep=
@@ -1347,33 +1402,21 @@ dataProcessor()
 
 	while IFS=${md_sep} read -u 3 -r host_name service_description state_id plugin_output junk
 	do
-		script_job_raw_data+=("${host_name}${md_sep}${service_description}${md_sep}${state_id}${md_sep}${plugin_output}${md_sep}${junk}")
-
-		if [ "${service_description}" != "NULL" ]
+		if validateData "${host_name}" "${service_description}" "${state_id}" "${plugin_output}" "${junk}"
 		then
-			script_service_counter="$(( script_service_counter + 1 ))"
-			script_job_data+=("${host_name}${od_sep}${service_description}${od_sep}${state_id}${od_sep}${plugin_output}")
+			if [ "${service_description}" != "NULL" ]
+			then
+				script_job_data+=("${host_name}${od_sep}${service_description}${od_sep}${state_id}${od_sep}${plugin_output}")
+			else
+				script_job_data+=("${host_name}${od_sep}${state_id}${od_sep}${plugin_output}")
+			fi
 		else
-			script_host_counter="$(( script_host_counter + 1 ))"
-			script_job_data+=("${host_name}${od_sep}${state_id}${od_sep}${plugin_output}")
-		fi
-
-		if [ -n "${junk}" ]
-		then
 			script_invalid_data_counter="$(( script_invalid_data_counter + 1 ))"
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
 				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
 			fi
-		fi
-
-		if [ "${job_interval_helper}" -le "${SECONDS}" ]
-		then
-			jobHandler
-			script_job_data=()
-			script_job_raw_data=()
-			job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
 
 		if [ "${stats_enabled}" == "1" ]
@@ -1386,16 +1429,24 @@ dataProcessor()
 			fi
 		fi
 
-		if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
+		if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
 		then
-			script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
-			logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
-
-			if : >| "${debug_log_file}" 2>&1 | logHandler
+			if [ "${debug_log_monitoring_data}" == "1" ]
 			then
-				logHandler "Truncating the debug logfile was successful"
-			else
-				logHandler "Truncating the debug logfile was not successful"
+				script_job_raw_data+=("${host_name}${md_sep}${service_description}${md_sep}${state_id}${md_sep}${plugin_output}${md_sep}${junk}")
+			fi
+
+			if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
+			then
+				script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
+				logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+
+				if : >| "${debug_log_file}" 2>&1 | logHandler
+				then
+					logHandler "Truncating the debug logfile was successful"
+				else
+					logHandler "Truncating the debug logfile was not successful"
+				fi
 			fi
 		fi
 
@@ -1406,6 +1457,14 @@ dataProcessor()
 				script_timer_last_error_mode_warning_result="$(( script_timer_last_error_mode_warning_result + 1 ))"
 				logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
 			fi
+		fi
+
+		if [ "${job_interval_helper}" -le "${SECONDS}" ]
+		then
+			jobHandler
+			script_job_data=()
+			script_job_raw_data=()
+			job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
 	done
 }
@@ -1454,11 +1513,11 @@ _main()
 script_pid="${$}"
 script_argc="${#}"
 script_name="${0##*/}"
-script_version="2.2.0"
+script_version="2.2.1"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017-2020 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2020-12-04"
+script_last_modification_date="2020-12-06"
 script_minimal_required_bash_version="3"
 script_license="GNU GPLv2"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
