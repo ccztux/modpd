@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-12-06
 #
-#  Version				2.2.2
+#  Version				2.2.4
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -1337,7 +1337,7 @@ jobHandler()
 	fi
 }
 
-validateNagioStateId()
+validateStateId()
 {
 	local state_id="${1}"
 
@@ -1366,7 +1366,7 @@ validateData()
 			return 1
 		fi
 
-		if ! validateNagioStateId "${state_id}"
+		if ! validateStateId "${state_id}"
 		then
 			return 1
 		fi
@@ -1378,7 +1378,7 @@ validateData()
 			return 1
 		fi
 
-		if ! validateNagioStateId "${state_id}"
+		if ! validateStateId "${state_id}"
 		then
 			return 1
 		fi
@@ -1518,7 +1518,7 @@ _main()
 script_pid="${$}"
 script_argc="${#}"
 script_name="${0##*/}"
-script_version="2.2.2"
+script_version="2.2.4"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017-2020 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
