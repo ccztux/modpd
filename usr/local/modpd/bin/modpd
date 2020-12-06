@@ -1431,12 +1431,6 @@ dataProcessor()
 
 		if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
 		then
-			if timerHandler "${script_debug_mode_log_interval}" "${script_timer_last_debug_mode_warning_result}"
-			then
-				script_timer_last_debug_mode_warning_result="$(( script_timer_last_debug_mode_warning_result + 1 ))"
-				logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
-			fi
-
 			if [ "${debug_log_monitoring_data}" == "1" ]
 			then
 				script_job_raw_data+=("${host_name}${md_sep}${service_description}${md_sep}${state_id}${md_sep}${plugin_output}${md_sep}${junk}")
@@ -1455,11 +1449,17 @@ dataProcessor()
 			fi
 		fi
 
-		if [ "${script_error_mode}" == "1" ]
+		if timerHandler "${script_warning_messages_interval}" "${script_timer_last_warning_messages_result}"
 		then
-			if timerHandler "${script_error_mode_log_interval}" "${script_timer_last_error_mode_warning_result}"
+			script_timer_last_warning_messages_result="$(( script_timer_last_warning_messages_result + 1 ))"
+
+			if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
 			then
-				script_timer_last_error_mode_warning_result="$(( script_timer_last_error_mode_warning_result + 1 ))"
+				logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+			fi
+
+			if [ "${script_error_mode}" == "1" ]
+			then
 				logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
 			fi
 		fi
@@ -1531,8 +1531,6 @@ script_bypass_exit_routines="0"
 script_config_file_included="0"
 script_log_requirements_ok="0"
 script_start_time=
-script_error_mode_log_interval="300"
-script_debug_mode_log_interval="300"
 script_exit_code="255"
 script_job_pid_1=
 script_job_pid_2=
@@ -1545,10 +1543,10 @@ script_job_counter_nok="0"
 script_job_counter_timeout="0"
 script_job_data=()
 script_job_raw_data=()
+script_warning_messages_interval="300"
 script_timer_last_debug_log_truncation_result="1"
 script_timer_last_stats_result="1"
-script_timer_last_error_mode_warning_result="1"
-script_timer_last_debug_mode_warning_result="1"
+script_timer_last_warning_messages_result="1"
 
 
 
