@@ -1341,7 +1341,7 @@ validateNagioStateId()
 {
 	local state_id="${1}"
 
-	if [ "${state_id}" == "0" ] || [ "${state_id}" == "1" ] || [ "${state_id}" == "2" ]
+	if [ "${state_id}" == "0" ] || [ "${state_id}" == "1" ] || [ "${state_id}" == "2" ] ||·[·"${state_id}"·==·"3"·]
 	then
 		return 0
 	else
