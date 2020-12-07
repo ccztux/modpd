@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-12-07
 #
-#  Version				2.2.6
+#  Version				3.0.0
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -51,13 +51,13 @@ eprintf()
 # Check error mode
 #-----------------
 
-script_error_mode="0"
+g_error_mode="0"
 
 for i in "${@}"
 do
 	if [ "${i}" == "-e" ]
 	then
-		script_error_mode="1"
+		g_error_mode="1"
 	fi
 done
 
@@ -90,7 +90,7 @@ then
 	exit 247
 fi
 
-if [ "${script_error_mode}" == "1" ]
+if [ "${g_error_mode}" == "1" ]
 then
 	if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
 	then
@@ -118,7 +118,7 @@ propagateSignalToChilds()
 	local signal="${1}"
 
 	# shellcheck disable=SC2154
-	${kill_bin:=kill} -"${signal}" -"${script_pid}"
+	${kill_bin:=kill} -"${signal}" -"${g_pid}"
 }
 
 
@@ -142,7 +142,7 @@ signalHandler()
 			# propagate signal to all childs
 			propagateSignalToChilds "${signal}"
 
-			script_exit_code="143"
+			g_exit_code="143"
 			exit
 			;;
 		SIGINT)
@@ -151,7 +151,7 @@ signalHandler()
 			# propagate signal to all childs
 			propagateSignalToChilds "${signal}"
 
-			script_exit_code="130"
+			g_exit_code="130"
 			exit
 			;;
 		SIGHUP)
@@ -168,18 +168,18 @@ signalHandler()
 			logHandler "Caught: '${signal}', in: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
 			;;
 		EXIT)
-			if [ "${script_config_file_included}" -eq "1" ]
+			if [ "${g_config_file_included}" -eq "1" ]
 			then
-				if [ "${script_log_requirements_ok}" -eq "1" ]
+				if [ "${g_log_requirements_ok}" -eq "1" ]
 				then
 					logStats
 				fi
 
 				logHandler "Caught: '${signal}', shutting down..."
 
-				if [ "${script_bypass_exit_routines}" != "1" ]
+				if [ "${g_bypass_exit_routines}" != "1" ]
 				then
-					if [ "${script_another_instance_is_running}" != "1" ]
+					if [ "${g_another_instance_is_running}" != "1" ]
 					then
 						if ! checkNamedPipe
 						then
@@ -200,12 +200,12 @@ signalHandler()
 
 				uptime="$(secondsToTime "${SECONDS}")"
 
-				logHandler "Exitcode: '${script_exit_code}'"
-				logHandler "${script_name} was running: ${uptime}"
+				logHandler "Exitcode: '${g_exit_code}'"
+				logHandler "${g_name} was running: ${uptime}"
 				logHandler "Bye, bye..."
 			fi
 
-			exit ${script_exit_code}
+			exit ${g_exit_code}
 			;;
 		*)
 			logHandler "Caught: '${signal}', but no handler defined"
@@ -346,28 +346,28 @@ printUsage()
 {
 	setRequiredVariables
 
-	printf "Usage: %s OPTIONS\\n\\n" "${script_name}"
-	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
-	printf "Last modification:\\t%s\\n" "${script_last_modification_date}"
-	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
-	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
+	printf "Usage: %s OPTIONS\\n\\n" "${g_name}"
+	printf "Author:\\t\\t\\t%s\\n" "${g_author}"
+	printf "Last modification:\\t%s\\n" "${g_last_modification_date}"
+	printf "Version:\\t\\t%s\\n\\n" "${g_version}"
+	printf "Description:\\t\\t%s\\n\\n" "${g_description}"
 	printf "OPTIONS:\\n"
 	printf "   -h\\t\\tShows this help.\\n"
-	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${script_config_file}"
-	printf "   -e\\t\\tError mode. Log bash errors additionally to: %s\\n" "${script_log_file}"
+	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${g_config_file}"
+	printf "   -e\\t\\tError mode. Log bash errors additionally to: %s\\n" "${g_log_file}"
 	printf "     \\t\\tWARNING: This is not intended for use in a production environment!\\n"
 	printf "   -v\\t\\tShows detailed version information.\\n"
 }
 
 printScriptInfos()
 {
-	printf "Author:\\t\\t\\t%s\\n" "${script_author}"
-	printf "Project website:\\t%s\\n" "${script_project_website}"
-	printf "License:\\t\\t%s\\n\\n" "${script_license}"
-	printf "Last modification:\\t%s\\n" "${script_last_modification_date}"
-	printf "Version:\\t\\t%s\\n\\n" "${script_version}"
-	printf "Description:\\t\\t%s\\n\\n" "${script_description}"
-	printf "Copyright:\\t\\t%s\\n" "${script_copyright}"
+	printf "Author:\\t\\t\\t%s\\n" "${g_author}"
+	printf "Project website:\\t%s\\n" "${g_project_website}"
+	printf "License:\\t\\t%s\\n\\n" "${g_license}"
+	printf "Last modification:\\t%s\\n" "${g_last_modification_date}"
+	printf "Version:\\t\\t%s\\n\\n" "${g_version}"
+	printf "Description:\\t\\t%s\\n\\n" "${g_description}"
+	printf "Copyright:\\t\\t%s\\n" "${g_copyright}"
 }
 
 secondsToTime()
@@ -391,37 +391,37 @@ logStats()
 
 	if [ -z "${last_stats_logged:-}" ]
 	then
-		timediff="$(( current_time - script_start_time ))"
+		timediff="$(( current_time - g_start_time ))"
 	else
 		timediff="$(( current_time - last_stats_logged ))"
 	fi
 
 	logHandler "---- Stats for the last ${timediff} seconds ----"
-	logHandler "${script_name} is running: ${uptime}"
-	logHandler "Total processed jobs: '${script_job_counter_total}', successful processed jobs: '${script_job_counter_ok}', unsuccessful processed jobs: '${script_job_counter_nok}', timed out jobs: '${script_job_counter_timeout}'"
-	logHandler "Handled host checks: '${script_host_counter}', handled service checks: '${script_service_counter}', invalid datasets received: '${script_invalid_data_counter}'"
+	logHandler "${g_name} is running: ${uptime}"
+	logHandler "Total processed jobs: '${g_job_counter_total}', successful processed jobs: '${g_job_counter_ok}', unsuccessful processed jobs: '${g_job_counter_nok}', timed out jobs: '${g_job_counter_timeout}'"
+	logHandler "Handled host checks: '${g_host_counter}', handled service checks: '${g_service_counter}', invalid datasets received: '${g_invalid_data_counter}'"
 
 	last_stats_logged="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
 }
 
 resetCounters()
 {
-	script_job_counter_total="0"
-	script_job_counter_ok="0"
-	script_job_counter_nok="0"
-	script_job_counter_timeout="0"
-	script_host_counter="0"
-	script_service_counter="0"
-	script_invalid_data_counter="0"
+	g_job_counter_total="0"
+	g_job_counter_ok="0"
+	g_job_counter_nok="0"
+	g_job_counter_timeout="0"
+	g_host_counter="0"
+	g_service_counter="0"
+	g_invalid_data_counter="0"
 }
 
 checkCliOptions()
 {
-	if [ "${script_argc}" -eq "0" ]
+	if [ "${g_argc}" -eq "0" ]
 	then
 		printUsage
-		script_bypass_exit_routines="1"
-		script_exit_code="10"
+		g_bypass_exit_routines="1"
+		g_exit_code="10"
 		exit
 	fi
 }
@@ -429,31 +429,31 @@ checkCliOptions()
 setRequiredVariables()
 {
 	# define base path of modpd
-	script_base_path="/usr/local/modpd"
+	g_base_path="/usr/local/modpd"
 
 	# path to lock directory
-	script_lock_directory="${script_base_path}/var/lock"
+	g_lock_directory="${g_base_path}/var/lock"
 
 	# path to libexec directory
-	script_libexec_directory="${script_base_path}/libexec"
+	g_libexec_directory="${g_base_path}/libexec"
 
 	# log directory
-	script_log_directory="${script_base_path}/var/log"
+	g_log_directory="${g_base_path}/var/log"
 
 	# etc directory
-	script_etc_directory="${script_base_path}/etc"
+	g_etc_directory="${g_base_path}/etc"
 
 	# default config file
-	script_config_file="${script_config_file:=${script_etc_directory}/${script_name}.conf}"
+	g_config_file="${g_config_file:=${g_etc_directory}/${g_name}.conf}"
 
 	# lock file
-	script_lock_file="${script_lock_directory}/${script_name}.lock"
+	g_lock_file="${g_lock_directory}/${g_name}.lock"
 
 	# log file
-	script_log_file="${script_log_directory}/${script_name}.log"
+	g_log_file="${g_log_directory}/${g_name}.log"
 
 	# debug log file
-	debug_log_file="${script_log_directory}/${script_name}.debug.log"
+	g_debug_log_file="${g_log_directory}/${g_name}.debug.log"
 }
 
 reloadHandler()
@@ -513,6 +513,7 @@ checkBin()
 
 checkRequiredBinaries()
 {
+	local bin=
 	local required_binaries=()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
@@ -567,57 +568,57 @@ checkRequiredBinaries()
 		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
 
 		logHandler "Required binaries: '${binaries_not_found_helper}' not found, terminating"
-		script_exit_code="127"
+		g_exit_code="127"
 		exit
 	elif [ "${#binaries_not_found[@]}" -eq "1" ]
 	then
 		logHandler "Required binary: '${binaries_not_found[*]}' not found, terminating"
-		script_exit_code="127"
+		g_exit_code="127"
 		exit
 	fi
 }
 
 includeConfig()
 {
-	checkFileParameters "${script_config_file}"
+	checkFileParameters "${g_config_file}"
 
 	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_regular_file_is_not_empty ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ]
 	then
 		# shellcheck source=/scripts/usr/local/modpd/etc/modpd.sample.conf
-		if source "${script_config_file}"
+		if source "${g_config_file}"
 		then
-			script_config_file_included="1"
+			g_config_file_included="1"
 		else
-			logHandler "Including config file: '${script_config_file}' was not successful"
+			logHandler "Including config file: '${g_config_file}' was not successful"
 			logHandler "Terminating..."
 
-			script_bypass_exit_routines="1"
-			script_exit_code="20"
+			g_bypass_exit_routines="1"
+			g_exit_code="20"
 			exit
 		fi
 	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
 	then
-		logHandler "Config file: '${script_config_file}' does not exist"
+		logHandler "Config file: '${g_config_file}' does not exist"
 		logHandler "Terminating..."
 
-		script_bypass_exit_routines="1"
-		script_exit_code="21"
+		g_bypass_exit_routines="1"
+		g_exit_code="21"
 		exit
 	elif [ "$(( file_permission & b_regular_file_is_not_empty ))" -eq "0" ]
 	then
-		logHandler "Config file: '${script_config_file}' exists, but is empty"
+		logHandler "Config file: '${g_config_file}' exists, but is empty"
 		logHandler "Terminating..."
 
-		script_bypass_exit_routines="1"
-		script_exit_code="22"
+		g_bypass_exit_routines="1"
+		g_exit_code="22"
 		exit
 	elif [ "$(( file_permission & b_permission_read ))" -eq "0" ]
 	then
-		logHandler "Config file: '${script_config_file}' exists, but it is not readable"
+		logHandler "Config file: '${g_config_file}' exists, but it is not readable"
 		logHandler "Terminating..."
 
-		script_bypass_exit_routines="1"
-		script_exit_code="23"
+		g_bypass_exit_routines="1"
+		g_exit_code="23"
 		exit
 	fi
 }
@@ -700,20 +701,20 @@ logHandlerSetConfig()
 
 checkLogDir()
 {
-	checkFileParameters "${script_log_directory}"
+	checkFileParameters "${g_log_directory}"
 
 	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 	then
-		checkFileParameters "${script_log_file}"
+		checkFileParameters "${g_log_file}"
 
 		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -eq "0" ]
 		then
 			logHandler "Log file exists but we dont have write permissions, terminating"
-			script_bypass_exit_routines="1"
-			script_exit_code="30"
+			g_bypass_exit_routines="1"
+			g_exit_code="30"
 			exit
 		else
-			script_log_requirements_ok="1"
+			g_log_requirements_ok="1"
 			return 0
 		fi
 	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
@@ -722,27 +723,27 @@ checkLogDir()
 		logHandler "Creating log directory..."
 
 		# shellcheck disable=SC2154
-		if ${mkdir_bin} -p "${script_log_directory}" 2>&1 | logHandler
+		if ${mkdir_bin} -p "${g_log_directory}" 2>&1 | logHandler
 		then
 			logHandler "Creating log directory was successful"
-			script_log_requirements_ok="1"
+			g_log_requirements_ok="1"
 		else
 			logHandler "Creating log directory was not successful"
-			script_bypass_exit_routines="1"
-			script_exit_code="31"
+			g_bypass_exit_routines="1"
+			g_exit_code="31"
 			exit
 		fi
 	else
 		logHandler "Log directory exists but permissions are not ok, terminating"
-		script_bypass_exit_routines="1"
-		script_exit_code="32"
+		g_bypass_exit_routines="1"
+		g_exit_code="32"
 		exit
 	fi
 }
 
 checkLogHandlerRequirements()
 {
-	script_start_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+	g_start_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
 
 	if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
 	then
@@ -754,8 +755,8 @@ checkLogHandlerRequirements()
 		checkLogDir
 	fi
 
-	logHandler "${script_name} ${script_version} starting... (PID=${script_pid})"
-	logHandler "We are using the config file: '${script_config_file}'"
+	logHandler "${g_name} ${g_version} starting... (PID=${g_pid})"
+	logHandler "We are using the config file: '${g_config_file}'"
 }
 
 logHandlerStdinHelper()
@@ -785,7 +786,7 @@ logHandler()
 		log_message="${log_message//${nrdp_password:-}/${log_secure_replace_string}}"
 		log_message="${log_message//${nrdp_token:-}/${log_secure_replace_string}}"
 
-		if [ "${script_log_requirements_ok}" -ne "1" ]
+		if [ "${g_log_requirements_ok}" -ne "1" ]
 		then
 			eprintf "${log_message}"
 			return
@@ -807,9 +808,9 @@ logHandler()
 					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
 			fi
 		fi
 
@@ -822,9 +823,9 @@ logHandler()
 					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${script_log_file}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${script_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${script_log_file}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
 			fi
 		fi
 
@@ -832,7 +833,7 @@ logHandler()
 		then
 			if [ "$(( log_conf & b_logger_bin_available ))" -gt "0" ]
 			then
-				${logger_bin} -t "${script_name}[${script_pid}]" -- "(${calling_function}) ${log_message}"
+				${logger_bin} -t "${g_name}[${g_pid}]" -- "(${calling_function}) ${log_message}"
 			fi
 		fi
 
@@ -840,7 +841,7 @@ logHandler()
 		then
 			if [ "$(( log_conf & b_systemd_cat_bin_available ))" -gt "0" ]
 			then
-				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${script_name}"
+				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${g_name}"
 			fi
 		fi
 	fi
@@ -848,9 +849,9 @@ logHandler()
 
 checkLock()
 {
-	logHandler "Check if lock file: '${script_lock_file}' exists and if it is read and writeable..."
+	logHandler "Check if lock file: '${g_lock_file}' exists and if it is read and writeable..."
 
-	checkFileParameters "${script_lock_file}"
+	checkFileParameters "${g_lock_file}"
 
 	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
 	then
@@ -868,9 +869,9 @@ checkLock()
 
 setLock()
 {
-	logHandler "Check if script lock directory: '${script_lock_directory}' exists and permissions to set lock are ok..."
+	logHandler "Check if daemon lock directory: '${g_lock_directory}' exists and permissions to set lock are ok..."
 
-	checkFileParameters "${script_lock_directory}"
+	checkFileParameters "${g_lock_directory}"
 
 	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
 	then
@@ -878,31 +879,31 @@ setLock()
 	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
 	then
 		logHandler "Script lock directory doesnt exist"
-		logHandler "Creating script lock directory..."
+		logHandler "Creating daemon lock directory..."
 
 		# shellcheck disable=SC2154
-		if ${mkdir_bin} -p "${script_lock_directory}" 2>&1 | logHandler
+		if ${mkdir_bin} -p "${g_lock_directory}" 2>&1 | logHandler
 		then
-			logHandler "Creating script lock directory was successful"
+			logHandler "Creating daemon lock directory was successful"
 		else
-			logHandler "Creating script lock directory was not successful"
-			script_exit_code="40"
+			logHandler "Creating daemon lock directory was not successful"
+			g_exit_code="40"
 			exit
 		fi
 	else
 		logHandler "Script lock directory exists but permissions are not ok, terminating"
-		script_exit_code="41"
+		g_exit_code="41"
 		exit
 	fi
 
 	logHandler "Setting lock..."
 
-	if printf "%d" "${script_pid}" >"${script_lock_file}"
+	if printf "%d" "${g_pid}" >"${g_lock_file}"
 	then
 		logHandler "Setting lock was successful"
 	else
 		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock"
-		script_exit_code="42"
+		g_exit_code="42"
 		exit
 	fi
 }
@@ -912,12 +913,12 @@ removeLock()
 	logHandler "Removing lock..."
 
 	# shellcheck disable=SC2154
-	if ${rm_bin} "${script_lock_file}" 2>&1 | logHandler
+	if ${rm_bin} "${g_lock_file}" 2>&1 | logHandler
 	then
 		logHandler "Removing lock was successful"
 	else
 		logHandler "Removing lock was not successful"
-		script_exit_code="50"
+		g_exit_code="50"
 		exit
 	fi
 }
@@ -1014,15 +1015,15 @@ checkBashVersion()
 	if [ -z "${BASH_VERSINFO[0]}" ]
 	then
 		logHandler "Could not determine bash version, terminating"
-		script_exit_code="60"
+		g_exit_code="60"
 		exit
 	else
-		if [ "${BASH_VERSINFO[0]}" -lt "${script_minimal_required_bash_version}" ]
+		if [ "${BASH_VERSINFO[0]}" -lt "${g_minimal_required_bash_version}" ]
 		then
 			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating"
 
-			script_bypass_exit_routines="1"
-			script_exit_code="61"
+			g_bypass_exit_routines="1"
+			g_exit_code="61"
 			exit
 		else
 			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements"
@@ -1032,75 +1033,77 @@ checkBashVersion()
 
 getExecUser()
 {
-	local script_exec_user=
+	local exec_user=
 
-	logHandler "Get user which starts the script..."
+	logHandler "Get user which starts the daemon..."
 
 	if [ -n "${SUDO_USER:-}" ]
 	then
-		script_exec_user="$SUDO_USER"
+		exec_user="$SUDO_USER"
 	else
 		# shellcheck disable=SC2154
-		script_exec_user="$(${whoami_bin})"
+		exec_user="$(${whoami_bin})"
 	fi
 
-	logHandler "${script_name} was started as user: '${script_exec_user}'"
+	logHandler "${g_name} was started as user: '${exec_user}'"
 }
 
 checkAlreadyRunningInstance()
 {
 	local rc=
+	local running_pid=
+	local session_pid=
 	local session_pids=()
-	local running_script_pids=()
+	local running_pids=()
 
 	# shellcheck disable=SC2154
 	# shellcheck disable=SC2207
-	session_pids+=($(${pgrep_bin} -d " " -s "${script_pid}"))
-	session_pids+=("${script_pid}")
+	session_pids+=($(${pgrep_bin} -d " " -s "${g_pid}"))
+	session_pids+=("${g_pid}")
 	# shellcheck disable=SC2154
 	# shellcheck disable=SC2207
-	running_script_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${script_base_path}/bin/${script_name}(.*)$"))
+	running_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${g_base_path}/bin/${g_name}(.*)$"))
 
-	for running_pid in "${!running_script_pids[@]}"
+	for running_pid in "${!running_pids[@]}"
 	do
 	   	for session_pid in "${!session_pids[@]}"
 		do
-			if [ "${running_script_pids[$running_pid]}" == "${session_pids[$session_pid]}" ]
+			if [ "${running_pids[$running_pid]}" == "${session_pids[$session_pid]}" ]
 			then
-				unset "running_script_pids[$running_pid]"
+				unset "running_pids[$running_pid]"
 				break
 			fi
 		done
 	done
 
-	logHandler "Check if another instance of: '${script_name}' is already running..."
+	logHandler "Check if another instance of: '${g_name}' is already running..."
 
 	checkLock
 	rc="${?}"
 
-	if [ "${rc}" != "0" ] && [ -z "${running_script_pids[*]:-}" ]
+	if [ "${rc}" != "0" ] && [ -z "${running_pids[*]:-}" ]
 	then
-		logHandler "No other instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and no processes are running)"
+		logHandler "No other instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and no processes are running)"
 		setLock
-	elif [ "${rc}" == "0" ] && [ -z "${running_script_pids[*]:-}" ]
+	elif [ "${rc}" == "0" ] && [ -z "${running_pids[*]:-}" ]
 	then
-		logHandler "No other instance of: '${script_name}' seems to be running (Lockfile: '${script_lock_file}' exists and no processes are running). Maybe ${script_name} was terminated abnormally"
+		logHandler "No other instance of: '${g_name}' seems to be running (Lockfile: '${g_lock_file}' exists and no processes are running). Maybe ${g_name} was terminated abnormally"
 		logHandler "We try to remove the old, leftover lockfile..."
 
 		removeLock
-	elif [ "${rc}" == "0" ] && [ -n "${running_script_pids[*]:-}" ]
+	elif [ "${rc}" == "0" ] && [ -n "${running_pids[*]:-}" ]
 	then
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' exists and the following processes: '${running_script_pids[*]}' are running)"
+		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' exists and the following processes: '${running_pids[*]}' are running)"
 
-		script_another_instance_is_running="1"
-		script_exit_code="70"
+		g_another_instance_is_running="1"
+		g_exit_code="70"
 		exit
-	elif [ "${rc}" != "0" ] && [ -n "${running_script_pids[*]:-}" ]
+	elif [ "${rc}" != "0" ] && [ -n "${running_pids[*]:-}" ]
 	then
-		logHandler "Another instance of: '${script_name}' is currently running (Lockfile: '${script_lock_file}' doesnt exist and the following processes: '${running_script_pids[*]}' are running)"
+		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and the following processes: '${running_pids[*]}' are running)"
 
-		script_another_instance_is_running="1"
-		script_exit_code="71"
+		g_another_instance_is_running="1"
+		g_exit_code="71"
 		exit
 	fi
 }
@@ -1117,7 +1120,7 @@ createNamedPipe()
 			logHandler "Creating named pipe was successful"
 		else
 			logHandler "Creating named pipe was not successful, terminating"
-			script_exit_code="80"
+			g_exit_code="80"
 			exit
 		fi
 	fi
@@ -1138,7 +1141,7 @@ removeNamedPipe()
 		exec 3<&-
 	else
 		logHandler "Removing named pipe was not successful, terminating"
-		script_exit_code="90"
+		g_exit_code="90"
 		exit
 	fi
 }
@@ -1159,7 +1162,7 @@ checkNamedPipe()
 		return 0
 	else
 		logHandler "Named pipe exists, but it is not read/writeable, terminating"
-		script_exit_code="100"
+		g_exit_code="100"
 		exit
 	fi
 }
@@ -1183,43 +1186,43 @@ generateDebugLogOutput()
 	local log_timestamp=
 	log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
 
-	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${script_name}"
+	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
 
 	if [ "${debug_log_monitoring_data}" == "1" ]
 	then
 		printf "*** START (raw data received from monitoring) ***\\n\\n"
-		printf "%s\\n" "${script_job_raw_data[@]}"
+		printf "%s\\n" "${g_job_raw_data[@]}"
 		printf "\\n*** END (raw data received from monitoring) ***\\n"
 	fi
 
 	if [ "${debug_log_obsessing_data}" == "1" ]
 	then
 		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
-		printf "%s\\n" "${script_job_data[@]}"
+		printf "%s\\n" "${g_job_data[@]}"
 		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
 	fi
 
-	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${log_timestamp}" "${script_name}"
+	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${log_timestamp}" "${g_name}"
 }
 
 debugLog()
 {
-	generateDebugLogOutput >> "${debug_log_file}"
+	generateDebugLogOutput >> "${g_debug_log_file}"
 }
 
 setSeparators()
 {
-	script_od_sep="$(printf "%b" "${obsessing_data_separator}")"
-	script_md_sep="$(printf "%b" "${monitoring_data_separator}")"
+	g_od_sep="$(printf "%b" "${obsessing_data_separator}")"
+	g_md_sep="$(printf "%b" "${monitoring_data_separator}")"
 }
 
 updateExistingData()
 {
-	local saved_script_od_sep=
+	local saved_g_od_sep=
 
-	saved_script_od_sep="${script_od_sep}"
+	saved_g_od_sep="${g_od_sep}"
 	setSeparators
-	script_job_data=("${script_job_data[@]//${saved_script_od_sep}/${script_od_sep}}")
+	g_job_data=("${g_job_data[@]//${saved_g_od_sep}/${g_od_sep}}")
 }
 
 buildJobCommand()
@@ -1237,18 +1240,18 @@ buildJobCommand()
 			if [ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]
 			then
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${script_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			else
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${script_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			fi
 			;;
 		nsca)
-			job_command="${job_command} ${script_libexec_directory}/send_nsca -d \"${script_od_sep}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
+			job_command="${job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
 			;;
 		*)
-			logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', terminating"
-			script_exit_code="110"
+			logHandler "Invalid obsessing interface defined in config file: '${g_config_file}', terminating"
+			g_exit_code="110"
 			exit
 			;;
 	esac
@@ -1262,10 +1265,10 @@ jobExec()
 
 	case "${obsessing_interface:-}" in
 		nrdp)
-			printf "%s\\n" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
+			printf "%s\\n" "${g_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 			;;
 		nsca)
-			printf "%s\\n\\x17" "${script_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
+			printf "%s\\n\\x17" "${g_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 			;;
 	esac
 
@@ -1283,11 +1286,11 @@ counterHandler()
 {
 	local rc="${1:-}"
 
-	script_job_counter_total="$(( script_job_counter_total + 1 ))"
+	g_job_counter_total="$(( g_job_counter_total + 1 ))"
 
 	if [ "${rc}" == "0" ]
 	then
-		script_job_counter_ok="$(( script_job_counter_ok + 1 ))"
+		g_job_counter_ok="$(( g_job_counter_ok + 1 ))"
 
 		if [ "${job_command_log_ok}" == "1" ]
 		then
@@ -1295,14 +1298,14 @@ counterHandler()
 		fi
 	elif [ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
 	then
-		script_job_counter_timeout="$(( script_job_counter_timeout + 1 ))"
+		g_job_counter_timeout="$(( g_job_counter_timeout + 1 ))"
 
 		if [ "${job_command_log_timeout}" == "1" ]
 		then
 			logHandler "Command: '${job_command}' timed out"
 		fi
 	else
-		script_job_counter_nok="$(( script_job_counter_nok + 1 ))"
+		g_job_counter_nok="$(( g_job_counter_nok + 1 ))"
 
 		if [ "${job_command_log_nok}" == "1" ]
 		then
@@ -1315,42 +1318,42 @@ jobHandler()
 {
 	local rc=
 
-	if [ -z "${script_job_pid_1}" ] && [ -z "${script_job_pid_2}" ]
+	if [ -z "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
 	then
 		jobExec &
-		script_job_pid_1="${!}"
-	elif [ -n "${script_job_pid_1}" ] && [ -z "${script_job_pid_2}" ]
+		g_job_pid_1="${!}"
+	elif [ -n "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
 	then
 		jobExec &
-		script_job_pid_2="${!}"
+		g_job_pid_2="${!}"
 
-		wait "${script_job_pid_1}"
+		wait "${g_job_pid_1}"
 		rc="${?}"
 		counterHandler "${rc}"
-		script_job_pid_1=
-	elif [ -z "${script_job_pid_1}" ] && [ -n "${script_job_pid_2}" ]
+		g_job_pid_1=
+	elif [ -z "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
 		jobExec &
-		script_job_pid_1="${!}"
+		g_job_pid_1="${!}"
 
-		wait "${script_job_pid_2}"
+		wait "${g_job_pid_2}"
 		rc="${?}"
 		counterHandler "${rc}"
-		script_job_pid_2=
-	elif [ -n "${script_job_pid_1}" ] && [ -n "${script_job_pid_2}" ]
+		g_job_pid_2=
+	elif [ -n "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
-		wait "${script_job_pid_1}"
+		wait "${g_job_pid_1}"
 		rc="${?}"
 		counterHandler "${rc}"
-		script_job_pid_1=
+		g_job_pid_1=
 
-		wait "${script_job_pid_2}"
+		wait "${g_job_pid_2}"
 		rc="${?}"
 		counterHandler "${rc}"
-		script_job_pid_2=
+		g_job_pid_2=
 
 		jobExec &
-		script_job_pid_1="${!}"
+		g_job_pid_1="${!}"
 	fi
 }
 
@@ -1376,7 +1379,7 @@ validateData()
 
 	if [ "${service_description}" != "NULL" ]
 	then
-		script_service_counter="$(( script_service_counter + 1 ))"
+		g_service_counter="$(( g_service_counter + 1 ))"
 
 		if [ -n "${junk}" ] || [ -z "${host_name}" ] || [ -z "${service_description}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
 		then
@@ -1388,7 +1391,7 @@ validateData()
 			return 1
 		fi
 	else
-		script_host_counter="$(( script_host_counter + 1 ))"
+		g_host_counter="$(( g_host_counter + 1 ))"
 
 		if [ -n "${junk}" ] ||  [ -z "${host_name}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
 		then
@@ -1412,31 +1415,37 @@ dataProcessor()
 	local plugin_output=
 	local junk=
 	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
+	local timer_interval_debug_mode_warning="300"
+	local timer_interval_error_mode_warning="300"
+	local timer_result_last_stats="1"
+	local timer_result_last_debug_mode_warning="1"
+	local timer_result_last_debug_log_truncation="1"
+	local timer_result_last_error_mode_warning="1"
 
-	while IFS=${script_md_sep} read -u 3 -r host_name service_description state_id plugin_output junk
+	while IFS=${g_md_sep} read -u 3 -r host_name service_description state_id plugin_output junk
 	do
 		if validateData "${host_name}" "${service_description}" "${state_id}" "${plugin_output}" "${junk}"
 		then
 			if [ "${service_description}" != "NULL" ]
 			then
-				script_job_data+=("${host_name}${script_od_sep}${service_description}${script_od_sep}${state_id}${script_od_sep}${plugin_output}")
+				g_job_data+=("${host_name}${g_od_sep}${service_description}${g_od_sep}${state_id}${g_od_sep}${plugin_output}")
 			else
-				script_job_data+=("${host_name}${script_od_sep}${state_id}${script_od_sep}${plugin_output}")
+				g_job_data+=("${host_name}${g_od_sep}${state_id}${g_od_sep}${plugin_output}")
 			fi
 		else
-			script_invalid_data_counter="$(( script_invalid_data_counter + 1 ))"
+			g_invalid_data_counter="$(( g_invalid_data_counter + 1 ))"
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
-				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${script_md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
+				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${g_md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
 			fi
 		fi
 
 		if [ "${stats_enabled}" == "1" ]
 		then
-			if timerHandler "${stats_interval}" "${script_timer_last_stats_result}"
+			if timerHandler "${stats_interval}" "${timer_result_last_stats}"
 			then
-				script_timer_last_stats_result="$(( script_timer_last_stats_result + 1 ))"
+				timer_result_last_stats="$(( timer_result_last_stats + 1 ))"
 				logStats
 				resetCounters
 			fi
@@ -1444,22 +1453,22 @@ dataProcessor()
 
 		if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
 		then
-			if timerHandler "${script_debug_mode_log_interval}" "${script_timer_last_debug_mode_warning_result}"
+			if timerHandler "${timer_interval_debug_mode_warning}" "${timer_result_last_debug_mode_warning}"
 			then
-				script_timer_last_debug_mode_warning_result="$(( script_timer_last_debug_mode_warning_result + 1 ))"
+				timer_result_last_debug_mode_warning="$(( timer_result_last_debug_mode_warning + 1 ))"
 				logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
 			fi
 
 			if [ "${debug_log_monitoring_data}" == "1" ]
 			then
-				script_job_raw_data+=("${host_name}${script_md_sep}${service_description}${script_md_sep}${state_id}${script_md_sep}${plugin_output}${script_md_sep}${junk}")
+				g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}${g_md_sep}${junk}")
 			fi
 
-			if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
+			if timerHandler "${debug_log_truncate_interval}" "${timer_result_last_debug_log_truncation}"
 			then
-				script_timer_last_debug_log_truncation_result="$(( script_timer_last_debug_log_truncation_result + 1 ))"
+				timer_result_last_debug_log_truncation="$(( timer_result_last_debug_log_truncation + 1 ))"
 
-				if : >| "${debug_log_file}" 2>&1 | logHandler
+				if : >| "${g_debug_log_file}" 2>&1 | logHandler
 				then
 					logHandler "Truncating the debug logfile was successful"
 				else
@@ -1468,11 +1477,11 @@ dataProcessor()
 			fi
 		fi
 
-		if [ "${script_error_mode}" == "1" ]
+		if [ "${g_error_mode}" == "1" ]
 		then
-			if timerHandler "${script_error_mode_log_interval}" "${script_timer_last_error_mode_warning_result}"
+			if timerHandler "${timer_interval_error_mode_warning}" "${timer_result_last_error_mode_warning}"
 			then
-				script_timer_last_error_mode_warning_result="$(( script_timer_last_error_mode_warning_result + 1 ))"
+				timer_result_last_error_mode_warning="$(( timer_result_last_error_mode_warning + 1 ))"
 				logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
 			fi
 		fi
@@ -1480,8 +1489,8 @@ dataProcessor()
 		if [ "${job_interval_helper}" -le "${SECONDS}" ]
 		then
 			jobHandler
-			script_job_data=()
-			script_job_raw_data=()
+			g_job_data=()
+			g_job_raw_data=()
 			job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
 	done
@@ -1492,6 +1501,9 @@ _main()
 	#-----
 	# Main
 	#-----
+
+	local timer_interval_warning_message="60"
+	local timer_result_last_warning_message="1"
 
 	checkCliOptions
 	setRequiredVariables
@@ -1513,58 +1525,53 @@ _main()
 	do
 		dataProcessor
 
-		if [ "$(( SECONDS % 60 ))" == "0" ]
+		if timerHandler "${timer_interval_warning_message}" "${timer_result_last_warning_message}"
 		then
-			logHandler "Data processor left in main loop, maybe the named pipe '${named_pipe_filename}' doesnt exist"
+			timer_result_last_warning_message="$(( timer_result_last_warning_message + 1 ))"
+			logHandler "WARNING: Data processor left in main loop! Maybe the named pipe '${named_pipe_filename}' doesnt exist"
 		fi
 
 		# shellcheck disable=SC2154
-		${sleep_bin} 2
+		${sleep_bin} 1
 	done
 }
 
 
 
-#------------------------
-# Script global variables
-#------------------------
+#-----------------
+# Global variables
+#-----------------
 
-script_pid="${$}"
-script_argc="${#}"
-script_name="${0##*/}"
-script_version="2.2.6"
-script_author="Christian Zettel (ccztux)"
-script_copyright="Copyright © 2017-2020 ${script_author}, all rights reserved"
-script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2020-12-07"
-script_minimal_required_bash_version="3"
-script_license="GNU GPLv2"
-script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
-script_another_instance_is_running="0"
-script_bypass_exit_routines="0"
-script_config_file_included="0"
-script_log_requirements_ok="0"
-script_start_time=
-script_error_mode_log_interval="300"
-script_debug_mode_log_interval="300"
-script_exit_code="255"
-script_od_sep=
-script_md_sep=
-script_job_pid_1=
-script_job_pid_2=
-script_host_counter="0"
-script_service_counter="0"
-script_invalid_data_counter="0"
-script_job_counter_total="0"
-script_job_counter_ok="0"
-script_job_counter_nok="0"
-script_job_counter_timeout="0"
-script_job_data=()
-script_job_raw_data=()
-script_timer_last_debug_log_truncation_result="1"
-script_timer_last_stats_result="1"
-script_timer_last_error_mode_warning_result="1"
-script_timer_last_debug_mode_warning_result="1"
+g_pid="${$}"
+g_argc="${#}"
+g_name="${0##*/}"
+g_version="3.0.0"
+g_author="Christian Zettel (ccztux)"
+g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
+g_project_website="https://github.com/ccztux/modpd"
+g_last_modification_date="2020-12-07"
+g_minimal_required_bash_version="3"
+g_license="GNU GPLv2"
+g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
+g_another_instance_is_running="0"
+g_bypass_exit_routines="0"
+g_config_file_included="0"
+g_log_requirements_ok="0"
+g_start_time=
+g_exit_code="255"
+g_od_sep=
+g_md_sep=
+g_job_pid_1=
+g_job_pid_2=
+g_host_counter="0"
+g_service_counter="0"
+g_invalid_data_counter="0"
+g_job_counter_total="0"
+g_job_counter_ok="0"
+g_job_counter_nok="0"
+g_job_counter_timeout="0"
+g_job_data=()
+g_job_raw_data=()
 
 
 
@@ -1595,34 +1602,34 @@ then
 		case "${OPTION}" in
 			h)
 				printUsage
-				script_bypass_exit_routines="1"
-				script_exit_code="200"
+				g_bypass_exit_routines="1"
+				g_exit_code="200"
 				exit
 				;;
 			c)
-				script_config_file="${OPTARG}"
+				g_config_file="${OPTARG}"
 				;;
 			e)
-				script_error_mode="1"
+				g_error_mode="1"
 				;;
 			v)
 				printScriptInfos
-				script_bypass_exit_routines="1"
-				script_exit_code="201"
+				g_bypass_exit_routines="1"
+				g_exit_code="201"
 				exit
 				;;
 			\?)
 				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
 				printUsage
-				script_bypass_exit_routines="1"
-				script_exit_code="202"
+				g_bypass_exit_routines="1"
+				g_exit_code="202"
 				exit
 				;;
 			:)
 				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
 				printUsage
-				script_bypass_exit_routines="1"
-				script_exit_code="203"
+				g_bypass_exit_routines="1"
+				g_exit_code="203"
 				exit
 				;;
 		esac
