@@ -1493,6 +1493,9 @@ _main()
 	# Main
 	#-----
 
+	local warning_message_interval="60"
+	local warning_message_last_result="1"
+
 	checkCliOptions
 	setRequiredVariables
 	includeConfig
@@ -1513,13 +1516,14 @@ _main()
 	do
 		dataProcessor
 
-		if [ "$(( SECONDS % 60 ))" == "0" ]
+		if timerHandler "${warning_message_interval}" "${warning_message_last_result}"
 		then
-			logHandler "Data processor left in main loop, maybe the named pipe '${named_pipe_filename}' doesnt exist"
+			warning_message_last_result="$(( warning_message_last_result + 1 ))"
+			logHandler "WARNING: Data processor left in main loop! Maybe the named pipe '${named_pipe_filename}' doesnt exist"
 		fi
 
 		# shellcheck disable=SC2154
-		${sleep_bin} 2
+		${sleep_bin} 1
 	done
 }
 
