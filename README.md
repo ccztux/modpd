@@ -7,7 +7,7 @@
 
 
 
-### Table of contents
+# Table of contents
 * [What is modpd?](#what-is-modpd)
 * [Known Issues](#known-issues)
 * [Flowchart](#flowchart)
@@ -52,7 +52,7 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 
 
 # Known Issues
-- [Reloading modpd is causing one invalid dataset #118](https://github.com/ccztux/modpd/issues/118)
+* [Reloading modpd is causing one invalid dataset #118](https://github.com/ccztux/modpd/issues/118)
 If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
 Nevertheless you should prefere the reload function over the restart function if you have only changed
 something in the configuration, because in case of a restart more than one datasets are getting lost.
