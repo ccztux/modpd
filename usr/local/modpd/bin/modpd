@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-06
+#						2020-12-07
 #
-#  Version				2.2.5
+#  Version				2.2.6
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -466,13 +466,13 @@ reloadHandler()
 	# check if we need additional binaries because of an updated config
 	if ! checkRequiredBinaries
 	then
-		return 3
+		return 2
 	fi
 
 	# set the new config for the logHandler function
 	if ! logHandlerSetConfig
 	then
-		return 4
+		return 3
 	fi
 
 	# get the longest name of functions for field calling function
@@ -482,6 +482,11 @@ reloadHandler()
 	fi
 
 	if ! setProxy
+	then
+		return 4
+	fi
+
+	if ! updateExistingData
 	then
 		return 5
 	fi
@@ -1202,11 +1207,23 @@ debugLog()
 	generateDebugLogOutput >> "${debug_log_file}"
 }
 
+setSeparators()
+{
+	script_od_sep="$(printf "%b" "${obsessing_data_separator}")"
+	script_md_sep="$(printf "%b" "${monitoring_data_separator}")"
+}
+
+updateExistingData()
+{
+	local saved_script_od_sep=
+
+	saved_script_od_sep="${script_od_sep}"
+	setSeparators
+	script_job_data=("${script_job_data[@]//${saved_script_od_sep}/${script_od_sep}}")
+}
+
 buildJobCommand()
 {
-	local od_sep=
-	od_sep="$(printf "%b" "${obsessing_data_separator}")"
-
 	logHandler "Building job command..."
 
 	if [ "${job_timeout_enabled}" == "1" ]
@@ -1220,14 +1237,14 @@ buildJobCommand()
 			if [ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]
 			then
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${script_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			else
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${script_libexec_directory}/send_nrdp.php --usestdin --delim=\"${script_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
 			fi
 			;;
 		nsca)
-			job_command="${job_command} ${script_libexec_directory}/send_nsca -d \"${od_sep}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
+			job_command="${job_command} ${script_libexec_directory}/send_nsca -d \"${script_od_sep}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${script_config_file}', terminating"
@@ -1395,27 +1412,23 @@ dataProcessor()
 	local plugin_output=
 	local junk=
 	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
-	local md_sep=
-	local od_sep=
-	md_sep="$(printf "%b" "${monitoring_data_separator}")"
-	od_sep="$(printf "%b" "${obsessing_data_separator}")"
 
-	while IFS=${md_sep} read -u 3 -r host_name service_description state_id plugin_output junk
+	while IFS=${script_md_sep} read -u 3 -r host_name service_description state_id plugin_output junk
 	do
 		if validateData "${host_name}" "${service_description}" "${state_id}" "${plugin_output}" "${junk}"
 		then
 			if [ "${service_description}" != "NULL" ]
 			then
-				script_job_data+=("${host_name}${od_sep}${service_description}${od_sep}${state_id}${od_sep}${plugin_output}")
+				script_job_data+=("${host_name}${script_od_sep}${service_description}${script_od_sep}${state_id}${script_od_sep}${plugin_output}")
 			else
-				script_job_data+=("${host_name}${od_sep}${state_id}${od_sep}${plugin_output}")
+				script_job_data+=("${host_name}${script_od_sep}${state_id}${script_od_sep}${plugin_output}")
 			fi
 		else
 			script_invalid_data_counter="$(( script_invalid_data_counter + 1 ))"
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
-				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
+				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${script_md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
 			fi
 		fi
 
@@ -1439,7 +1452,7 @@ dataProcessor()
 
 			if [ "${debug_log_monitoring_data}" == "1" ]
 			then
-				script_job_raw_data+=("${host_name}${md_sep}${service_description}${md_sep}${state_id}${md_sep}${plugin_output}${md_sep}${junk}")
+				script_job_raw_data+=("${host_name}${script_md_sep}${service_description}${script_md_sep}${state_id}${script_md_sep}${plugin_output}${script_md_sep}${junk}")
 			fi
 
 			if timerHandler "${debug_log_truncate_interval}" "${script_timer_last_debug_log_truncation_result}"
@@ -1491,6 +1504,7 @@ _main()
 	checkAlreadyRunningInstance
 	createNamedPipe
 	setProxy
+	setSeparators
 	buildJobCommand
 
 	logHandler "Ready to handle jobs..."
@@ -1511,18 +1525,18 @@ _main()
 
 
 
-#----------------------
-# Script info variables
-#----------------------
+#------------------------
+# Script global variables
+#------------------------
 
 script_pid="${$}"
 script_argc="${#}"
 script_name="${0##*/}"
-script_version="2.2.5"
+script_version="2.2.6"
 script_author="Christian Zettel (ccztux)"
 script_copyright="Copyright © 2017-2020 ${script_author}, all rights reserved"
 script_project_website="https://github.com/ccztux/modpd"
-script_last_modification_date="2020-12-06"
+script_last_modification_date="2020-12-07"
 script_minimal_required_bash_version="3"
 script_license="GNU GPLv2"
 script_description="${script_name} (Monitoring Obsessing Data Processor Daemon)"
@@ -1534,6 +1548,8 @@ script_start_time=
 script_error_mode_log_interval="300"
 script_debug_mode_log_interval="300"
 script_exit_code="255"
+script_od_sep=
+script_md_sep=
 script_job_pid_1=
 script_job_pid_2=
 script_host_counter="0"

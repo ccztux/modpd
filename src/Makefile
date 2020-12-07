@@ -9,9 +9,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-06
+#						2020-12-07
 #
-#  Version				2.2.5
+#  Version				2.2.6
 #
 #  Description:			Makefile for the modpd NEB module
 #
