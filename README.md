@@ -7,6 +7,38 @@
 
 
 
+##### Table of contents
+* [modpd](#modpd)
+* [Known Issues](#known-issues)
+* [Flowchart](#flowchart)
+* [Registered trademarks](#registered-trademarks)
+* [Required binaries](#required-binaries)
+   * [Required binaries to install modpd](#required-binaries-to-install-modpd)
+   * [Required by the daemon part of modpd](#required-by-the-daemon-part-of-modpd)
+   * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features)
+   * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module)
+* [Installation](#installation)
+   * [Installation on the Nagios® site with active checks](#installation-on-the-nagios-site-with-active-checks)
+      * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
+      * [Installation of the modpd NEB module part](#installation-of-the-modpd-neb-module-part)
+      * [Installation of the modpd daemon part](#installation-of-the-modpd-daemon-part)
+      * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
+         * [send_nrdp.php](#send_nrdpphp)
+         * [send_nsca](#send_nsca)
+   * [Installation on the Nagios® site with passive checks](#installation-on-the-nagios-site-with-passive-checks)
+      * [Installation of the server software (of your choice)](#installation-of-the-server-software-of-your-choice)
+         * [NRDP](#nrdp)
+         * [NSCA](#nsca)
+* [Updating modpd](#updating-modpd)
+* [Files](#files)
+* [Example help output](#example-help-output)
+* [Default sample config](#default-sample-config)
+* [Example log snippets](#example-log-snippets)
+   * [modpd daemon log snippet](#modpd-daemon-log-snippet)
+   * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
+
+
+
 # modpd
 (**M**onitoring **O**bsessing **D**ata **P**rocessor **D**aemon)
 
@@ -16,6 +48,14 @@ via NRDP or NSCA to another Nagios® server. It increases the performance of an 
 installation greatly, because the obsessing commands will be executed by modpd and not by the Nagios®
 process itself. Nagios® executes the obsessing command after every check, where obsessing is activated
 and then Nagios® waits, till every obsessing command was executed successfully or timed out.
+
+
+
+# Known Issues
+- Reloading modpd is causing one invalid dataset (#118)
+If the daemon will be reloaded, one dataset gets malformed and will be detected as an invalid dataset.
+Nevertheless you should prefere the reload function over the restart function if you have only changed
+something in the configuration, because in case of a restart more than one dataset is getting lost.
 
 
 
@@ -296,7 +336,7 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2020-12-06
+Last modification:      2020-12-07
 Version:                2.2.6
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
@@ -325,7 +365,7 @@ OPTIONS:
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-06
+#						2020-12-07
 #
 #  Version				2.2.6
 #
@@ -573,41 +613,41 @@ modpd (PID 6931) is running                                [  OK  ]
 Stopping modpd                                             [  OK  ]
 
 [root@lab01]:~# grep 6931 /usr/local/modpd/var/log/modpd.log
-2020-12-06 12:07:53 |   6931 |                     setLock | Script lock directory exists and permissions are ok
-2020-12-06 12:07:53 |   6931 |                     setLock | Setting lock...
-2020-12-06 12:07:53 |   6931 |                     setLock | Setting lock was successful
-2020-12-06 12:07:53 |   6931 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
-2020-12-06 12:07:53 |   6931 |              checkNamedPipe | Named pipe doesnt exist
-2020-12-06 12:07:53 |   6931 |             createNamedPipe | Creating named pipe...
-2020-12-06 12:07:53 |   6931 |             createNamedPipe | Creating named pipe was successful
-2020-12-06 12:07:53 |   6931 |             buildJobCommand | Building job command...
-2020-12-06 12:07:53 |   6931 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
-2020-12-06 12:07:53 |   6931 |                       _main | Ready to handle jobs...
-2020-12-06 12:08:24 |   6931 |                    logStats | ---- Stats for the last 31 seconds ----
-2020-12-06 12:08:24 |   6931 |                    logStats | modpd is running: 0d 0h 0m 31s
-2020-12-06 12:08:24 |   6931 |                    logStats | Total processed jobs: '4', successful processed jobs: '4', unsuccessful processed jobs: '0', timed out jobs: '0'
-2020-12-06 12:08:24 |   6931 |                    logStats | Handled host checks: '1011', handled service checks: '751', invalid datasets received: '0'
-2020-12-06 12:08:54 |   6931 |                    logStats | ---- Stats for the last 30 seconds ----
-2020-12-06 12:08:54 |   6931 |                    logStats | modpd is running: 0d 0h 1m 1s
-2020-12-06 12:08:54 |   6931 |                    logStats | Total processed jobs: '5', successful processed jobs: '5', unsuccessful processed jobs: '0', timed out jobs: '0'
-2020-12-06 12:08:54 |   6931 |                    logStats | Handled host checks: '1095', handled service checks: '751', invalid datasets received: '0'
-2020-12-06 12:09:21 |   6931 |               signalHandler | Caught: 'SIGTERM', preparing for shutdown...
-2020-12-06 12:09:21 |   6931 |                    logStats | ---- Stats for the last 27 seconds ----
-2020-12-06 12:09:21 |   6931 |                    logStats | modpd is running: 0d 0h 1m 28s
-2020-12-06 12:09:21 |   6931 |                    logStats | Total processed jobs: '5', successful processed jobs: '5', unsuccessful processed jobs: '0', timed out jobs: '0'
-2020-12-06 12:09:21 |   6931 |                    logStats | Handled host checks: '1018', handled service checks: '749', invalid datasets received: '0'
-2020-12-06 12:09:21 |   6931 |               signalHandler | Caught: 'EXIT', shutting down...
-2020-12-06 12:09:21 |   6931 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
-2020-12-06 12:09:22 |   6931 |              checkNamedPipe | Named pipe exists and it is read/writeable
-2020-12-06 12:09:22 |   6931 |             removeNamedPipe | Remove named pipe...
-2020-12-06 12:09:22 |   6931 |             removeNamedPipe | Removing named pipe was successful
-2020-12-06 12:09:22 |   6931 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
-2020-12-06 12:09:22 |   6931 |                   checkLock | Lock file exists and it is read/writeable
-2020-12-06 12:09:22 |   6931 |                  removeLock | Removing lock...
-2020-12-06 12:09:22 |   6931 |                  removeLock | Removing lock was successful
-2020-12-06 12:09:22 |   6931 |               signalHandler | Exitcode: '143'
-2020-12-06 12:09:22 |   6931 |               signalHandler | modpd was running: 0d 0h 1m 29s
-2020-12-06 12:09:22 |   6931 |               signalHandler | Bye, bye...
+2020-12-07 12:07:53 |   6931 |                     setLock | Script lock directory exists and permissions are ok
+2020-12-07 12:07:53 |   6931 |                     setLock | Setting lock...
+2020-12-07 12:07:53 |   6931 |                     setLock | Setting lock was successful
+2020-12-07 12:07:53 |   6931 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-12-07 12:07:53 |   6931 |              checkNamedPipe | Named pipe doesnt exist
+2020-12-07 12:07:53 |   6931 |             createNamedPipe | Creating named pipe...
+2020-12-07 12:07:53 |   6931 |             createNamedPipe | Creating named pipe was successful
+2020-12-07 12:07:53 |   6931 |             buildJobCommand | Building job command...
+2020-12-07 12:07:53 |   6931 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
+2020-12-07 12:07:53 |   6931 |                       _main | Ready to handle jobs...
+2020-12-07 12:08:24 |   6931 |                    logStats | ---- Stats for the last 31 seconds ----
+2020-12-07 12:08:24 |   6931 |                    logStats | modpd is running: 0d 0h 0m 31s
+2020-12-07 12:08:24 |   6931 |                    logStats | Total processed jobs: '4', successful processed jobs: '4', unsuccessful processed jobs: '0', timed out jobs: '0'
+2020-12-07 12:08:24 |   6931 |                    logStats | Handled host checks: '1011', handled service checks: '751', invalid datasets received: '0'
+2020-12-07 12:08:54 |   6931 |                    logStats | ---- Stats for the last 30 seconds ----
+2020-12-07 12:08:54 |   6931 |                    logStats | modpd is running: 0d 0h 1m 1s
+2020-12-07 12:08:54 |   6931 |                    logStats | Total processed jobs: '5', successful processed jobs: '5', unsuccessful processed jobs: '0', timed out jobs: '0'
+2020-12-07 12:08:54 |   6931 |                    logStats | Handled host checks: '1095', handled service checks: '751', invalid datasets received: '0'
+2020-12-07 12:09:21 |   6931 |               signalHandler | Caught: 'SIGTERM', preparing for shutdown...
+2020-12-07 12:09:21 |   6931 |                    logStats | ---- Stats for the last 27 seconds ----
+2020-12-07 12:09:21 |   6931 |                    logStats | modpd is running: 0d 0h 1m 28s
+2020-12-07 12:09:21 |   6931 |                    logStats | Total processed jobs: '5', successful processed jobs: '5', unsuccessful processed jobs: '0', timed out jobs: '0'
+2020-12-07 12:09:21 |   6931 |                    logStats | Handled host checks: '1018', handled service checks: '749', invalid datasets received: '0'
+2020-12-07 12:09:21 |   6931 |               signalHandler | Caught: 'EXIT', shutting down...
+2020-12-07 12:09:21 |   6931 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2020-12-07 12:09:22 |   6931 |              checkNamedPipe | Named pipe exists and it is read/writeable
+2020-12-07 12:09:22 |   6931 |             removeNamedPipe | Remove named pipe...
+2020-12-07 12:09:22 |   6931 |             removeNamedPipe | Removing named pipe was successful
+2020-12-07 12:09:22 |   6931 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
+2020-12-07 12:09:22 |   6931 |                   checkLock | Lock file exists and it is read/writeable
+2020-12-07 12:09:22 |   6931 |                  removeLock | Removing lock...
+2020-12-07 12:09:22 |   6931 |                  removeLock | Removing lock was successful
+2020-12-07 12:09:22 |   6931 |               signalHandler | Exitcode: '143'
+2020-12-07 12:09:22 |   6931 |               signalHandler | modpd was running: 0d 0h 1m 29s
+2020-12-07 12:09:22 |   6931 |               signalHandler | Bye, bye...
 ```
 
 
