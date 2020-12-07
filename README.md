@@ -7,8 +7,8 @@
 
 
 
-#### Table of contents
-* [modpd](#modpd)
+### Table of contents
+* [What is modpd?](#what-is-modpd)
 * [Known Issues](#known-issues)
 * [Flowchart](#flowchart)
 * [Registered trademarks](#registered-trademarks)
@@ -39,7 +39,7 @@
 
 
 
-# modpd
+# What is modpd?
 (**M**onitoring **O**bsessing **D**ata **P**rocessor **D**aemon)
 
 modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
