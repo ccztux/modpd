@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-07
+#						2020-12-08
 #
-#  Version				3.0.0
+#  Version				2.2.7
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -387,7 +387,7 @@ logStats()
 	local timediff=
 	local current_time=
 	uptime="$(secondsToTime "${SECONDS}")"
-	current_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+	current_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 
 	if [ -z "${last_stats_logged:-}" ]
 	then
@@ -401,7 +401,7 @@ logStats()
 	logHandler "Total processed jobs: '${g_job_counter_total}', successful processed jobs: '${g_job_counter_ok}', unsuccessful processed jobs: '${g_job_counter_nok}', timed out jobs: '${g_job_counter_timeout}'"
 	logHandler "Handled host checks: '${g_host_counter}', handled service checks: '${g_service_counter}', invalid datasets received: '${g_invalid_data_counter}'"
 
-	last_stats_logged="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+	last_stats_logged="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 }
 
 resetCounters()
@@ -428,8 +428,12 @@ checkCliOptions()
 
 setRequiredVariables()
 {
+	#-----------------
+	# Global variables
+	#-----------------
+
 	# define base path of modpd
-	g_base_path="/usr/local/modpd"
+	g_base_path="/usr/local/${g_name}"
 
 	# path to lock directory
 	g_lock_directory="${g_base_path}/var/lock"
@@ -454,6 +458,9 @@ setRequiredVariables()
 
 	# debug log file
 	g_debug_log_file="${g_log_directory}/${g_name}.debug.log"
+
+	# named pipe
+	g_named_pipe_file="${g_base_path}/var/rw/${g_name}.cmd"
 }
 
 reloadHandler()
@@ -476,7 +483,7 @@ reloadHandler()
 	fi
 
 	# get the longest name of functions for field calling function
-	if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
+	if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 	then
 		calculateFunctionNameLength
 	fi
@@ -582,7 +589,7 @@ includeConfig()
 {
 	checkFileParameters "${g_config_file}"
 
-	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_regular_file_is_not_empty ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ]
+	if [ "$(( g_file_permission & g_regular_file_exists ))" -gt "0" ] && [ "$(( g_file_permission & g_regular_file_is_not_empty ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ]
 	then
 		# shellcheck source=/scripts/usr/local/modpd/etc/modpd.sample.conf
 		if source "${g_config_file}"
@@ -596,7 +603,7 @@ includeConfig()
 			g_exit_code="20"
 			exit
 		fi
-	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
+	elif [ "$(( g_file_permission & g_regular_file_exists ))" -eq "0" ]
 	then
 		logHandler "Config file: '${g_config_file}' does not exist"
 		logHandler "Terminating..."
@@ -604,7 +611,7 @@ includeConfig()
 		g_bypass_exit_routines="1"
 		g_exit_code="21"
 		exit
-	elif [ "$(( file_permission & b_regular_file_is_not_empty ))" -eq "0" ]
+	elif [ "$(( g_file_permission & g_regular_file_is_not_empty ))" -eq "0" ]
 	then
 		logHandler "Config file: '${g_config_file}' exists, but is empty"
 		logHandler "Terminating..."
@@ -612,7 +619,7 @@ includeConfig()
 		g_bypass_exit_routines="1"
 		g_exit_code="22"
 		exit
-	elif [ "$(( file_permission & b_permission_read ))" -eq "0" ]
+	elif [ "$(( g_file_permission & g_permission_read ))" -eq "0" ]
 	then
 		logHandler "Config file: '${g_config_file}' exists, but it is not readable"
 		logHandler "Terminating..."
@@ -627,7 +634,6 @@ calculateFunctionNameLength()
 {
 	local function=
 	local function_names=()
-	function_names_max_length="0"
 
 	while IFS='' read -r
 	do
@@ -636,66 +642,57 @@ calculateFunctionNameLength()
 
 	for function in "${function_names[@]//declare -f /}"
 	do
-		if [ "${#function}" -gt "${function_names_max_length}" ]
+		if [ "${#function}" -gt "${g_function_names_max_length}" ]
 		then
-			function_names_max_length="${#function}"
+			g_function_names_max_length="${#function}"
 		fi
 	done
 }
 
 logHandlerSetConfig()
 {
-	log_conf="0"
-	b_log_to_file="1"
-	b_log_to_stdout="2"
-	b_log_to_syslog="4"
-	b_log_to_journal="8"
-	b_date_bin_available="16"
-	b_logger_bin_available="32"
-	b_systemd_cat_bin_available="64"
-
 	if [ "${date_bin_printf:-}" -eq "1" ]
 	then
-		date_cmd_format_prefix="'%("
-		date_cmd_format_suffix=")T\\n' -1"
+		g_date_cmd_format_prefix="'%("
+		g_date_cmd_format_suffix=")T\\n' -1"
 	else
-		date_cmd_format_prefix="'+"
-		date_cmd_format_suffix="'"
+		g_date_cmd_format_prefix="'+"
+		g_date_cmd_format_suffix="'"
 	fi
 
 	if [ "${log_to_file}" -eq "1" ]
 	then
-		log_conf="$(( log_conf | b_log_to_file ))"
+		g_log_conf="$(( g_log_conf | g_log_to_file ))"
 	fi
 
 	if [ "${log_to_stdout}" -eq "1" ]
 	then
-		log_conf="$(( log_conf | b_log_to_stdout ))"
+		g_log_conf="$(( g_log_conf | g_log_to_stdout ))"
 	fi
 
 	if [ "${log_to_syslog}" -eq "1" ]
 	then
-		log_conf="$(( log_conf | b_log_to_syslog ))"
+		g_log_conf="$(( g_log_conf | g_log_to_syslog ))"
 	fi
 
 	if [ "${log_to_journal}" -eq "1" ]
 	then
-		log_conf="$(( log_conf | b_log_to_journal ))"
+		g_log_conf="$(( g_log_conf | g_log_to_journal ))"
 	fi
 
 	if [ -n "${date_bin:-}" ]
 	then
-		log_conf="$(( log_conf | b_date_bin_available ))"
+		g_log_conf="$(( g_log_conf | g_date_bin_available ))"
 	fi
 
 	if [ -n "${logger_bin:-}" ]
 	then
-		log_conf="$(( log_conf | b_logger_bin_available ))"
+		g_log_conf="$(( g_log_conf | g_logger_bin_available ))"
 	fi
 
 	if [ -n "${systemd_cat_bin:-}" ]
 	then
-		log_conf="$(( log_conf | b_systemd_cat_bin_available ))"
+		g_log_conf="$(( g_log_conf | g_systemd_cat_bin_available ))"
 	fi
 }
 
@@ -703,11 +700,11 @@ checkLogDir()
 {
 	checkFileParameters "${g_log_directory}"
 
-	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
+	if [ "$(( g_file_permission & g_is_directory ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_execute ))" -gt "0" ]
 	then
 		checkFileParameters "${g_log_file}"
 
-		if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -eq "0" ]
+		if [ "$(( g_file_permission & g_regular_file_exists ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_write ))" -eq "0" ]
 		then
 			logHandler "Log file exists but we dont have write permissions, terminating"
 			g_bypass_exit_routines="1"
@@ -717,7 +714,7 @@ checkLogDir()
 			g_log_requirements_ok="1"
 			return 0
 		fi
-	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
+	elif [ "$(( g_file_permission & g_is_directory ))" -eq "0" ]
 	then
 		logHandler "Log directory doesnt exist"
 		logHandler "Creating log directory..."
@@ -743,14 +740,14 @@ checkLogDir()
 
 checkLogHandlerRequirements()
 {
-	g_start_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+	g_start_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 
-	if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
+	if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 	then
 		calculateFunctionNameLength
 	fi
 
-	if [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
+	if [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 	then
 		checkLogDir
 	fi
@@ -799,47 +796,47 @@ logHandler()
 			calling_function="${FUNCNAME[3]}"
 		fi
 
-		if [ "$(( log_conf & b_log_to_stdout ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ]
 		then
-			if [ "$(( log_conf & b_date_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
 			fi
 		fi
 
-		if [ "$(( log_conf & b_log_to_file ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 		then
-			if [ "$(( log_conf & b_date_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
 			fi
 		fi
 
-		if [ "$(( log_conf & b_log_to_syslog ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_syslog ))" -gt "0" ]
 		then
-			if [ "$(( log_conf & b_logger_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_logger_bin_available ))" -gt "0" ]
 			then
 				${logger_bin} -t "${g_name}[${g_pid}]" -- "(${calling_function}) ${log_message}"
 			fi
 		fi
 
-		if [ "$(( log_conf & b_log_to_journal ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_journal ))" -gt "0" ]
 		then
-			if [ "$(( log_conf & b_systemd_cat_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_systemd_cat_bin_available ))" -gt "0" ]
 			then
 				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${g_name}"
 			fi
@@ -853,11 +850,11 @@ checkLock()
 
 	checkFileParameters "${g_lock_file}"
 
-	if [ "$(( file_permission & b_regular_file_exists ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
+	if [ "$(( g_file_permission & g_regular_file_exists ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_write ))" -gt "0" ]
 	then
 		logHandler "Lock file exists and it is read/writeable"
 		return 0
-	elif [ "$(( file_permission & b_regular_file_exists ))" -eq "0" ]
+	elif [ "$(( g_file_permission & g_regular_file_exists ))" -eq "0" ]
 	then
 		logHandler "Lock file doesnt exist"
 		return 1
@@ -873,10 +870,10 @@ setLock()
 
 	checkFileParameters "${g_lock_directory}"
 
-	if [ "$(( file_permission & b_is_directory ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_execute ))" -gt "0" ]
+	if [ "$(( g_file_permission & g_is_directory ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_execute ))" -gt "0" ]
 	then
 		logHandler "Script lock directory exists and permissions are ok"
-	elif [ "$(( file_permission & b_is_directory ))" -eq "0" ]
+	elif [ "$(( g_file_permission & g_is_directory ))" -eq "0" ]
 	then
 		logHandler "Script lock directory doesnt exist"
 		logHandler "Creating daemon lock directory..."
@@ -962,48 +959,40 @@ setProxy()
 checkFileParameters()
 {
 	local file="${1:-}"
-
-	file_permission="0"
-	b_permission_execute="1"
-	b_permission_write="2"
-	b_permission_read="4"
-	b_regular_file_exists="8"
-	b_regular_file_is_not_empty="16"
-	b_is_directory="32"
-	b_is_named_pipe="64"
+	g_file_permission="0"
 
 	if [ -x "${file}" ]
 	then
-		file_permission="$(( file_permission | b_permission_execute ))"
+		g_file_permission="$(( g_file_permission | g_permission_execute ))"
 	fi
 
 	if [ -w "${file}" ]
 	then
-		file_permission="$(( file_permission | b_permission_write ))"
+		g_file_permission="$(( g_file_permission | g_permission_write ))"
 	fi
 
 	if [ -r "${file}" ]
 	then
-		file_permission="$(( file_permission | b_permission_read ))"
+		g_file_permission="$(( g_file_permission | g_permission_read ))"
 	fi
 
 	if [ -f "${file}" ]
 	then
-		file_permission="$(( file_permission | b_regular_file_exists ))"
+		g_file_permission="$(( g_file_permission | g_regular_file_exists ))"
 
 		if [ -s "${file}" ]
 		then
-			file_permission="$(( file_permission | b_regular_file_is_not_empty ))"
+			g_file_permission="$(( g_file_permission | g_regular_file_is_not_empty ))"
 		fi
 	else
 		if [ -d "${file}" ]
 		then
-			file_permission="$(( file_permission | b_is_directory ))"
+			g_file_permission="$(( g_file_permission | g_is_directory ))"
 		fi
 
 		if [ -p "${file}" ]
 		then
-			file_permission="$(( file_permission | b_is_named_pipe ))"
+			g_file_permission="$(( g_file_permission | g_is_named_pipe ))"
 		fi
 	fi
 }
@@ -1115,7 +1104,7 @@ createNamedPipe()
 		logHandler "Creating named pipe..."
 
 		# shellcheck disable=SC2154
-		if ${mkfifo_bin} "${named_pipe_filename}" 2>&1 | logHandler
+		if ${mkfifo_bin} "${g_named_pipe_file}" 2>&1 | logHandler
 		then
 			logHandler "Creating named pipe was successful"
 		else
@@ -1125,7 +1114,7 @@ createNamedPipe()
 		fi
 	fi
 
-	exec 3<> "${named_pipe_filename}"
+	exec 3<> "${g_named_pipe_file}"
 }
 
 removeNamedPipe()
@@ -1133,7 +1122,7 @@ removeNamedPipe()
 	logHandler "Remove named pipe..."
 
 	# shellcheck disable=SC2154
-	if ${rm_bin} "${named_pipe_filename}" 2>&1 | logHandler
+	if ${rm_bin} "${g_named_pipe_file}" 2>&1 | logHandler
 	then
 		logHandler "Removing named pipe was successful"
 
@@ -1148,15 +1137,15 @@ removeNamedPipe()
 
 checkNamedPipe()
 {
-	logHandler "Check if named pipe: '${named_pipe_filename}' exists and if it is read/writeable..."
+	logHandler "Check if named pipe: '${g_named_pipe_file}' exists and if it is read/writeable..."
 
-	checkFileParameters "${named_pipe_filename}"
+	checkFileParameters "${g_named_pipe_file}"
 
-	if [ "$(( file_permission & b_is_named_pipe ))" -gt "0" ] && [ "$(( file_permission & b_permission_read ))" -gt "0" ] && [ "$(( file_permission & b_permission_write ))" -gt "0" ]
+	if [ "$(( g_file_permission & g_is_named_pipe ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_write ))" -gt "0" ]
 	then
 		logHandler "Named pipe exists and it is read/writeable"
 		return 1
-	elif [ "$(( file_permission & b_is_named_pipe ))" -eq "0" ]
+	elif [ "$(( g_file_permission & g_is_named_pipe ))" -eq "0" ]
 	then
 		logHandler "Named pipe doesnt exist"
 		return 0
@@ -1184,7 +1173,7 @@ timerHandler()
 generateDebugLogOutput()
 {
 	local log_timestamp=
-	log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 
 	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
 
@@ -1213,7 +1202,7 @@ debugLog()
 setSeparators()
 {
 	g_od_sep="$(printf "%b" "${obsessing_data_separator}")"
-	g_md_sep="$(printf "%b" "${monitoring_data_separator}")"
+	g_md_sep="$(printf "%b" "${g_monitoring_data_separator}")"
 }
 
 updateExistingData()
@@ -1528,7 +1517,7 @@ _main()
 		if timerHandler "${timer_interval_warning_message}" "${timer_result_last_warning_message}"
 		then
 			timer_result_last_warning_message="$(( timer_result_last_warning_message + 1 ))"
-			logHandler "WARNING: Data processor left in main loop! Maybe the named pipe '${named_pipe_filename}' doesnt exist"
+			logHandler "WARNING: Data processor left in main loop! Maybe the named pipe '${g_named_pipe_file}' doesnt exist"
 		fi
 
 		# shellcheck disable=SC2154
@@ -1545,20 +1534,40 @@ _main()
 g_pid="${$}"
 g_argc="${#}"
 g_name="${0##*/}"
-g_version="3.0.0"
+g_version="2.2.7"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
-g_project_website="https://github.com/ccztux/modpd"
-g_last_modification_date="2020-12-07"
+g_project_website="https://github.com/ccztux/${g_name}"
+g_last_modification_date="2020-12-08"
 g_minimal_required_bash_version="3"
 g_license="GNU GPLv2"
 g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
+g_file_permission="0"
+g_permission_execute="1"
+g_permission_write="2"
+g_permission_read="4"
+g_regular_file_exists="8"
+g_regular_file_is_not_empty="16"
+g_is_directory="32"
+g_is_named_pipe="64"
 g_another_instance_is_running="0"
 g_bypass_exit_routines="0"
 g_config_file_included="0"
 g_log_requirements_ok="0"
+g_log_conf="0"
+g_log_to_file="1"
+g_log_to_stdout="2"
+g_log_to_syslog="4"
+g_log_to_journal="8"
+g_date_bin_available="16"
+g_logger_bin_available="32"
+g_systemd_cat_bin_available="64"
 g_start_time=
 g_exit_code="255"
+g_function_names_max_length="0"
+g_date_cmd_format_prefix=
+g_date_cmd_format_suffix=
+g_monitoring_data_separator="\\x1e"
 g_od_sep=
 g_md_sep=
 g_job_pid_1=
