@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-12-08
 #
-#  Version				2.2.7
+#  Version				2.2.8
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -53,15 +53,15 @@ eprintf()
 
 g_error_mode="0"
 
-for i in "${@}"
+for argument in "${@}"
 do
-	if [ "${i}" == "-e" ]
+	if [ "${argument}" == "-e" ]
 	then
 		g_error_mode="1"
 	fi
 done
 
-unset i
+unset argument
 
 
 
@@ -226,11 +226,21 @@ checkShellOption()
 
 	if [ -n "${shell_option}" ]
 	then
-		if [[ "${-}" =~ ^(.*)${shell_option}(.*)$ ]] || [[ "${SHELLOPTS}" =~ ^(.*)${shell_option}(.*)$ ]]
+		if [[ "${shell_option}" =~ ^([A-Z][a-z])$ ]]
 		then
-			return 0
+			if [[ "${-}" =~ ^(.*)${shell_option}(.*)$ ]]
+			then
+				return 0
+			else
+				return 1
+			fi
 		else
-			return 1
+			if [[ "${SHELLOPTS}" =~ ^(.*)${shell_option}(.*)$ ]]
+			then
+				return 0
+			else
+				return 1
+			fi
 		fi
 	else
 		return 2
@@ -243,7 +253,7 @@ setShellOption()
 
 	if [ -n "${shell_option}" ]
 	then
-		if [[ "${shell_option}" =~ ^([A-Z]|[a-z])$ ]]
+		if [[ "${shell_option}" =~ ^([A-Z][a-z])$ ]]
 		then
 			if set -"${shell_option}" 2>/dev/null
 			then
@@ -1534,7 +1544,7 @@ _main()
 g_pid="${$}"
 g_argc="${#}"
 g_name="${0##*/}"
-g_version="2.2.7"
+g_version="2.2.8"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
