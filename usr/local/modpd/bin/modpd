@@ -387,7 +387,7 @@ logStats()
 	local timediff=
 	local current_time=
 	uptime="$(secondsToTime "${SECONDS}")"
-	current_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+	current_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 
 	if [ -z "${last_stats_logged:-}" ]
 	then
@@ -401,7 +401,7 @@ logStats()
 	logHandler "Total processed jobs: '${g_job_counter_total}', successful processed jobs: '${g_job_counter_ok}', unsuccessful processed jobs: '${g_job_counter_nok}', timed out jobs: '${g_job_counter_timeout}'"
 	logHandler "Handled host checks: '${g_host_counter}', handled service checks: '${g_service_counter}', invalid datasets received: '${g_invalid_data_counter}'"
 
-	last_stats_logged="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+	last_stats_logged="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 }
 
 resetCounters()
@@ -483,7 +483,7 @@ reloadHandler()
 	fi
 
 	# get the longest name of functions for field calling function
-	if [ "$(( g_log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & b_log_to_file ))" -gt "0" ]
+	if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 	then
 		calculateFunctionNameLength
 	fi
@@ -634,7 +634,6 @@ calculateFunctionNameLength()
 {
 	local function=
 	local function_names=()
-	function_names_max_length="0"
 
 	while IFS='' read -r
 	do
@@ -643,66 +642,57 @@ calculateFunctionNameLength()
 
 	for function in "${function_names[@]//declare -f /}"
 	do
-		if [ "${#function}" -gt "${function_names_max_length}" ]
+		if [ "${#function}" -gt "${g_function_names_max_length}" ]
 		then
-			function_names_max_length="${#function}"
+			g_function_names_max_length="${#function}"
 		fi
 	done
 }
 
 logHandlerSetConfig()
 {
-	g_log_conf="0"
-	b_log_to_file="1"
-	b_log_to_stdout="2"
-	b_log_to_syslog="4"
-	b_log_to_journal="8"
-	b_date_bin_available="16"
-	b_logger_bin_available="32"
-	b_systemd_cat_bin_available="64"
-
 	if [ "${date_bin_printf:-}" -eq "1" ]
 	then
-		date_cmd_format_prefix="'%("
-		date_cmd_format_suffix=")T\\n' -1"
+		g_date_cmd_format_prefix="'%("
+		g_date_cmd_format_suffix=")T\\n' -1"
 	else
-		date_cmd_format_prefix="'+"
-		date_cmd_format_suffix="'"
+		g_date_cmd_format_prefix="'+"
+		g_date_cmd_format_suffix="'"
 	fi
 
 	if [ "${log_to_file}" -eq "1" ]
 	then
-		g_log_conf="$(( g_log_conf | b_log_to_file ))"
+		g_log_conf="$(( g_log_conf | g_log_to_file ))"
 	fi
 
 	if [ "${log_to_stdout}" -eq "1" ]
 	then
-		g_log_conf="$(( g_log_conf | b_log_to_stdout ))"
+		g_log_conf="$(( g_log_conf | g_log_to_stdout ))"
 	fi
 
 	if [ "${log_to_syslog}" -eq "1" ]
 	then
-		g_log_conf="$(( g_log_conf | b_log_to_syslog ))"
+		g_log_conf="$(( g_log_conf | g_log_to_syslog ))"
 	fi
 
 	if [ "${log_to_journal}" -eq "1" ]
 	then
-		g_log_conf="$(( g_log_conf | b_log_to_journal ))"
+		g_log_conf="$(( g_log_conf | g_log_to_journal ))"
 	fi
 
 	if [ -n "${date_bin:-}" ]
 	then
-		g_log_conf="$(( g_log_conf | b_date_bin_available ))"
+		g_log_conf="$(( g_log_conf | g_date_bin_available ))"
 	fi
 
 	if [ -n "${logger_bin:-}" ]
 	then
-		g_log_conf="$(( g_log_conf | b_logger_bin_available ))"
+		g_log_conf="$(( g_log_conf | g_logger_bin_available ))"
 	fi
 
 	if [ -n "${systemd_cat_bin:-}" ]
 	then
-		g_log_conf="$(( g_log_conf | b_systemd_cat_bin_available ))"
+		g_log_conf="$(( g_log_conf | g_systemd_cat_bin_available ))"
 	fi
 }
 
@@ -750,14 +740,14 @@ checkLogDir()
 
 checkLogHandlerRequirements()
 {
-	g_start_time="$(eval "${date_bin} ${date_cmd_format_prefix}%s${date_cmd_format_suffix}")"
+	g_start_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 
-	if [ "$(( g_log_conf & b_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & b_log_to_file ))" -gt "0" ]
+	if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 	then
 		calculateFunctionNameLength
 	fi
 
-	if [ "$(( g_log_conf & b_log_to_file ))" -gt "0" ]
+	if [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 	then
 		checkLogDir
 	fi
@@ -806,47 +796,47 @@ logHandler()
 			calling_function="${FUNCNAME[3]}"
 		fi
 
-		if [ "$(( g_log_conf & b_log_to_stdout ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ]
 		then
-			if [ "$(( g_log_conf & b_date_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
 			fi
 		fi
 
-		if [ "$(( g_log_conf & b_log_to_file ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
 		then
-			if [ "$(( g_log_conf & b_date_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
 			then
 				if [ -z "${log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
 			fi
 		fi
 
-		if [ "$(( g_log_conf & b_log_to_syslog ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_syslog ))" -gt "0" ]
 		then
-			if [ "$(( g_log_conf & b_logger_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_logger_bin_available ))" -gt "0" ]
 			then
 				${logger_bin} -t "${g_name}[${g_pid}]" -- "(${calling_function}) ${log_message}"
 			fi
 		fi
 
-		if [ "$(( g_log_conf & b_log_to_journal ))" -gt "0" ]
+		if [ "$(( g_log_conf & g_log_to_journal ))" -gt "0" ]
 		then
-			if [ "$(( g_log_conf & b_systemd_cat_bin_available ))" -gt "0" ]
+			if [ "$(( g_log_conf & g_systemd_cat_bin_available ))" -gt "0" ]
 			then
 				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${g_name}"
 			fi
@@ -1182,7 +1172,7 @@ timerHandler()
 generateDebugLogOutput()
 {
 	local log_timestamp=
-	log_timestamp="$(eval "${date_bin} ${date_cmd_format_prefix}${log_timestamp_format}${date_cmd_format_suffix}")"
+	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 
 	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
 
@@ -1563,9 +1553,19 @@ g_another_instance_is_running="0"
 g_bypass_exit_routines="0"
 g_config_file_included="0"
 g_log_requirements_ok="0"
-g_log_conf=
+g_log_conf="0"
+g_log_to_file="1"
+g_log_to_stdout="2"
+g_log_to_syslog="4"
+g_log_to_journal="8"
+g_date_bin_available="16"
+g_logger_bin_available="32"
+g_systemd_cat_bin_available="64"
 g_start_time=
 g_exit_code="255"
+g_function_names_max_length="0"
+g_date_cmd_format_prefix=
+g_date_cmd_format_suffix=
 g_monitoring_data_separator="\\x1e"
 g_od_sep=
 g_md_sep=
