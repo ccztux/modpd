@@ -13,7 +13,7 @@
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-12-08
 #
-#  Version				2.2.7
+#  Version				2.2.8
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -1534,7 +1534,7 @@ _main()
 g_pid="${$}"
 g_argc="${#}"
 g_name="${0##*/}"
-g_version="2.2.7"
+g_version="2.2.8"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
