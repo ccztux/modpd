@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-08
+#						2020-12-09
 #
-#  Version				2.2.8
+#  Version				2.2.9
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -549,14 +549,14 @@ checkRequiredBinaries()
 	then
 		if [ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]
 		then
-			date_bin_printf="1"
+			g_date_bin_printf="1"
 			date_bin="printf"
 		else
-			date_bin_printf="0"
+			g_date_bin_printf="0"
 			required_binaries+=("date")
 		fi
 	else
-		date_bin_printf="0"
+		g_date_bin_printf="0"
 	fi
 
 	if [ "${job_timeout_enabled}" == "1" ]
@@ -661,7 +661,9 @@ calculateFunctionNameLength()
 
 logHandlerSetConfig()
 {
-	if [ "${date_bin_printf:-}" -eq "1" ]
+	g_log_conf="0"
+
+	if [ "${g_date_bin_printf:-}" -eq "1" ]
 	then
 		g_date_cmd_format_prefix="'%("
 		g_date_cmd_format_suffix=")T\\n' -1"
@@ -1544,14 +1546,20 @@ _main()
 g_pid="${$}"
 g_argc="${#}"
 g_name="${0##*/}"
-g_version="2.2.8"
+g_version="2.2.9"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
-g_last_modification_date="2020-12-08"
+g_last_modification_date="2020-12-09"
 g_minimal_required_bash_version="3"
 g_license="GNU GPLv2"
 g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
+g_another_instance_is_running="0"
+g_bypass_exit_routines="0"
+g_config_file_included="0"
+g_log_requirements_ok="0"
+g_start_time=
+g_exit_code="255"
 g_file_permission="0"
 g_permission_execute="1"
 g_permission_write="2"
@@ -1560,10 +1568,6 @@ g_regular_file_exists="8"
 g_regular_file_is_not_empty="16"
 g_is_directory="32"
 g_is_named_pipe="64"
-g_another_instance_is_running="0"
-g_bypass_exit_routines="0"
-g_config_file_included="0"
-g_log_requirements_ok="0"
 g_log_conf="0"
 g_log_to_file="1"
 g_log_to_stdout="2"
@@ -1572,9 +1576,8 @@ g_log_to_journal="8"
 g_date_bin_available="16"
 g_logger_bin_available="32"
 g_systemd_cat_bin_available="64"
-g_start_time=
-g_exit_code="255"
 g_function_names_max_length="0"
+g_date_bin_printf=
 g_date_cmd_format_prefix=
 g_date_cmd_format_suffix=
 g_monitoring_data_separator="\\x1e"
