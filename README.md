@@ -174,8 +174,8 @@ Check if the modpd NEB module was loaded by Nagios®:
 ### Installation of the modpd daemon part
 Copy the files:
 ```bash
-cp -av ./usr/local/modpd/ /usr/local/
-cp -av ./etc/ /etc/
+cp -v ./usr/local/modpd/ /usr/local/
+cp -v ./etc/ /
 ```
 
 
@@ -192,8 +192,10 @@ chmod 644 /etc/sysconfig/modpd
 
 
 Copy the sample modpd daemon config file:
+
+**Skip this step in case of an update!**
 ```bash
-cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+cp -v /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
 
 
@@ -244,7 +246,7 @@ cd NagiosEnterprises-nrdp-*
 
 Copy the send_nrdp.php script:
 ```bash
-cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
+cp -v ./clients/send_nrdp.php /usr/local/modpd/libexec/
 ```
 
 
@@ -276,8 +278,8 @@ make send_nsca
 
 Copy the files:
 ```bash
-cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
-cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
+cp -v ./src/send_nsca /usr/local/modpd/libexec/send_nsca
+cp -v ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
 ```
 
 
@@ -539,24 +541,6 @@ debug_log_monitoring_data="0"
 
 # time in seconds when the debug logfile should be truncated
 debug_log_truncate_interval="604800"
-
-
-
-#----------------
-# Named pipe path
-#----------------
-
-# file name of named pipe
-named_pipe_filename="${g_base_path}/var/rw/modpd.cmd"
-
-
-
-#--------------------
-# Monitoring settings
-#--------------------
-
-# separator to separate the data we have got from the monitoring system
-monitoring_data_separator="\\x1e"
 
 
 
