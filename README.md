@@ -8,6 +8,7 @@
 
 
 # Table of contents
+* [Table of contents](#table-of-contents)
 * [What is modpd?](#what-is-modpd)
 * [Known Issues](#known-issues)
 * [Flowchart](#flowchart)
@@ -30,12 +31,17 @@
          * [NRDP](#nrdp)
          * [NSCA](#nsca)
 * [Updating modpd](#updating-modpd)
+   * [Backup](#backup)
+   * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
+   * [Updating the modpd NEB module part](#updating-the-modpd-neb-module-part)
+   * [Updating the modpd daemon part](#updating-the-modpd-daemon-part)
 * [Files](#files)
 * [Example help output](#example-help-output)
 * [Default sample config](#default-sample-config)
 * [Example log snippets](#example-log-snippets)
    * [modpd daemon log snippet](#modpd-daemon-log-snippet)
    * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
+
 
 
 
