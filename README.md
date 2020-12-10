@@ -174,8 +174,8 @@ Check if the modpd NEB module was loaded by Nagios®:
 ### Installation of the modpd daemon part
 Copy the files:
 ```bash
-cp -v ./usr/local/modpd/ /usr/local/
-cp -v ./etc/ /
+cp -av ./usr/local/modpd/ /usr/local/
+cp -av ./etc/* /etc/
 ```
 
 
@@ -195,7 +195,7 @@ Copy the sample modpd daemon config file:
 
 **Skip this step in case of an update!**
 ```bash
-cp -v /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
 
 
@@ -246,7 +246,7 @@ cd NagiosEnterprises-nrdp-*
 
 Copy the send_nrdp.php script:
 ```bash
-cp -v ./clients/send_nrdp.php /usr/local/modpd/libexec/
+cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
 ```
 
 
@@ -278,8 +278,8 @@ make send_nsca
 
 Copy the files:
 ```bash
-cp -v ./src/send_nsca /usr/local/modpd/libexec/send_nsca
-cp -v ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
+cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
+cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
 ```
 
 
