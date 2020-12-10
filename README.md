@@ -220,6 +220,7 @@ service modpd start
 Check if the modpd daemon is running:
 ```bash
 service modpd status
+tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
 
@@ -319,7 +320,11 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 ## Backup
 Make a backup of your existing installation:
 ```bash
-tar -cvzf /backup_path/modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd /etc/logrotate.d/modpd /etc/sysconfig/modpd /usr/local/modpd/ /usr/local/nagios/include/modpd.o
+tar -cvzf /backup_path/modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
+													/etc/logrotate.d/modpd \
+													/etc/sysconfig/modpd \
+													/usr/local/modpd/ \
+													/usr/local/nagios/include/modpd.o
 ```
 
 
@@ -402,6 +407,7 @@ service modpd restart
 Check if the modpd daemon is running:
 ```bash
 service modpd status
+tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
 
