@@ -321,10 +321,10 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 Make a backup of your existing installation:
 ```bash
 tar -cvzf /backup_path/modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
-													/etc/logrotate.d/modpd \
-													/etc/sysconfig/modpd \
-													/usr/local/modpd/ \
-													/usr/local/nagios/include/modpd.o
+                                                    /etc/logrotate.d/modpd \
+                                                    /etc/sysconfig/modpd \
+                                                    /usr/local/modpd/ \
+                                                    /usr/local/nagios/include/modpd.o
 ```
 
 
