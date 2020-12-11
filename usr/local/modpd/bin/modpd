@@ -1192,14 +1192,14 @@ generateDebugLogOutput()
 	if [ "${debug_log_monitoring_data}" == "1" ]
 	then
 		printf "*** START (raw data received from monitoring) ***\\n\\n"
-		printf "%s\\n" "${g_job_raw_data[@]}"
+		printf "${log_timestamp}: %s\\n" "${g_job_raw_data[@]}"
 		printf "\\n*** END (raw data received from monitoring) ***\\n"
 	fi
 
 	if [ "${debug_log_obsessing_data}" == "1" ]
 	then
 		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
-		printf "%s\\n" "${g_job_data[@]}"
+		printf "${log_timestamp}: %s\\n" "${g_job_data[@]}"
 		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
 	fi
 
