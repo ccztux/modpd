@@ -466,8 +466,11 @@ setRequiredVariables()
 	# log file
 	g_log_file="${g_log_directory}/${g_name}.log"
 
-	# debug log file
-	g_debug_log_file="${g_log_directory}/${g_name}.debug.log"
+	# debug log file monitoring rawdata
+	g_debug_log_file_monitoring="${g_log_directory}/${g_name}.monitoring.debug.log"
+
+	# debug log file obsessing data
+	g_debug_log_file_obsessing="${g_log_directory}/${g_name}.obsessing.debug.log"
 
 	# named pipe
 	g_named_pipe_file="${g_base_path}/var/rw/${g_name}.cmd"
@@ -1208,7 +1211,38 @@ generateDebugLogOutput()
 
 debugLog()
 {
-	generateDebugLogOutput >> "${g_debug_log_file}"
+	if [ "${debug_log_monitoring_data}" == "1" ]
+	then
+		generateDebugLogOutput >> "${g_debug_log_file_monitoring}"
+	fi
+
+	if [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		generateDebugLogOutput >> "${g_debug_log_file_obsessing}"
+	fi
+}
+
+truncateDebugLogs()
+{
+	if [ "${debug_log_monitoring_data}" == "1" ]
+	then
+		if : >| "${g_debug_log_file_monitoring}" 2>&1 | logHandler
+		then
+			logHandler "Truncating the debug logfile for monitoring data was successful"
+		else
+			logHandler "Truncating the debug logfile for monitoring data was not successful"
+		fi
+	fi
+
+	if [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		if : >| "${g_debug_log_file_obsessing}" 2>&1 | logHandler
+		then
+			logHandler "Truncating the debug logfile for obsessing data was successful"
+		else
+			logHandler "Truncating the debug logfile for obsessing data was not successful"
+		fi
+	fi
 }
 
 setSeparators()
@@ -1473,13 +1507,7 @@ dataProcessor()
 			if timerHandler "${debug_log_truncate_interval}" "${timer_result_last_debug_log_truncation}"
 			then
 				timer_result_last_debug_log_truncation="$(( timer_result_last_debug_log_truncation + 1 ))"
-
-				if : >| "${g_debug_log_file}" 2>&1 | logHandler
-				then
-					logHandler "Truncating the debug logfile was successful"
-				else
-					logHandler "Truncating the debug logfile was not successful"
-				fi
+				truncateDebugLogs
 			fi
 		fi
 
