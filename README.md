@@ -34,7 +34,7 @@
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
    * [Updating the modpd NEB module](#updating-the-modpd-neb-module)
    * [Updating the modpd daemon](#updating-the-modpd-daemon)
-* [Files](#files)
+* [File overview](#file-overview)
 * [Backup your modpd installation](#backup-your-modpd-installation)
 * [Daemon help output](#daemon-help-output)
 * [Default sample config](#default-sample-config)
@@ -400,15 +400,15 @@ tail -f /usr/local/modpd/var/log/modpd.log
 
 
 
-# Files
+# File overview
 - ```/etc/init.d/modpd``` init script for the modpd daemon
 - ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
 - ```/etc/sysconfig/modpd``` default configuration values for the modpd init script
 - ```/usr/local/modpd/bin/modpd``` modpd daemon
 - ```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
 - ```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.monitoring.debug.log``` debug logfile raw monitoring data (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.obsessing.debug.log``` debug logfile obsessing data (will be created by the daemon)
+- ```/usr/local/modpd/var/log/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
+- ```/usr/local/modpd/var/log/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
 - ```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
 - ```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
 - ```/usr/local/nagios/include/modpd.o``` modpd NEB module
@@ -625,7 +625,7 @@ log_invalid_data="1"
 # Debugging
 #----------
 
-# enable debug log of the raw data prepared to send via obsessing_interface
+# enable debug log of the raw data processed via obsessing_interface
 # (valid values: 1|0)
 debug_log_obsessing_data="0"
 
