@@ -33,8 +33,8 @@
 * [Updating modpd](#updating-modpd)
    * [Backup](#backup)
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
-   * [Updating the modpd NEB module part](#updating-the-modpd-neb-module-part)
-   * [Updating the modpd daemon part](#updating-the-modpd-daemon-part)
+   * [Updating the modpd NEB module](#updating-the-modpd-neb-module)
+   * [Updating the modpd daemon](#updating-the-modpd-daemon)
 * [Files](#files)
 * [Example help output](#example-help-output)
 * [Default sample config](#default-sample-config)
@@ -133,6 +133,7 @@ make install
 
 
 Add the modpd NEB module with the editor of your choice to your main Nagios® config file:
+
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
@@ -141,6 +142,7 @@ broker_module=/usr/local/nagios/include/modpd.o
 
 
 Set the eventbroker options with the editor of your choice in your main nagios config file:
+
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
 ```bash
 event_broker_options=-1
@@ -331,7 +333,7 @@ cd ccztux-modpd-*
 
 
 
-## Updating the modpd NEB module part
+## Updating the modpd NEB module
 Build the modpd NEB module:
 ```bash
 make
@@ -364,7 +366,7 @@ Check if the modpd NEB module was loaded by Nagios®:
 
 
 
-## Updating the modpd daemon part
+## Updating the modpd daemon
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
