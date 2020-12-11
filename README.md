@@ -407,7 +407,8 @@ tail -f /usr/local/modpd/var/log/modpd.log
 - ```/usr/local/modpd/bin/modpd``` modpd daemon
 - ```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
 - ```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.debug.log``` modpd debug logfile (will be created by the daemon)
+- ```/usr/local/modpd/var/log/modpd.monitoring.debug.log``` debug logfile raw monitoring data (will be created by the daemon)
+- ```/usr/local/modpd/var/log/modpd.obsessing.debug.log``` debug logfile obsessing data (will be created by the daemon)
 - ```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
 - ```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
 - ```/usr/local/nagios/include/modpd.o``` modpd NEB module
