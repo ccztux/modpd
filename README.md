@@ -30,12 +30,19 @@
          * [NRDP](#nrdp)
          * [NSCA](#nsca)
 * [Updating modpd](#updating-modpd)
+   * [Make a backup](#make-a-backup)
+   * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
+   * [Updating the modpd NEB module](#updating-the-modpd-neb-module)
+   * [Updating the modpd daemon](#updating-the-modpd-daemon)
 * [Files](#files)
-* [Example help output](#example-help-output)
+* [Backup your modpd installation](#backup-your-modpd-installation)
+* [Daemon help output](#daemon-help-output)
 * [Default sample config](#default-sample-config)
 * [Example log snippets](#example-log-snippets)
    * [modpd daemon log snippet](#modpd-daemon-log-snippet)
    * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
+
+
 
 
 
@@ -129,8 +136,6 @@ make install
 Add the modpd NEB module with the editor of your choice to your main Nagios® config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-
-**Skip this step in case of an update!**
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
 ```
@@ -140,8 +145,6 @@ broker_module=/usr/local/nagios/include/modpd.o
 Set the eventbroker options with the editor of your choice in your main nagios config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-
-**Skip this step in case of an update!**
 ```bash
 event_broker_options=-1
 ```
@@ -175,7 +178,7 @@ Check if the modpd NEB module was loaded by Nagios®:
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
-cp -av ./etc/ /etc/
+cp -av ./etc/* /etc/
 ```
 
 
@@ -212,6 +215,7 @@ service modpd start
 Check if the modpd daemon is running:
 ```bash
 service modpd status
+tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
 
@@ -306,14 +310,93 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
 
+
 # Updating modpd
-1. Make a backup of files modified by you
-2. Follow the guide [Installation on the Nagios® site with active checks](https://github.com/ccztux/modpd#installation-on-the-nagios-site-with-active-checks) and overwrite all existing files
-3. Merge possible changes between the new sample config ```/usr/local/modpd/etc/modpd.sample.conf``` and your productive one ```/usr/local/modpd/etc/modpd.conf``` using the tool of your choice like ```vimdiff```.
-4. Restart nagios ```service nagios restart```
-5. Check if nagios is running ```service nagios status```
-6. Restart the modpd daemon ```service modpd restart```
-7. Check if the modpd daemon is running ```service modpd status```
+## Make a backup
+Make a backup of your existing installation as described [here](https://github.com/ccztux/modpd#backup-your-modpd-installation)
+
+
+## Download the latest sources of modpd
+Download the latest tarball and extract it:
+```bash
+cd /tmp
+wget "https://api.github.com/repos/ccztux/modpd/tarball" -O modpd.latest.tar.gz
+tar -xvzf modpd.latest.tar.gz
+cd ccztux-modpd-*
+```
+
+
+
+## Updating the modpd NEB module
+Build the modpd NEB module:
+```bash
+make
+make install
+```
+
+
+
+Restart nagios:
+```bash
+service nagios restart
+```
+
+
+
+Check if nagios is running:
+```bash
+service nagios status
+```
+
+
+
+Check if the modpd NEB module was loaded by Nagios®:
+```bash
+[root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.2.11
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
+```
+
+
+
+## Updating the modpd daemon
+Copy the files:
+```bash
+cp -av ./usr/local/modpd/ /usr/local/
+cp -av ./etc/* /etc/
+```
+
+
+Change the file ownerships:
+```bash
+chown -R nagios:nagios /usr/local/modpd/
+chown root:root /etc/logrotate.d/modpd
+chmod 644 /etc/logrotate.d/modpd
+chown root:root /etc/init.d/modpd
+chmod 755 /etc/init.d/modpd
+chown root:root /etc/sysconfig/modpd
+chmod 644 /etc/sysconfig/modpd
+```
+
+
+Merge possible changes between the new sample config and your productive one using the tool of your choice like vimdiff:
+```bash
+vimdiff ./usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+```
+
+
+Restart the modpd daemon:
+```bash
+service modpd restart
+```
+
+
+Check if the modpd daemon is running:
+```bash
+service modpd status
+tail -f /usr/local/modpd/var/log/modpd.log
+```
 
 
 
@@ -331,7 +414,19 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 
 
 
-# Example help output
+# Backup your modpd installation
+Make a backup of your existing installation:
+```bash
+tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
+                                       /etc/logrotate.d/modpd \
+                                       /etc/sysconfig/modpd \
+                                       /usr/local/modpd/ \
+                                       /usr/local/nagios/include/modpd.o
+```
+
+
+
+# Daemon help output
 ```
 Usage: modpd OPTIONS
 
@@ -539,24 +634,6 @@ debug_log_monitoring_data="0"
 
 # time in seconds when the debug logfile should be truncated
 debug_log_truncate_interval="604800"
-
-
-
-#----------------
-# Named pipe path
-#----------------
-
-# file name of named pipe
-named_pipe_filename="${g_base_path}/var/rw/modpd.cmd"
-
-
-
-#--------------------
-# Monitoring settings
-#--------------------
-
-# separator to separate the data we have got from the monitoring system
-monitoring_data_separator="\\x1e"
 
 
 
