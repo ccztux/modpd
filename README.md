@@ -8,7 +8,6 @@
 
 
 # Table of contents
-* [Table of contents](#table-of-contents)
 * [What is modpd?](#what-is-modpd)
 * [Known Issues](#known-issues)
 * [Flowchart](#flowchart)
@@ -31,16 +30,18 @@
          * [NRDP](#nrdp)
          * [NSCA](#nsca)
 * [Updating modpd](#updating-modpd)
-   * [Backup](#backup)
+   * [Make a backup](#make-a-backup)
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
    * [Updating the modpd NEB module](#updating-the-modpd-neb-module)
    * [Updating the modpd daemon](#updating-the-modpd-daemon)
 * [Files](#files)
-* [Example help output](#example-help-output)
+* [Backup your modpd installation](#backup-your-modpd-installation)
+* [Daemon help output](#daemon-help-output)
 * [Default sample config](#default-sample-config)
 * [Example log snippets](#example-log-snippets)
    * [modpd daemon log snippet](#modpd-daemon-log-snippet)
    * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
+
 
 
 
@@ -311,15 +312,8 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 
 
 # Updating modpd
-## Backup
-Make a backup of your existing installation:
-```bash
-tar -cvzf /backup_path/modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
-                                                    /etc/logrotate.d/modpd \
-                                                    /etc/sysconfig/modpd \
-                                                    /usr/local/modpd/ \
-                                                    /usr/local/nagios/include/modpd.o
-```
+## Make a backup
+Make a backup of your existing installation as described [here](https://github.com/ccztux/modpd#backup-your-modpd-installation)
 
 
 ## Download the latest sources of modpd
@@ -420,7 +414,19 @@ tail -f /usr/local/modpd/var/log/modpd.log
 
 
 
-# Example help output
+# Backup your modpd installation
+Make a backup of your existing installation:
+```bash
+tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
+                                       /etc/logrotate.d/modpd \
+                                       /etc/sysconfig/modpd \
+                                       /usr/local/modpd/ \
+                                       /usr/local/nagios/include/modpd.o
+```
+
+
+
+# Daemon help output
 ```
 Usage: modpd OPTIONS
 
