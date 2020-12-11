@@ -133,10 +133,7 @@ make install
 
 
 Add the modpd NEB module with the editor of your choice to your main Nagios® config file:
-
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-
-**Skip this step in case of an update!**
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
 ```
@@ -144,10 +141,7 @@ broker_module=/usr/local/nagios/include/modpd.o
 
 
 Set the eventbroker options with the editor of your choice in your main nagios config file:
-
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-
-**Skip this step in case of an update!**
 ```bash
 event_broker_options=-1
 ```
@@ -198,8 +192,6 @@ chmod 644 /etc/sysconfig/modpd
 
 
 Copy the sample modpd daemon config file:
-
-**Skip this step in case of an update!**
 ```bash
 cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 ```
