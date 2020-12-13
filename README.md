@@ -169,7 +169,7 @@ service nagios status
 Check if the modpd NEB module was loaded by Nagios®:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.0
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -355,7 +355,7 @@ service nagios status
 Check if the modpd NEB module was loaded by Nagios®:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.0
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -436,7 +436,7 @@ Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
 Last modification:      2020-12-13
-Version:                2.3.0
+Version:                2.3.1
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
@@ -478,7 +478,7 @@ OPTIONS:
 #  Last Modification:	Christian Zettel (ccztux)
 #						2020-12-13
 #
-#  Version				2.3.0
+#  Version				2.3.1
 #
 #  Description:			Config file for modpd (Monitoring Obsessing Data Processor Daemon)
 #
