@@ -410,7 +410,7 @@ logStats()
 		l_timediff="$(( l_current_time - last_stats_logged ))"
 	fi
 
-	logHandlerlogHandler  "-------------- Stats for the last ${l_timediff} seconds --------------"
+	logHandler "-------------- Stats for the last ${l_timediff} seconds --------------"
 	logHandler "Process info:"
 	logHandler "${g_name} is running: ${l_uptime}"
 	logHandler " "
