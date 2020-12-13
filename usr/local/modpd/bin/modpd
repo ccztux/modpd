@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-10
+#						2020-12-13
 #
-#  Version				2.2.10
+#  Version				2.3.0
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -466,8 +466,11 @@ setRequiredVariables()
 	# log file
 	g_log_file="${g_log_directory}/${g_name}.log"
 
-	# debug log file
-	g_debug_log_file="${g_log_directory}/${g_name}.debug.log"
+	# debug log file monitoring rawdata
+	g_debug_log_file_monitoring="${g_log_directory}/${g_name}.monitoring.debug.log"
+
+	# debug log file obsessing data
+	g_debug_log_file_obsessing="${g_log_directory}/${g_name}.obsessing.debug.log"
 
 	# named pipe
 	g_named_pipe_file="${g_base_path}/var/rw/${g_name}.cmd"
@@ -1184,22 +1187,21 @@ timerHandler()
 
 generateDebugLogOutput()
 {
+	local debug_type="${1}"
 	local log_timestamp=
 	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 
 	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
 
-	if [ "${debug_log_monitoring_data}" == "1" ]
+	if [ "${debug_type}" == "monitoring" ]
 	then
 		printf "*** START (raw data received from monitoring) ***\\n\\n"
-		printf "%s\\n" "${g_job_raw_data[@]}"
+		printf "${log_timestamp}: %s\\n" "${g_job_raw_data[@]}"
 		printf "\\n*** END (raw data received from monitoring) ***\\n"
-	fi
-
-	if [ "${debug_log_obsessing_data}" == "1" ]
+	elif [ "${debug_type}" == "obsessing" ]
 	then
 		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
-		printf "%s\\n" "${g_job_data[@]}"
+		printf "${log_timestamp}: %s\\n" "${g_job_data[@]}"
 		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
 	fi
 
@@ -1208,7 +1210,38 @@ generateDebugLogOutput()
 
 debugLog()
 {
-	generateDebugLogOutput >> "${g_debug_log_file}"
+	if [ "${debug_log_monitoring_data}" == "1" ]
+	then
+		generateDebugLogOutput "monitoring" >> "${g_debug_log_file_monitoring}"
+	fi
+
+	if [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		generateDebugLogOutput "obsessing" >> "${g_debug_log_file_obsessing}"
+	fi
+}
+
+truncateDebugLogs()
+{
+	if [ "${debug_log_monitoring_data}" == "1" ]
+	then
+		if : >| "${g_debug_log_file_monitoring}" 2>&1 | logHandler
+		then
+			logHandler "Truncating the debug logfile for monitoring data was successful"
+		else
+			logHandler "Truncating the debug logfile for monitoring data was not successful"
+		fi
+	fi
+
+	if [ "${debug_log_obsessing_data}" == "1" ]
+	then
+		if : >| "${g_debug_log_file_obsessing}" 2>&1 | logHandler
+		then
+			logHandler "Truncating the debug logfile for obsessing data was successful"
+		else
+			logHandler "Truncating the debug logfile for obsessing data was not successful"
+		fi
+	fi
 }
 
 setSeparators()
@@ -1462,19 +1495,18 @@ dataProcessor()
 
 			if [ "${debug_log_monitoring_data}" == "1" ]
 			then
-				g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}${g_md_sep}${junk}")
+				if [ -z "${junk}" ]
+				then
+					g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}")
+				else
+					g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}${g_md_sep}${junk}")
+				fi
 			fi
 
 			if timerHandler "${debug_log_truncate_interval}" "${timer_result_last_debug_log_truncation}"
 			then
 				timer_result_last_debug_log_truncation="$(( timer_result_last_debug_log_truncation + 1 ))"
-
-				if : >| "${g_debug_log_file}" 2>&1 | logHandler
-				then
-					logHandler "Truncating the debug logfile was successful"
-				else
-					logHandler "Truncating the debug logfile was not successful"
-				fi
+				truncateDebugLogs
 			fi
 		fi
 
@@ -1487,7 +1519,7 @@ dataProcessor()
 			fi
 		fi
 
-		if [ "${job_interval_helper}" -le "${SECONDS}" ]
+		if [ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${job_max_bulk_size}" ]
 		then
 			jobHandler
 			g_job_data=()
@@ -1546,11 +1578,11 @@ _main()
 g_pid="${$}"
 g_argc="${#}"
 g_name="${0##*/}"
-g_version="2.2.10"
+g_version="2.3.0"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
-g_last_modification_date="2020-12-10"
+g_last_modification_date="2020-12-13"
 g_minimal_required_bash_version="3"
 g_license="GNU GPLv2"
 g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
