@@ -1187,19 +1187,18 @@ timerHandler()
 
 generateDebugLogOutput()
 {
+	local debug_type="${1}"
 	local log_timestamp=
 	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 
 	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
 
-	if [ "${debug_log_monitoring_data}" == "1" ]
+	if [ "${debug_type}" == "monitoring" ]
 	then
 		printf "*** START (raw data received from monitoring) ***\\n\\n"
 		printf "${log_timestamp}: %s\\n" "${g_job_raw_data[@]}"
 		printf "\\n*** END (raw data received from monitoring) ***\\n"
-	fi
-
-	if [ "${debug_log_obsessing_data}" == "1" ]
+	elif [ "${debug_type}" == "obsessing" ]
 	then
 		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
 		printf "${log_timestamp}: %s\\n" "${g_job_data[@]}"
@@ -1213,12 +1212,12 @@ debugLog()
 {
 	if [ "${debug_log_monitoring_data}" == "1" ]
 	then
-		generateDebugLogOutput >> "${g_debug_log_file_monitoring}"
+		generateDebugLogOutput "monitoring" >> "${g_debug_log_file_monitoring}"
 	fi
 
 	if [ "${debug_log_obsessing_data}" == "1" ]
 	then
-		generateDebugLogOutput >> "${g_debug_log_file_obsessing}"
+		generateDebugLogOutput "obsessing" >> "${g_debug_log_file_obsessing}"
 	fi
 }
 
