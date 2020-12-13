@@ -115,10 +115,10 @@ fi
 
 propagateSignalToChilds()
 {
-	local signal="${1}"
+	local l_signal="${1}"
 
 	# shellcheck disable=SC2154
-	${kill_bin:=kill} -"${signal}" -"${g_pid}"
+	${kill_bin:=kill} -"${l_signal}" -"${g_pid}"
 }
 
 
@@ -129,33 +129,33 @@ propagateSignalToChilds()
 
 signalHandler()
 {
-	local signal="${1:-}"
-	local bash_source="${2:-}"
-	local bash_lineno="${3:-}"
-	local bash_command="${4:-}"
-	local uptime=
+	local l_signal="${1:-}"
+	local l_bash_source="${2:-}"
+	local l_bash_lineno="${3:-}"
+	local l_bash_command="${4:-}"
+	local l_uptime=
 
-	case "${signal}" in
+	case "${l_signal}" in
 		SIGTERM)
-			logHandler "Caught: '${signal}', preparing for shutdown..."
+			logHandler "Caught: '${l_signal}', preparing for shutdown..."
 
 			# propagate signal to all childs
-			propagateSignalToChilds "${signal}"
+			propagateSignalToChilds "${l_signal}"
 
 			g_exit_code="143"
 			exit
 			;;
 		SIGINT)
-			logHandler "Caught: '${signal}', preparing for shutdown..."
+			logHandler "Caught: '${l_signal}', preparing for shutdown..."
 
 			# propagate signal to all childs
-			propagateSignalToChilds "${signal}"
+			propagateSignalToChilds "${l_signal}"
 
 			g_exit_code="130"
 			exit
 			;;
 		SIGHUP)
-			logHandler "Caught: '${signal}', reloading..."
+			logHandler "Caught: '${l_signal}', reloading..."
 
 			if reloadHandler
 			then
@@ -165,7 +165,7 @@ signalHandler()
 			fi
 			;;
 		ERR)
-			logHandler "Caught: '${signal}', in: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
+			logHandler "Caught: '${l_signal}', in: '${l_bash_source}', at line number: '${l_bash_lineno}', command: '${l_bash_command}'"
 			;;
 		EXIT)
 			if [ "${g_config_file_included}" -eq "1" ]
@@ -175,7 +175,7 @@ signalHandler()
 					logStats
 				fi
 
-				logHandler "Caught: '${signal}', shutting down..."
+				logHandler "Caught: '${l_signal}', shutting down..."
 
 				if [ "${g_bypass_exit_routines}" != "1" ]
 				then
@@ -198,17 +198,17 @@ signalHandler()
 				# propagate signal to all childs
 				propagateSignalToChilds "SIGTERM"
 
-				uptime="$(secondsToTime "${SECONDS}")"
+				l_uptime="$(secondsToTime "${SECONDS}")"
 
 				logHandler "Exitcode: '${g_exit_code}'"
-				logHandler "${g_name} was running: ${uptime}"
+				logHandler "${g_name} was running: ${l_uptime}"
 				logHandler "Bye, bye..."
 			fi
 
 			exit ${g_exit_code}
 			;;
 		*)
-			logHandler "Caught: '${signal}', but no handler defined"
+			logHandler "Caught: '${l_signal}', but no handler defined"
 			return 0
 			;;
 	esac
@@ -222,20 +222,20 @@ signalHandler()
 
 checkShellOption()
 {
-	local shell_option="${1}"
+	local l_shell_option="${1}"
 
-	if [ -n "${shell_option}" ]
+	if [ -n "${l_shell_option}" ]
 	then
-		if [[ "${shell_option}" =~ ^([A-Z][a-z])$ ]]
+		if [[ "${l_shell_option}" =~ ^([A-Z][a-z])$ ]]
 		then
-			if [[ "${-}" =~ ^(.*)${shell_option}(.*)$ ]]
+			if [[ "${-}" =~ ^(.*)${l_shell_option}(.*)$ ]]
 			then
 				return 0
 			else
 				return 1
 			fi
 		else
-			if [[ "${SHELLOPTS}" =~ ^(.*)${shell_option}(.*)$ ]]
+			if [[ "${SHELLOPTS}" =~ ^(.*)${l_shell_option}(.*)$ ]]
 			then
 				return 0
 			else
@@ -249,20 +249,20 @@ checkShellOption()
 
 setShellOption()
 {
-	local shell_option="${1}"
+	local l_shell_option="${1}"
 
-	if [ -n "${shell_option}" ]
+	if [ -n "${l_shell_option}" ]
 	then
-		if [[ "${shell_option}" =~ ^([A-Z][a-z])$ ]]
+		if [[ "${l_shell_option}" =~ ^([A-Z][a-z])$ ]]
 		then
-			if set -"${shell_option}" 2>/dev/null
+			if set -"${l_shell_option}" 2>/dev/null
 			then
 				return 0
 			else
 				return 1
 			fi
 		else
-			if set -o "${shell_option}" 2>/dev/null
+			if set -o "${l_shell_option}" 2>/dev/null
 			then
 				return 0
 			else
@@ -276,11 +276,11 @@ setShellOption()
 
 checkBashOption()
 {
-	local bash_option="${1}"
+	local l_bash_option="${1}"
 
-	if [ -n "${bash_option}" ]
+	if [ -n "${l_bash_option}" ]
 	then
-		if shopt -q "${bash_option}" 2>/dev/null
+		if shopt -q "${l_bash_option}" 2>/dev/null
 		then
 			return 0
 		else
@@ -293,11 +293,11 @@ checkBashOption()
 
 setBashOption()
 {
-	local bash_option="${1}"
+	local l_bash_option="${1}"
 
-	if [ -n "${bash_option}" ]
+	if [ -n "${l_bash_option}" ]
 	then
-		if shopt -s "${bash_option}" 2>/dev/null
+		if shopt -s "${l_bash_option}" 2>/dev/null
 		then
 			return 0
 		else
@@ -310,16 +310,16 @@ setBashOption()
 
 setRequiredShellOptions()
 {
-	local shell_option=
-	local required_shell_options=("noclobber" "nounset" "pipefail" "errtrace")
+	local l_shell_option=
+	local l_required_shell_options=("noclobber" "nounset" "pipefail" "errtrace")
 
-	for shell_option in "${required_shell_options[@]}"
+	for l_shell_option in "${l_required_shell_options[@]}"
 	do
-		if ! checkShellOption "${shell_option}"
+		if ! checkShellOption "${l_shell_option}"
 		then
-			if ! setShellOption "${shell_option}"
+			if ! setShellOption "${l_shell_option}"
 			then
-				eprintf "Setting required shell option: '${shell_option}' was not successful."
+				eprintf "Setting required shell option: '${l_shell_option}' was not successful."
 				eprintf "Terminating..."
 				exit 245
 			fi
@@ -329,16 +329,16 @@ setRequiredShellOptions()
 
 setRequiredBashOptions()
 {
-	local bash_option=
-	local required_bash_options=("nullglob")
+	local l_bash_option=
+	local l_required_bash_options=("nullglob")
 
-	for bash_option in "${required_bash_options[@]}"
+	for l_bash_option in "${l_required_bash_options[@]}"
 	do
-		if ! checkBashOption "${bash_option}"
+		if ! checkBashOption "${l_bash_option}"
 		then
-			if ! setBashOption "${bash_option}"
+			if ! setBashOption "${l_bash_option}"
 			then
-				eprintf "Setting required bash option: '${bash_option}' was not successful."
+				eprintf "Setting required bash option: '${l_bash_option}' was not successful."
 				eprintf "Terminating..."
 				exit 246
 			fi
@@ -382,33 +382,33 @@ printScriptInfos()
 
 secondsToTime()
 {
-	local seconds_to_convert="${1:-}"
-	local days="$(( seconds_to_convert / (3600 * 24) ))"
-	local hours="$(( (seconds_to_convert / 3600) % 24 ))"
-	local minutes="$(( (seconds_to_convert / 60) % 60 ))"
-	local seconds="$(( seconds_to_convert % 60 ))"
+	local l_seconds_to_convert="${1:-}"
+	local l_days="$(( l_seconds_to_convert / (3600 * 24) ))"
+	local l_hours="$(( (l_seconds_to_convert / 3600) % 24 ))"
+	local l_minutes="$(( (l_seconds_to_convert / 60) % 60 ))"
+	local l_seconds="$(( l_seconds_to_convert % 60 ))"
 
-	printf "%sd %sh %sm %ss\\n" "${days}" "${hours}" "${minutes}" "${seconds}"
+	printf "%sd %sh %sm %ss\\n" "${l_days}" "${l_hours}" "${l_minutes}" "${l_seconds}"
 }
 
 logStats()
 {
-	local uptime=
-	local timediff=
-	local current_time=
-	uptime="$(secondsToTime "${SECONDS}")"
-	current_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
+	local l_uptime=
+	local l_timediff=
+	local l_current_time=
+	l_uptime="$(secondsToTime "${SECONDS}")"
+	l_current_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 
 	if [ -z "${last_stats_logged:-}" ]
 	then
-		timediff="$(( current_time - g_start_time ))"
+		l_timediff="$(( l_current_time - g_start_time ))"
 	else
-		timediff="$(( current_time - last_stats_logged ))"
+		l_timediff="$(( l_current_time - last_stats_logged ))"
 	fi
 
-	logHandlerlogHandler  "-------------- Stats for the last ${timediff} seconds --------------"
+	logHandlerlogHandler  "-------------- Stats for the last ${l_timediff} seconds --------------"
 	logHandler "Process info:"
-	logHandler "${g_name} is running: ${uptime}"
+	logHandler "${g_name} is running: ${l_uptime}"
 	logHandler " "
 	logHandler "Processed jobs:"
 	logHandler "Total processed jobs: '${g_job_counter_total}'"
@@ -530,12 +530,12 @@ reloadHandler()
 
 checkBin()
 {
-	local binary="${1:-}"
-	local _bin=
+	local l_binary="${1:-}"
+	local l_bin=
 
-	if _bin="$(command -v "${binary}" 2>/dev/null)"
+	if l_bin="$(command -v "${l_binary}" 2>/dev/null)"
 	then
-		export "${binary//-/_}"_bin="${_bin}"
+		export "${l_binary//-/_}"_bin="${l_bin}"
 		return 0
 	else
 		return 1
@@ -544,19 +544,19 @@ checkBin()
 
 checkRequiredBinaries()
 {
-	local bin=
-	local required_binaries=()
-	local binaries_not_found=()
-	local binaries_not_found_helper=
+	local l_bin=
+	local l_required_binaries=()
+	local l_binaries_not_found=()
+	local l_binaries_not_found_helper=
 
 	if [ "${log_to_syslog}" == "1" ]
 	then
-		required_binaries+=("logger")
+		l_required_binaries+=("logger")
 	fi
 
 	if [ "${log_to_journal}" -eq "1" ]
 	then
-		required_binaries+=("systemd-cat")
+		l_required_binaries+=("systemd-cat")
 	fi
 
 	if [ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]
@@ -567,7 +567,7 @@ checkRequiredBinaries()
 			date_bin="printf"
 		else
 			g_date_bin_printf="0"
-			required_binaries+=("date")
+			l_required_binaries+=("date")
 		fi
 	else
 		g_date_bin_printf="0"
@@ -575,35 +575,35 @@ checkRequiredBinaries()
 
 	if [ "${job_timeout_enabled}" == "1" ]
 	then
-		required_binaries+=("timeout")
+		l_required_binaries+=("timeout")
 	fi
 
 	if [ "${obsessing_interface}" == "nrdp" ]
 	then
-		required_binaries+=("php")
+		l_required_binaries+=("php")
 	fi
 
-	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "kill" "sleep")
+	l_required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "kill" "sleep")
 
-	for bin in "${required_binaries[@]}"
+	for l_bin in "${l_required_binaries[@]}"
 	do
-		if ! checkBin "${bin}"
+		if ! checkBin "${l_bin}"
 		then
-			binaries_not_found+=("${bin}")
+			l_binaries_not_found+=("${l_bin}")
 		fi
 	done
 
-	if [ "${#binaries_not_found[@]}" -gt "1" ]
+	if [ "${#l_binaries_not_found[@]}" -gt "1" ]
 	then
-		binaries_not_found_helper="${binaries_not_found[*]}"
-		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
+		l_binaries_not_found_helper="${l_binaries_not_found[*]}"
+		l_binaries_not_found_helper="${l_binaries_not_found_helper//\ /\,\ }"
 
-		logHandler "Required binaries: '${binaries_not_found_helper}' not found, terminating"
+		logHandler "Required binaries: '${l_binaries_not_found_helper}' not found, terminating"
 		g_exit_code="127"
 		exit
-	elif [ "${#binaries_not_found[@]}" -eq "1" ]
+	elif [ "${#l_binaries_not_found[@]}" -eq "1" ]
 	then
-		logHandler "Required binary: '${binaries_not_found[*]}' not found, terminating"
+		logHandler "Required binary: '${l_binaries_not_found[*]}' not found, terminating"
 		g_exit_code="127"
 		exit
 	fi
@@ -656,19 +656,19 @@ includeConfig()
 
 calculateFunctionNameLength()
 {
-	local function=
-	local function_names=()
+	local l_function=
+	local l_function_names=()
 
 	while IFS='' read -r
 	do
-		function_names+=("${REPLY}")
+		l_function_names+=("${REPLY}")
 	done <<< "$(declare -F)"
 
-	for function in "${function_names[@]//declare -f /}"
+	for l_function in "${l_function_names[@]//declare -f /}"
 	do
-		if [ "${#function}" -gt "${g_function_names_max_length}" ]
+		if [ "${#l_function}" -gt "${g_function_names_max_length}" ]
 		then
-			g_function_names_max_length="${#function}"
+			g_function_names_max_length="${#l_function}"
 		fi
 	done
 }
@@ -792,48 +792,48 @@ logHandlerStdinHelper()
 
 logHandler()
 {
-	local log_message="${1:-}"
-	local log_timestamp=
-	local calling_function=
-	local log_secure_replace_string="[HIDDEN FOR SECURITY]"
+	local l_log_message="${1:-}"
+	local l_log_timestamp=
+	local l_calling_function=
+	local l_log_secure_replace_string="[HIDDEN FOR SECURITY]"
 
-	if [ -z "${log_message:-}" ]
+	if [ -z "${l_log_message:-}" ]
 	then
 		if [ ! -t "0" ]
 		then
 			logHandlerStdinHelper
 		fi
 	else
-		log_message="${log_message//\`/}"
-		log_message="${log_message//${proxy_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_token:-}/${log_secure_replace_string}}"
+		l_log_message="${l_log_message//\`/}"
+		l_log_message="${l_log_message//${proxy_password:-}/${l_log_secure_replace_string}}"
+		l_log_message="${l_log_message//${nrdp_password:-}/${l_log_secure_replace_string}}"
+		l_log_message="${l_log_message//${nrdp_token:-}/${l_log_secure_replace_string}}"
 
 		if [ "${g_log_requirements_ok}" -ne "1" ]
 		then
-			eprintf "${log_message}"
+			eprintf "${l_log_message}"
 			return
 		fi
 
 		if [ "${FUNCNAME[1]}" != "logHandlerStdinHelper" ]
 		then
-			calling_function="${FUNCNAME[1]}"
+			l_calling_function="${FUNCNAME[1]}"
 		else
-			calling_function="${FUNCNAME[3]}"
+			l_calling_function="${FUNCNAME[3]}"
 		fi
 
 		if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ]
 		then
 			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
 			then
-				if [ -z "${log_timestamp}" ]
+				if [ -z "${l_log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+					l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "%s | %6d | %*s | %s\\n" "${l_log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${l_calling_function}" "${l_log_message}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${l_calling_function}" "${l_log_message}"
 			fi
 		fi
 
@@ -841,14 +841,14 @@ logHandler()
 		then
 			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
 			then
-				if [ -z "${log_timestamp}" ]
+				if [ -z "${l_log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+					l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
-				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+				printf "%s | %6d | %*s | %s\\n" "${l_log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${l_calling_function}" "${l_log_message}" >>"${g_log_file}"
 			else
-				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${l_calling_function}" "${l_log_message}" >>"${g_log_file}"
 			fi
 		fi
 
@@ -856,7 +856,7 @@ logHandler()
 		then
 			if [ "$(( g_log_conf & g_logger_bin_available ))" -gt "0" ]
 			then
-				${logger_bin} -t "${g_name}[${g_pid}]" -- "(${calling_function}) ${log_message}"
+				${logger_bin} -t "${g_name}[${g_pid}]" -- "(${l_calling_function}) ${l_log_message}"
 			fi
 		fi
 
@@ -864,7 +864,7 @@ logHandler()
 		then
 			if [ "$(( g_log_conf & g_systemd_cat_bin_available ))" -gt "0" ]
 			then
-				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${g_name}"
+				printf "(%s) %s\\n" "${l_calling_function}" "${l_log_message}" | ${systemd_cat_bin} --identifier="${g_name}"
 			fi
 		fi
 	fi
@@ -950,73 +950,73 @@ setProxy()
 {
 	if [ "${proxy_enabled}" == "1" ]
 	then
-		local proxy=
-		local proxy_url=
+		local l_proxy=
+		local l_proxy_url=
 
 		logHandler "Using proxy is enabled, building proxy configuration..."
 
 		if [ -n "${proxy_port}" ]
 		then
-			proxy_url="${proxy_ip}:${proxy_port}"
+			l_proxy_url="${proxy_ip}:${proxy_port}"
 		else
-			proxy_url="${proxy_ip}"
+			l_proxy_url="${proxy_ip}"
 		fi
 
 		if [ -n "${proxy_username}" ] && [ -n "${proxy_password}" ]
 		then
-			proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${proxy_url}"
+			l_proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${l_proxy_url}"
 		else
-			proxy="${proxy_protocol}://${proxy_url}"
+			l_proxy="${proxy_protocol}://${l_proxy_url}"
 		fi
 
-		export http_proxy="${proxy}"
-		export https_proxy="${proxy}"
-		export ftp_proxy="${proxy}"
-		export socks_proxy="${proxy}"
-		export HTTP_PROXY="${proxy}"
-		export HTTPS_PROXY="${proxy}"
-		export FTP_PROXY="${proxy}"
-		export SOCKS_PROXY="${proxy}"
+		export http_proxy="${l_proxy}"
+		export https_proxy="${l_proxy}"
+		export ftp_proxy="${l_proxy}"
+		export socks_proxy="${l_proxy}"
+		export HTTP_PROXY="${l_proxy}"
+		export HTTPS_PROXY="${l_proxy}"
+		export FTP_PROXY="${l_proxy}"
+		export SOCKS_PROXY="${l_proxy}"
 
-		logHandler "We build the following proxy config: '${proxy}'"
+		logHandler "We build the following proxy config: '${l_proxy}'"
 	fi
 }
 
 checkFileParameters()
 {
-	local file="${1:-}"
+	local l_file="${1:-}"
 	g_file_permission="0"
 
-	if [ -x "${file}" ]
+	if [ -x "${l_file}" ]
 	then
 		g_file_permission="$(( g_file_permission | g_permission_execute ))"
 	fi
 
-	if [ -w "${file}" ]
+	if [ -w "${l_file}" ]
 	then
 		g_file_permission="$(( g_file_permission | g_permission_write ))"
 	fi
 
-	if [ -r "${file}" ]
+	if [ -r "${l_file}" ]
 	then
 		g_file_permission="$(( g_file_permission | g_permission_read ))"
 	fi
 
-	if [ -f "${file}" ]
+	if [ -f "${l_file}" ]
 	then
 		g_file_permission="$(( g_file_permission | g_regular_file_exists ))"
 
-		if [ -s "${file}" ]
+		if [ -s "${l_file}" ]
 		then
 			g_file_permission="$(( g_file_permission | g_regular_file_is_not_empty ))"
 		fi
 	else
-		if [ -d "${file}" ]
+		if [ -d "${l_file}" ]
 		then
 			g_file_permission="$(( g_file_permission | g_is_directory ))"
 		fi
 
-		if [ -p "${file}" ]
+		if [ -p "${l_file}" ]
 		then
 			g_file_permission="$(( g_file_permission | g_is_named_pipe ))"
 		fi
@@ -1048,44 +1048,44 @@ checkBashVersion()
 
 getExecUser()
 {
-	local exec_user=
+	local l_exec_user=
 
 	logHandler "Get user which starts the daemon..."
 
 	if [ -n "${SUDO_USER:-}" ]
 	then
-		exec_user="$SUDO_USER"
+		l_exec_user="$SUDO_USER"
 	else
 		# shellcheck disable=SC2154
-		exec_user="$(${whoami_bin})"
+		l_exec_user="$(${whoami_bin})"
 	fi
 
-	logHandler "${g_name} was started as user: '${exec_user}'"
+	logHandler "${g_name} was started as user: '${l_exec_user}'"
 }
 
 checkAlreadyRunningInstance()
 {
-	local rc=
-	local running_pid=
-	local session_pid=
-	local session_pids=()
-	local running_pids=()
+	local l_rc=
+	local l_running_pid=
+	local l_session_pid=
+	local l_session_pids=()
+	local l_running_pids=()
 
 	# shellcheck disable=SC2154
 	# shellcheck disable=SC2207
-	session_pids+=($(${pgrep_bin} -d " " -s "${g_pid}"))
-	session_pids+=("${g_pid}")
+	l_session_pids+=($(${pgrep_bin} -d " " -s "${g_pid}"))
+	l_session_pids+=("${g_pid}")
 	# shellcheck disable=SC2154
 	# shellcheck disable=SC2207
-	running_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${g_base_path}/bin/${g_name}(.*)$"))
+	l_running_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${g_base_path}/bin/${g_name}(.*)$"))
 
-	for running_pid in "${!running_pids[@]}"
+	for l_running_pid in "${!l_running_pids[@]}"
 	do
-	   	for session_pid in "${!session_pids[@]}"
+		for l_session_pid in "${!l_session_pids[@]}"
 		do
-			if [ "${running_pids[$running_pid]}" == "${session_pids[$session_pid]}" ]
+			if [ "${l_running_pids[$l_running_pid]}" == "${l_session_pids[$l_session_pid]}" ]
 			then
-				unset "running_pids[$running_pid]"
+				unset "l_running_pids[$l_running_pid]"
 				break
 			fi
 		done
@@ -1094,28 +1094,28 @@ checkAlreadyRunningInstance()
 	logHandler "Check if another instance of: '${g_name}' is already running..."
 
 	checkLock
-	rc="${?}"
+	l_rc="${?}"
 
-	if [ "${rc}" != "0" ] && [ -z "${running_pids[*]:-}" ]
+	if [ "${l_rc}" != "0" ] && [ -z "${l_running_pids[*]:-}" ]
 	then
 		logHandler "No other instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and no processes are running)"
 		setLock
-	elif [ "${rc}" == "0" ] && [ -z "${running_pids[*]:-}" ]
+	elif [ "${l_rc}" == "0" ] && [ -z "${l_running_pids[*]:-}" ]
 	then
 		logHandler "No other instance of: '${g_name}' seems to be running (Lockfile: '${g_lock_file}' exists and no processes are running). Maybe ${g_name} was terminated abnormally"
 		logHandler "We try to remove the old, leftover lockfile..."
 
 		removeLock
-	elif [ "${rc}" == "0" ] && [ -n "${running_pids[*]:-}" ]
+	elif [ "${l_rc}" == "0" ] && [ -n "${l_running_pids[*]:-}" ]
 	then
-		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' exists and the following processes: '${running_pids[*]}' are running)"
+		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' exists and the following processes: '${l_running_pids[*]}' are running)"
 
 		g_another_instance_is_running="1"
 		g_exit_code="70"
 		exit
-	elif [ "${rc}" != "0" ] && [ -n "${running_pids[*]:-}" ]
+	elif [ "${l_rc}" != "0" ] && [ -n "${l_running_pids[*]:-}" ]
 	then
-		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and the following processes: '${running_pids[*]}' are running)"
+		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and the following processes: '${l_running_pids[*]}' are running)"
 
 		g_another_instance_is_running="1"
 		g_exit_code="71"
@@ -1184,11 +1184,11 @@ checkNamedPipe()
 
 timerHandler()
 {
-	local interval="${1}"
-	local last_result="${2}"
-	local result="$(( SECONDS / interval ))"
+	local l_interval="${1}"
+	local l_last_result="${2}"
+	local l_result="$(( SECONDS / l_interval ))"
 
-	if [ "${result}" -ge "${last_result}" ]
+	if [ "${l_result}" -ge "${l_last_result}" ]
 	then
 		return 0
 	else
@@ -1198,25 +1198,25 @@ timerHandler()
 
 generateDebugLogOutput()
 {
-	local debug_type="${1}"
-	local log_timestamp=
-	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+	local l_debug_type="${1}"
+	local l_log_timestamp=
+	l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
 
-	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
+	printf "********** START (%s) %s debug log cycle **********\\n" "${l_log_timestamp}" "${g_name}"
 
-	if [ "${debug_type}" == "monitoring" ]
+	if [ "${l_debug_type}" == "monitoring" ]
 	then
 		printf "*** START (raw data received from monitoring) ***\\n\\n"
-		printf "${log_timestamp}: %s\\n" "${g_job_raw_data[@]}"
+		printf "${l_log_timestamp}: %s\\n" "${g_job_raw_data[@]}"
 		printf "\\n*** END (raw data received from monitoring) ***\\n"
-	elif [ "${debug_type}" == "obsessing" ]
+	elif [ "${l_debug_type}" == "obsessing" ]
 	then
 		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
-		printf "${log_timestamp}: %s\\n" "${g_job_data[@]}"
+		printf "${l_log_timestamp}: %s\\n" "${g_job_data[@]}"
 		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
 	fi
 
-	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${log_timestamp}" "${g_name}"
+	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${l_log_timestamp}" "${g_name}"
 }
 
 debugLog()
@@ -1263,11 +1263,11 @@ setSeparators()
 
 updateExistingData()
 {
-	local saved_g_od_sep=
+	local l_saved_g_od_sep=
 
-	saved_g_od_sep="${g_od_sep}"
+	l_saved_g_od_sep="${g_od_sep}"
 	setSeparators
-	g_job_data=("${g_job_data[@]//${saved_g_od_sep}/${g_od_sep}}")
+	g_job_data=("${g_job_data[@]//${l_saved_g_od_sep}/${g_od_sep}}")
 }
 
 buildJobCommand()
@@ -1306,7 +1306,7 @@ buildJobCommand()
 
 jobExec()
 {
-	local rc=
+	local l_rc=
 
 	case "${obsessing_interface:-}" in
 		nrdp)
@@ -1317,23 +1317,23 @@ jobExec()
 			;;
 	esac
 
-	rc="${PIPESTATUS[1]}"
+	l_rc="${PIPESTATUS[1]}"
 
 	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
 	then
 		debugLog
 	fi
 
-	return "${rc}"
+	return "${l_rc}"
 }
 
 counterHandler()
 {
-	local rc="${1:-}"
+	local l_rc="${1:-}"
 
 	g_job_counter_total="$(( g_job_counter_total + 1 ))"
 
-	if [ "${rc}" == "0" ]
+	if [ "${l_rc}" == "0" ]
 	then
 		g_job_counter_ok="$(( g_job_counter_ok + 1 ))"
 
@@ -1341,7 +1341,7 @@ counterHandler()
 		then
 			logHandler "Command: '${job_command}' was successful"
 		fi
-	elif [ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
+	elif [ "${job_timeout_enabled}" == "1" ] && [ "${l_rc}" == "124" ]
 	then
 		g_job_counter_timeout="$(( g_job_counter_timeout + 1 ))"
 
@@ -1361,7 +1361,7 @@ counterHandler()
 
 jobHandler()
 {
-	local rc=
+	local l_rc=
 
 	if [ -z "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
 	then
@@ -1373,8 +1373,8 @@ jobHandler()
 		g_job_pid_2="${!}"
 
 		wait "${g_job_pid_1}"
-		rc="${?}"
-		counterHandler "${rc}"
+		l_rc="${?}"
+		counterHandler "${l_rc}"
 		g_job_pid_1=
 	elif [ -z "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
@@ -1382,19 +1382,19 @@ jobHandler()
 		g_job_pid_1="${!}"
 
 		wait "${g_job_pid_2}"
-		rc="${?}"
-		counterHandler "${rc}"
+		l_rc="${?}"
+		counterHandler "${l_rc}"
 		g_job_pid_2=
 	elif [ -n "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
 		wait "${g_job_pid_1}"
-		rc="${?}"
-		counterHandler "${rc}"
+		l_rc="${?}"
+		counterHandler "${l_rc}"
 		g_job_pid_1=
 
 		wait "${g_job_pid_2}"
-		rc="${?}"
-		counterHandler "${rc}"
+		l_rc="${?}"
+		counterHandler "${l_rc}"
 		g_job_pid_2=
 
 		jobExec &
@@ -1404,9 +1404,9 @@ jobHandler()
 
 validateStateId()
 {
-	local state_id="${1}"
+	local l_state_id="${1}"
 
-	if [ "${state_id}" == "0" ] || [ "${state_id}" == "1" ] || [ "${state_id}" == "2" ] || [ "${state_id}" == "3" ]
+	if [ "${l_state_id}" == "0" ] || [ "${l_state_id}" == "1" ] || [ "${l_state_id}" == "2" ] || [ "${l_state_id}" == "3" ]
 	then
 		return 0
 	else
@@ -1416,34 +1416,34 @@ validateStateId()
 
 validateData()
 {
-	local host_name="${1}"
-	local service_description="${2}"
-	local state_id="${3}"
-	local plugin_output="${4}"
-	local junk="${5}"
+	local l_host_name="${1}"
+	local l_service_description="${2}"
+	local l_state_id="${3}"
+	local l_plugin_output="${4}"
+	local l_junk="${5}"
 
-	if [ "${service_description}" != "NULL" ]
+	if [ "${l_service_description}" != "NULL" ]
 	then
 		g_service_counter="$(( g_service_counter + 1 ))"
 
-		if [ -n "${junk}" ] || [ -z "${host_name}" ] || [ -z "${service_description}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
+		if [ -n "${l_junk}" ] || [ -z "${l_host_name}" ] || [ -z "${l_service_description}" ] || [ -z "${l_state_id}" ] || [ -z "${l_plugin_output}" ]
 		then
 			return 1
 		fi
 
-		if ! validateStateId "${state_id}"
+		if ! validateStateId "${l_state_id}"
 		then
 			return 1
 		fi
 	else
 		g_host_counter="$(( g_host_counter + 1 ))"
 
-		if [ -n "${junk}" ] ||  [ -z "${host_name}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
+		if [ -n "${l_junk}" ] ||  [ -z "${l_host_name}" ] || [ -z "${l_state_id}" ] || [ -z "${l_plugin_output}" ]
 		then
 			return 1
 		fi
 
-		if ! validateStateId "${state_id}"
+		if ! validateStateId "${l_state_id}"
 		then
 			return 1
 		fi
@@ -1454,9 +1454,9 @@ validateData()
 
 logStatsHandler()
 {
-	local timer_interval_stats="300"
+	local l_timer_interval_stats="300"
 
-	if timerHandler "${timer_interval_stats}" "${g_timer_result_last_stats}"
+	if timerHandler "${l_timer_interval_stats}" "${g_timer_result_last_stats}"
 	then
 		g_timer_result_last_stats="$(( g_timer_result_last_stats + 1 ))"
 		logStats
@@ -1466,9 +1466,9 @@ logStatsHandler()
 
 debugLogHandler()
 {
-	local timer_interval_debug_mode_warning="300"
+	local l_timer_interval_debug_mode_warning="300"
 
-	if timerHandler "${timer_interval_debug_mode_warning}" "${g_timer_result_last_debug_mode_warning}"
+	if timerHandler "${l_timer_interval_debug_mode_warning}" "${g_timer_result_last_debug_mode_warning}"
 	then
 		g_timer_result_last_debug_mode_warning="$(( g_timer_result_last_debug_mode_warning + 1 ))"
 		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
@@ -1476,11 +1476,11 @@ debugLogHandler()
 
 	if [ "${debug_log_monitoring_data}" == "1" ]
 	then
-		if [ -z "${junk}" ]
+		if [ -z "${l_junk}" ]
 		then
-			g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}")
+			g_job_raw_data+=("${l_host_name}${g_md_sep}${l_service_description}${g_md_sep}${l_state_id}${g_md_sep}${l_plugin_output}")
 		else
-			g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}${g_md_sep}${junk}")
+			g_job_raw_data+=("${l_host_name}${g_md_sep}${l_service_description}${g_md_sep}${l_state_id}${g_md_sep}${l_plugin_output}${g_md_sep}${l_junk}")
 		fi
 	fi
 
@@ -1493,9 +1493,9 @@ debugLogHandler()
 
 errorModeHandler()
 {
-	local timer_interval_error_mode_warning="300"
+	local l_timer_interval_error_mode_warning="300"
 
-	if timerHandler "${timer_interval_error_mode_warning}" "${g_timer_result_last_error_mode_warning}"
+	if timerHandler "${l_timer_interval_error_mode_warning}" "${g_timer_result_last_error_mode_warning}"
 	then
 		g_timer_result_last_error_mode_warning="$(( g_timer_result_last_error_mode_warning + 1 ))"
 		logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
@@ -1504,19 +1504,19 @@ errorModeHandler()
 
 dataProcessor()
 {
-	local host_name=
-	local service_description=
-	local state_id=
-	local plugin_output=
-	local junk=
-	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
-	local read_timeout="60"
+	local l_host_name=
+	local l_service_description=
+	local l_state_id=
+	local l_plugin_output=
+	local l_junk=
+	local l_job_interval_helper="$(( SECONDS + job_exec_interval ))"
+	local l_read_timeout="60"
 
 	while true
 	do
-		if ! IFS=${g_md_sep} read -t "${read_timeout}" -u 3 -r host_name service_description state_id plugin_output junk
+		if ! IFS=${g_md_sep} read -t "${l_read_timeout}" -u 3 -r l_host_name l_service_description l_state_id l_plugin_output l_junk
 		then
-			logHandler "WARNING: No monitoring data received within the last ${read_timeout} seconds! Is the monitoring system running?"
+			logHandler "WARNING: No monitoring data received within the last ${l_read_timeout} seconds! Is the monitoring system running?"
 
 			if [ "${stats_enabled}" == "1" ]
 			then
@@ -1536,20 +1536,20 @@ dataProcessor()
 			continue
 		fi
 
-		if validateData "${host_name}" "${service_description}" "${state_id}" "${plugin_output}" "${junk}"
+		if validateData "${l_host_name}" "${l_service_description}" "${l_state_id}" "${l_plugin_output}" "${l_junk}"
 		then
-			if [ "${service_description}" != "NULL" ]
+			if [ "${l_service_description}" != "NULL" ]
 			then
-				g_job_data+=("${host_name}${g_od_sep}${service_description}${g_od_sep}${state_id}${g_od_sep}${plugin_output}")
+				g_job_data+=("${l_host_name}${g_od_sep}${l_service_description}${g_od_sep}${l_state_id}${g_od_sep}${l_plugin_output}")
 			else
-				g_job_data+=("${host_name}${g_od_sep}${state_id}${g_od_sep}${plugin_output}")
+				g_job_data+=("${l_host_name}${g_od_sep}${l_state_id}${g_od_sep}${l_plugin_output}")
 			fi
 		else
 			g_invalid_data_counter="$(( g_invalid_data_counter + 1 ))"
 
 			if [ "${log_invalid_data}" == "1" ]
 			then
-				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${g_md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
+				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${g_md_sep}) 'host_name: ${l_host_name}, service_description: ${l_service_description}, state_id: ${l_state_id}, plugin_output: ${l_plugin_output} junk: ${l_junk}'"
 			fi
 		fi
 
@@ -1568,12 +1568,12 @@ dataProcessor()
 			errorModeHandler
 		fi
 
-		if [ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${job_max_bulk_size}" ]
+		if [ "${l_job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${job_max_bulk_size}" ]
 		then
 			jobHandler
 			g_job_data=()
 			g_job_raw_data=()
-			job_interval_helper="$(( SECONDS + job_exec_interval ))"
+			l_job_interval_helper="$(( SECONDS + job_exec_interval ))"
 		fi
 	done
 }
@@ -1584,8 +1584,8 @@ _main()
 	# Main
 	#-----
 
-	local timer_interval_warning_message="60"
-	local timer_result_last_warning_message="1"
+	local l_timer_interval_warning_message="60"
+	local l_timer_result_last_warning_message="1"
 
 	checkCliOptions
 	setRequiredVariables
@@ -1607,9 +1607,9 @@ _main()
 	do
 		dataProcessor
 
-		if timerHandler "${timer_interval_warning_message}" "${timer_result_last_warning_message}"
+		if timerHandler "${l_timer_interval_warning_message}" "${l_timer_result_last_warning_message}"
 		then
-			timer_result_last_warning_message="$(( timer_result_last_warning_message + 1 ))"
+			l_timer_result_last_warning_message="$(( l_timer_result_last_warning_message + 1 ))"
 			logHandler "WARNING: Data processor left in main loop!"
 		fi
 
