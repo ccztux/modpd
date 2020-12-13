@@ -1454,7 +1454,9 @@ validateData()
 
 logStatsHandler()
 {
-	if timerHandler "${stats_interval}" "${g_timer_result_last_stats}"
+	local timer_interval_stats="300"
+
+	if timerHandler "${timer_interval_stats}" "${g_timer_result_last_stats}"
 	then
 		g_timer_result_last_stats="$(( g_timer_result_last_stats + 1 ))"
 		logStats
