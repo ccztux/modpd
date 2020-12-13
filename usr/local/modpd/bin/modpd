@@ -1520,7 +1520,7 @@ dataProcessor()
 			fi
 		fi
 
-		if [ "${job_interval_helper}" -le "${SECONDS}" ]
+		if [ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" -ge "${job_max_bulk_size}" ]
 		then
 			jobHandler
 			g_job_data=()
