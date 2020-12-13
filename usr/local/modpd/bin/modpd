@@ -53,7 +53,7 @@ eprintf()
 
 checkErrorMode()
 {
-	local l_arguments=(${@})
+	local l_arguments=("${@}")
 	local l_argument=
 	g_error_mode="0"
 
