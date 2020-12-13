@@ -686,9 +686,6 @@ job_command_log_ok="0"
 
 # enable stats logging
 stats_enabled="1"
-
-# interval in seconds when the stats should be logged
-stats_interval="300"
 ```
 
 
