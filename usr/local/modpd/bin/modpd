@@ -51,17 +51,21 @@ eprintf()
 # Check error mode
 #-----------------
 
-g_error_mode="0"
+checkErrorMode()
+{
+	local l_argument=
+	g_error_mode="0"
 
-for argument in "${@}"
-do
-	if [ "${argument}" == "-e" ]
-	then
-		g_error_mode="1"
-	fi
-done
+	for l_argument in "${@}"
+	do
+		if [ "${l_argument}" == "-e" ]
+		then
+			g_error_mode="1"
+		fi
+	done
+}
 
-unset argument
+checkErrorMode
 
 
 
