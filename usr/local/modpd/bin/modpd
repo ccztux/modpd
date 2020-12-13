@@ -53,10 +53,11 @@ eprintf()
 
 checkErrorMode()
 {
+	local l_arguments=(${@})
 	local l_argument=
 	g_error_mode="0"
 
-	for l_argument in "${@}"
+	for l_argument in "${l_arguments[@]}"
 	do
 		if [ "${l_argument}" == "-e" ]
 		then
@@ -65,7 +66,7 @@ checkErrorMode()
 	done
 }
 
-checkErrorMode
+checkErrorMode "${@}"
 
 
 
