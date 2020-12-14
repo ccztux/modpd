@@ -554,17 +554,17 @@ checkRequiredBinaries()
 	local l_binaries_not_found=()
 	local l_binaries_not_found_helper=
 
-	if [ "${log_to_syslog}" == "1" ]
+	if [ "${c_log_to_syslog}" == "1" ]
 	then
 		l_required_binaries+=("logger")
 	fi
 
-	if [ "${log_to_journal}" -eq "1" ]
+	if [ "${c_log_to_journal}" -eq "1" ]
 	then
 		l_required_binaries+=("systemd-cat")
 	fi
 
-	if [ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]
+	if [ "${c_log_to_file}" == "1" ] || [ "${c_log_to_stdout}" == "1" ]
 	then
 		if [ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]
 		then
@@ -578,12 +578,12 @@ checkRequiredBinaries()
 		g_date_bin_printf="0"
 	fi
 
-	if [ "${job_timeout_enabled}" == "1" ]
+	if [ "${c_job_timeout_enabled}" == "1" ]
 	then
 		l_required_binaries+=("timeout")
 	fi
 
-	if [ "${obsessing_interface}" == "nrdp" ]
+	if [ "${c_obsessing_interface}" == "nrdp" ]
 	then
 		l_required_binaries+=("php")
 	fi
@@ -691,22 +691,22 @@ logHandlerSetConfig()
 		g_date_cmd_format_suffix="'"
 	fi
 
-	if [ "${log_to_file}" -eq "1" ]
+	if [ "${c_log_to_file}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_file ))"
 	fi
 
-	if [ "${log_to_stdout}" -eq "1" ]
+	if [ "${c_log_to_stdout}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_stdout ))"
 	fi
 
-	if [ "${log_to_syslog}" -eq "1" ]
+	if [ "${c_log_to_syslog}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_syslog ))"
 	fi
 
-	if [ "${log_to_journal}" -eq "1" ]
+	if [ "${c_log_to_journal}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_journal ))"
 	fi
@@ -810,9 +810,9 @@ logHandler()
 		fi
 	else
 		l_log_message="${l_log_message//\`/}"
-		l_log_message="${l_log_message//${proxy_password:-}/${l_log_secure_replace_string}}"
-		l_log_message="${l_log_message//${nrdp_password:-}/${l_log_secure_replace_string}}"
-		l_log_message="${l_log_message//${nrdp_token:-}/${l_log_secure_replace_string}}"
+		l_log_message="${l_log_message//${c_proxy_password:-}/${l_log_secure_replace_string}}"
+		l_log_message="${l_log_message//${c_nrdp_password:-}/${l_log_secure_replace_string}}"
+		l_log_message="${l_log_message//${c_nrdp_token:-}/${l_log_secure_replace_string}}"
 
 		if [ "${g_log_requirements_ok}" -ne "1" ]
 		then
@@ -833,7 +833,7 @@ logHandler()
 			then
 				if [ -z "${l_log_timestamp}" ]
 				then
-					l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+					l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
 				printf "%s | %6d | %*s | %s\\n" "${l_log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${l_calling_function}" "${l_log_message}"
@@ -848,7 +848,7 @@ logHandler()
 			then
 				if [ -z "${l_log_timestamp}" ]
 				then
-					l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+					l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
 				printf "%s | %6d | %*s | %s\\n" "${l_log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${l_calling_function}" "${l_log_message}" >>"${g_log_file}"
@@ -953,25 +953,25 @@ removeLock()
 
 setProxy()
 {
-	if [ "${proxy_enabled}" == "1" ]
+	if [ "${c_proxy_enabled}" == "1" ]
 	then
 		local l_proxy=
 		local l_proxy_url=
 
 		logHandler "Using proxy is enabled, building proxy configuration..."
 
-		if [ -n "${proxy_port}" ]
+		if [ -n "${c_proxy_port}" ]
 		then
-			l_proxy_url="${proxy_ip}:${proxy_port}"
+			l_proxy_url="${c_proxy_ip}:${c_proxy_port}"
 		else
-			l_proxy_url="${proxy_ip}"
+			l_proxy_url="${c_proxy_ip}"
 		fi
 
-		if [ -n "${proxy_username}" ] && [ -n "${proxy_password}" ]
+		if [ -n "${c_proxy_username}" ] && [ -n "${c_proxy_password}" ]
 		then
-			l_proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${l_proxy_url}"
+			l_proxy="${c_proxy_protocol}://${c_proxy_username}:${c_proxy_password}@${l_proxy_url}"
 		else
-			l_proxy="${proxy_protocol}://${l_proxy_url}"
+			l_proxy="${c_proxy_protocol}://${l_proxy_url}"
 		fi
 
 		export http_proxy="${l_proxy}"
@@ -1205,7 +1205,7 @@ generateDebugLogOutput()
 {
 	local l_debug_type="${1}"
 	local l_log_timestamp=
-	l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+	l_log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
 
 	printf "********** START (%s) %s debug log cycle **********\\n" "${l_log_timestamp}" "${g_name}"
 
@@ -1216,9 +1216,9 @@ generateDebugLogOutput()
 		printf "\\n*** END (raw data received from monitoring) ***\\n"
 	elif [ "${l_debug_type}" == "obsessing" ]
 	then
-		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
+		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${c_obsessing_interface}"
 		printf "${l_log_timestamp}: %s\\n" "${g_job_data[@]}"
-		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
+		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${c_obsessing_interface}"
 	fi
 
 	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${l_log_timestamp}" "${g_name}"
@@ -1226,12 +1226,12 @@ generateDebugLogOutput()
 
 debugLog()
 {
-	if [ "${debug_log_monitoring_data}" == "1" ]
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
 	then
 		generateDebugLogOutput "monitoring" >> "${g_debug_log_file_monitoring}"
 	fi
 
-	if [ "${debug_log_obsessing_data}" == "1" ]
+	if [ "${c_debug_log_obsessing_data}" == "1" ]
 	then
 		generateDebugLogOutput "obsessing" >> "${g_debug_log_file_obsessing}"
 	fi
@@ -1239,7 +1239,7 @@ debugLog()
 
 truncateDebugLogs()
 {
-	if [ "${debug_log_monitoring_data}" == "1" ]
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
 	then
 		if : >| "${g_debug_log_file_monitoring}" 2>&1 | logHandler
 		then
@@ -1249,7 +1249,7 @@ truncateDebugLogs()
 		fi
 	fi
 
-	if [ "${debug_log_obsessing_data}" == "1" ]
+	if [ "${c_debug_log_obsessing_data}" == "1" ]
 	then
 		if : >| "${g_debug_log_file_obsessing}" 2>&1 | logHandler
 		then
@@ -1262,7 +1262,7 @@ truncateDebugLogs()
 
 setSeparators()
 {
-	printf -v g_od_sep "%b" "${obsessing_data_separator}"
+	printf -v g_od_sep "%b" "${c_obsessing_data_separator}"
 	printf -v g_md_sep "%b" "${g_monitoring_data_separator}"
 }
 
@@ -1279,25 +1279,25 @@ buildJobCommand()
 {
 	logHandler "Building job command..."
 
-	if [ "${job_timeout_enabled}" == "1" ]
+	if [ "${c_job_timeout_enabled}" == "1" ]
 	then
 		# shellcheck disable=SC2154
-		job_command="${timeout_bin} --signal=TERM ${job_timeout}"
+		job_command="${timeout_bin} --signal=TERM ${c_job_timeout}"
 	fi
 
-	case "${obsessing_interface:-}" in
+	case "${c_obsessing_interface:-}" in
 		nrdp)
-			if [ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]
+			if [ -n "${c_nrdp_username}" ] && [ -n "${c_nrdp_password}" ]
 			then
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_nrdp_username}:${c_nrdp_password}@${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
 			else
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
 			fi
 			;;
 		nsca)
-			job_command="${job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
+			job_command="${job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${c_obsessing_host} -p ${c_obsessing_port} -c \"${c_nsca_config_file}\""
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${g_config_file}', terminating"
@@ -1313,7 +1313,7 @@ jobExec()
 {
 	local l_rc=
 
-	case "${obsessing_interface:-}" in
+	case "${c_obsessing_interface:-}" in
 		nrdp)
 			printf "%s\\n" "${g_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
 			;;
@@ -1324,7 +1324,7 @@ jobExec()
 
 	l_rc="${PIPESTATUS[1]}"
 
-	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+	if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
 	then
 		debugLog
 	fi
@@ -1342,22 +1342,22 @@ counterHandler()
 	then
 		g_job_counter_ok="$(( g_job_counter_ok + 1 ))"
 
-		if [ "${job_command_log_ok}" == "1" ]
+		if [ "${c_job_command_log_ok}" == "1" ]
 		then
 			logHandler "Command: '${job_command}' was successful"
 		fi
-	elif [ "${job_timeout_enabled}" == "1" ] && [ "${l_rc}" == "124" ]
+	elif [ "${c_job_timeout_enabled}" == "1" ] && [ "${l_rc}" == "124" ]
 	then
 		g_job_counter_timeout="$(( g_job_counter_timeout + 1 ))"
 
-		if [ "${job_command_log_timeout}" == "1" ]
+		if [ "${c_job_command_log_timeout}" == "1" ]
 		then
 			logHandler "Command: '${job_command}' timed out"
 		fi
 	else
 		g_job_counter_nok="$(( g_job_counter_nok + 1 ))"
 
-		if [ "${job_command_log_nok}" == "1" ]
+		if [ "${c_job_command_log_nok}" == "1" ]
 		then
 			logHandler "Command: '${job_command}' was not successful"
 		fi
@@ -1479,7 +1479,7 @@ debugLogHandler()
 		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
 	fi
 
-	if [ "${debug_log_monitoring_data}" == "1" ]
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
 	then
 		if [ -z "${l_junk}" ]
 		then
@@ -1489,7 +1489,7 @@ debugLogHandler()
 		fi
 	fi
 
-	if timerHandler "${debug_log_truncate_interval}" "${g_timer_result_last_debug_log_truncation}"
+	if timerHandler "${c_debug_log_truncate_interval}" "${g_timer_result_last_debug_log_truncation}"
 	then
 		g_timer_result_last_debug_log_truncation="$(( g_timer_result_last_debug_log_truncation + 1 ))"
 		truncateDebugLogs
@@ -1514,7 +1514,7 @@ dataProcessor()
 	local l_state_id=
 	local l_plugin_output=
 	local l_junk=
-	local l_job_interval_helper="$(( SECONDS + job_exec_interval ))"
+	local l_job_interval_helper="$(( SECONDS + c_job_exec_interval ))"
 	local l_read_timeout="60"
 
 	while true
@@ -1523,12 +1523,12 @@ dataProcessor()
 		then
 			logHandler "WARNING: No monitoring data received within the last ${l_read_timeout} seconds! Is the monitoring system running?"
 
-			if [ "${stats_enabled}" == "1" ]
+			if [ "${c_stats_enabled}" == "1" ]
 			then
 				logStatsHandler
 			fi
 
-			if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+			if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
 			then
 				debugLogHandler
 			fi
@@ -1552,18 +1552,18 @@ dataProcessor()
 		else
 			g_invalid_data_counter="$(( g_invalid_data_counter + 1 ))"
 
-			if [ "${log_invalid_data}" == "1" ]
+			if [ "${c_log_invalid_data}" == "1" ]
 			then
 				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${g_md_sep}) 'host_name: ${l_host_name}, service_description: ${l_service_description}, state_id: ${l_state_id}, plugin_output: ${l_plugin_output} junk: ${l_junk}'"
 			fi
 		fi
 
-		if [ "${stats_enabled}" == "1" ]
+		if [ "${c_stats_enabled}" == "1" ]
 		then
 			logStatsHandler
 		fi
 
-		if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+		if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
 		then
 			debugLogHandler
 		fi
@@ -1573,12 +1573,12 @@ dataProcessor()
 			errorModeHandler
 		fi
 
-		if [ "${l_job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${job_max_bulk_size}" ]
+		if [ "${l_job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${c_job_max_bulk_size}" ]
 		then
 			jobHandler
 			g_job_data=()
 			g_job_raw_data=()
-			l_job_interval_helper="$(( SECONDS + job_exec_interval ))"
+			l_job_interval_helper="$(( SECONDS + c_job_exec_interval ))"
 		fi
 	done
 }
