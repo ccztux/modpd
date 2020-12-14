@@ -536,11 +536,11 @@ reloadHandler()
 checkBin()
 {
 	local binary="${1:-}"
-	local _bin=
+	local bin=
 
-	if _bin="$(command -v "${binary}" 2>/dev/null)"
+	if bin="$(command -v "${binary}" 2>/dev/null)"
 	then
-		export "${binary//-/_}"_bin="${_bin}"
+		export "${binary//-/_}"_bin="${bin}"
 		return 0
 	else
 		return 1
@@ -1282,7 +1282,7 @@ buildJobCommand()
 	if [ "${c_job_timeout_enabled}" == "1" ]
 	then
 		# shellcheck disable=SC2154
-		job_command="${timeout_bin} --signal=TERM ${c_job_timeout}"
+		g_job_command="${timeout_bin} --signal=TERM ${c_job_timeout}"
 	fi
 
 	case "${c_obsessing_interface:-}" in
@@ -1290,14 +1290,14 @@ buildJobCommand()
 			if [ -n "${c_nrdp_username}" ] && [ -n "${c_nrdp_password}" ]
 			then
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_nrdp_username}:${c_nrdp_password}@${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
+				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_nrdp_username}:${c_nrdp_password}@${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
 			else
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
+				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
 			fi
 			;;
 		nsca)
-			job_command="${job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${c_obsessing_host} -p ${c_obsessing_port} -c \"${c_nsca_config_file}\""
+			g_job_command="${g_job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${c_obsessing_host} -p ${c_obsessing_port} -c \"${c_nsca_config_file}\""
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${g_config_file}', terminating"
@@ -1306,7 +1306,7 @@ buildJobCommand()
 			;;
 	esac
 
-	logHandler "We build the following job command: '${job_command}'"
+	logHandler "We build the following job command: '${g_job_command}'"
 }
 
 jobExec()
@@ -1315,10 +1315,10 @@ jobExec()
 
 	case "${c_obsessing_interface:-}" in
 		nrdp)
-			printf "%s\\n" "${g_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
+			printf "%s\\n" "${g_job_data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
 			;;
 		nsca)
-			printf "%s\\n\\x17" "${g_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
+			printf "%s\\n\\x17" "${g_job_data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
 			;;
 	esac
 
@@ -1344,7 +1344,7 @@ counterHandler()
 
 		if [ "${c_job_command_log_ok}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' was successful"
+			logHandler "Command: '${g_job_command}' was successful"
 		fi
 	elif [ "${c_job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
 	then
@@ -1352,14 +1352,14 @@ counterHandler()
 
 		if [ "${c_job_command_log_timeout}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' timed out"
+			logHandler "Command: '${g_job_command}' timed out"
 		fi
 	else
 		g_job_counter_nok="$(( g_job_counter_nok + 1 ))"
 
 		if [ "${c_job_command_log_nok}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' was not successful"
+			logHandler "Command: '${g_job_command}' was not successful"
 		fi
 	fi
 }
@@ -1669,6 +1669,7 @@ g_date_cmd_format_suffix=
 g_monitoring_data_separator="\\x1e"
 g_od_sep=
 g_md_sep=
+g_job_command=
 g_job_pid_1=
 g_job_pid_2=
 g_host_counter="0"
