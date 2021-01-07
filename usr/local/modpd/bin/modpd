@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-13
+#						2021-01-07
 #
-#  Version				2.3.0
+#  Version				2.3.1
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -51,17 +51,22 @@ eprintf()
 # Check error mode
 #-----------------
 
-g_error_mode="0"
+checkErrorMode()
+{
+	local arguments=("${@}")
+	local argument=
+	g_error_mode="0"
 
-for argument in "${@}"
-do
-	if [ "${argument}" == "-e" ]
-	then
-		g_error_mode="1"
-	fi
-done
+	for argument in "${arguments[@]}"
+	do
+		if [ "${argument}" == "-e" ]
+		then
+			g_error_mode="1"
+		fi
+	done
+}
 
-unset argument
+checkErrorMode "${@}"
 
 
 
@@ -406,10 +411,27 @@ logStats()
 		timediff="$(( current_time - last_stats_logged ))"
 	fi
 
-	logHandler "---- Stats for the last ${timediff} seconds ----"
+	logHandler "-------------- Stats for the last ${timediff} seconds --------------"
+	logHandler "Process info:"
 	logHandler "${g_name} is running: ${uptime}"
-	logHandler "Total processed jobs: '${g_job_counter_total}', successful processed jobs: '${g_job_counter_ok}', unsuccessful processed jobs: '${g_job_counter_nok}', timed out jobs: '${g_job_counter_timeout}'"
-	logHandler "Handled host checks: '${g_host_counter}', handled service checks: '${g_service_counter}', invalid datasets received: '${g_invalid_data_counter}'"
+	logHandler " "
+	logHandler "Processed jobs:"
+	logHandler "Total processed jobs: '${g_job_counter_total}'"
+	logHandler "Successful processed jobs: '${g_job_counter_ok}'"
+	logHandler "Unsuccessful processed jobs: '${g_job_counter_nok}'"
+	logHandler "Timed out jobs: '${g_job_counter_timeout}'"
+	logHandler " "
+	logHandler "Retransmission jobs:"
+	logHandler "Total retransmission jobs: '${g_job_counter_retransmitted_total}'"
+	logHandler "Successful retransmission jobs: '${g_job_counter_retransmitted_ok}'"
+	logHandler "Unsuccessful retransmission jobs: '${g_job_counter_retransmitted_nok}'"
+	logHandler "Timed out retransmission jobs: '${g_job_counter_retransmitted_timeout}'"
+	logHandler " "
+	logHandler "Handled checks:"
+	logHandler "Host checks: '${g_host_counter}'"
+	logHandler "Service checks: '${g_service_counter}'"
+	logHandler "Invalid datasets received: '${g_invalid_data_counter}'"
+	logHandler " "
 
 	last_stats_logged="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
 }
@@ -420,6 +442,10 @@ resetCounters()
 	g_job_counter_ok="0"
 	g_job_counter_nok="0"
 	g_job_counter_timeout="0"
+	g_job_counter_retransmitted_total="0"
+	g_job_counter_retransmitted_ok="0"
+	g_job_counter_retransmitted_nok="0"
+	g_job_counter_retransmitted_timeout="0"
 	g_host_counter="0"
 	g_service_counter="0"
 	g_invalid_data_counter="0"
@@ -520,11 +546,11 @@ reloadHandler()
 checkBin()
 {
 	local binary="${1:-}"
-	local _bin=
+	local bin=
 
-	if _bin="$(command -v "${binary}" 2>/dev/null)"
+	if bin="$(command -v "${binary}" 2>/dev/null)"
 	then
-		export "${binary//-/_}"_bin="${_bin}"
+		export "${binary//-/_}"_bin="${bin}"
 		return 0
 	else
 		return 1
@@ -538,17 +564,17 @@ checkRequiredBinaries()
 	local binaries_not_found=()
 	local binaries_not_found_helper=
 
-	if [ "${log_to_syslog}" == "1" ]
+	if [ "${c_log_to_syslog}" == "1" ]
 	then
 		required_binaries+=("logger")
 	fi
 
-	if [ "${log_to_journal}" -eq "1" ]
+	if [ "${c_log_to_journal}" -eq "1" ]
 	then
 		required_binaries+=("systemd-cat")
 	fi
 
-	if [ "${log_to_file}" == "1" ] || [ "${log_to_stdout}" == "1" ]
+	if [ "${c_log_to_file}" == "1" ] || [ "${c_log_to_stdout}" == "1" ]
 	then
 		if [ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]
 		then
@@ -562,12 +588,12 @@ checkRequiredBinaries()
 		g_date_bin_printf="0"
 	fi
 
-	if [ "${job_timeout_enabled}" == "1" ]
+	if [ "${c_job_timeout_enabled}" == "1" ]
 	then
 		required_binaries+=("timeout")
 	fi
 
-	if [ "${obsessing_interface}" == "nrdp" ]
+	if [ "${c_obsessing_interface}" == "nrdp" ]
 	then
 		required_binaries+=("php")
 	fi
@@ -675,22 +701,22 @@ logHandlerSetConfig()
 		g_date_cmd_format_suffix="'"
 	fi
 
-	if [ "${log_to_file}" -eq "1" ]
+	if [ "${c_log_to_file}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_file ))"
 	fi
 
-	if [ "${log_to_stdout}" -eq "1" ]
+	if [ "${c_log_to_stdout}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_stdout ))"
 	fi
 
-	if [ "${log_to_syslog}" -eq "1" ]
+	if [ "${c_log_to_syslog}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_syslog ))"
 	fi
 
-	if [ "${log_to_journal}" -eq "1" ]
+	if [ "${c_log_to_journal}" -eq "1" ]
 	then
 		g_log_conf="$(( g_log_conf | g_log_to_journal ))"
 	fi
@@ -794,9 +820,9 @@ logHandler()
 		fi
 	else
 		log_message="${log_message//\`/}"
-		log_message="${log_message//${proxy_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${nrdp_token:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${c_proxy_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${c_nrdp_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${c_nrdp_token:-}/${log_secure_replace_string}}"
 
 		if [ "${g_log_requirements_ok}" -ne "1" ]
 		then
@@ -817,7 +843,7 @@ logHandler()
 			then
 				if [ -z "${log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
 				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
@@ -832,7 +858,7 @@ logHandler()
 			then
 				if [ -z "${log_timestamp}" ]
 				then
-					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
 				fi
 
 				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
@@ -937,25 +963,25 @@ removeLock()
 
 setProxy()
 {
-	if [ "${proxy_enabled}" == "1" ]
+	if [ "${c_proxy_enabled}" == "1" ]
 	then
 		local proxy=
 		local proxy_url=
 
 		logHandler "Using proxy is enabled, building proxy configuration..."
 
-		if [ -n "${proxy_port}" ]
+		if [ -n "${c_proxy_port}" ]
 		then
-			proxy_url="${proxy_ip}:${proxy_port}"
+			proxy_url="${c_proxy_ip}:${c_proxy_port}"
 		else
-			proxy_url="${proxy_ip}"
+			proxy_url="${c_proxy_ip}"
 		fi
 
-		if [ -n "${proxy_username}" ] && [ -n "${proxy_password}" ]
+		if [ -n "${c_proxy_username}" ] && [ -n "${c_proxy_password}" ]
 		then
-			proxy="${proxy_protocol}://${proxy_username}:${proxy_password}@${proxy_url}"
+			proxy="${c_proxy_protocol}://${c_proxy_username}:${c_proxy_password}@${proxy_url}"
 		else
-			proxy="${proxy_protocol}://${proxy_url}"
+			proxy="${c_proxy_protocol}://${proxy_url}"
 		fi
 
 		export http_proxy="${proxy}"
@@ -1070,7 +1096,7 @@ checkAlreadyRunningInstance()
 
 	for running_pid in "${!running_pids[@]}"
 	do
-	   	for session_pid in "${!session_pids[@]}"
+		for session_pid in "${!session_pids[@]}"
 		do
 			if [ "${running_pids[$running_pid]}" == "${session_pids[$session_pid]}" ]
 			then
@@ -1189,7 +1215,7 @@ generateDebugLogOutput()
 {
 	local debug_type="${1}"
 	local log_timestamp=
-	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${log_timestamp_format}${g_date_cmd_format_suffix}")"
+	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
 
 	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
 
@@ -1200,9 +1226,9 @@ generateDebugLogOutput()
 		printf "\\n*** END (raw data received from monitoring) ***\\n"
 	elif [ "${debug_type}" == "obsessing" ]
 	then
-		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${obsessing_interface}"
+		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${c_obsessing_interface}"
 		printf "${log_timestamp}: %s\\n" "${g_job_data[@]}"
-		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${obsessing_interface}"
+		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${c_obsessing_interface}"
 	fi
 
 	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${log_timestamp}" "${g_name}"
@@ -1210,12 +1236,12 @@ generateDebugLogOutput()
 
 debugLog()
 {
-	if [ "${debug_log_monitoring_data}" == "1" ]
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
 	then
 		generateDebugLogOutput "monitoring" >> "${g_debug_log_file_monitoring}"
 	fi
 
-	if [ "${debug_log_obsessing_data}" == "1" ]
+	if [ "${c_debug_log_obsessing_data}" == "1" ]
 	then
 		generateDebugLogOutput "obsessing" >> "${g_debug_log_file_obsessing}"
 	fi
@@ -1223,7 +1249,7 @@ debugLog()
 
 truncateDebugLogs()
 {
-	if [ "${debug_log_monitoring_data}" == "1" ]
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
 	then
 		if : >| "${g_debug_log_file_monitoring}" 2>&1 | logHandler
 		then
@@ -1233,7 +1259,7 @@ truncateDebugLogs()
 		fi
 	fi
 
-	if [ "${debug_log_obsessing_data}" == "1" ]
+	if [ "${c_debug_log_obsessing_data}" == "1" ]
 	then
 		if : >| "${g_debug_log_file_obsessing}" 2>&1 | logHandler
 		then
@@ -1246,8 +1272,8 @@ truncateDebugLogs()
 
 setSeparators()
 {
-	g_od_sep="$(printf "%b" "${obsessing_data_separator}")"
-	g_md_sep="$(printf "%b" "${g_monitoring_data_separator}")"
+	printf -v g_od_sep "%b" "${c_obsessing_data_separator}"
+	printf -v g_md_sep "%b" "${g_monitoring_data_separator}"
 }
 
 updateExistingData()
@@ -1263,25 +1289,25 @@ buildJobCommand()
 {
 	logHandler "Building job command..."
 
-	if [ "${job_timeout_enabled}" == "1" ]
+	if [ "${c_job_timeout_enabled}" == "1" ]
 	then
 		# shellcheck disable=SC2154
-		job_command="${timeout_bin} --signal=TERM ${job_timeout}"
+		g_job_command="${timeout_bin} --signal=TERM ${c_job_timeout}"
 	fi
 
-	case "${obsessing_interface:-}" in
+	case "${c_obsessing_interface:-}" in
 		nrdp)
-			if [ -n "${nrdp_username}" ] && [ -n "${nrdp_password}" ]
+			if [ -n "${c_nrdp_username}" ] && [ -n "${c_nrdp_password}" ]
 			then
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${nrdp_username}:${nrdp_password}@${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_nrdp_username}:${c_nrdp_password}@${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
 			else
 				# shellcheck disable=SC2154
-				job_command="${job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${nrdp_token}\" --url=${nrdp_protocol}://${obsessing_host}:${obsessing_port}${nrdp_url_path}"
+				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
 			fi
 			;;
 		nsca)
-			job_command="${job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${obsessing_host} -p ${obsessing_port} -c \"${nsca_config_file}\""
+			g_job_command="${g_job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${c_obsessing_host} -p ${c_obsessing_port} -c \"${c_nsca_config_file}\""
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${g_config_file}', terminating"
@@ -1290,25 +1316,34 @@ buildJobCommand()
 			;;
 	esac
 
-	logHandler "We build the following job command: '${job_command}'"
+	logHandler "We build the following job command: '${g_job_command}'"
 }
 
 jobExec()
 {
+	local retransmission_data=("${@}")
+	local data=
 	local rc=
 
-	case "${obsessing_interface:-}" in
+	if [ "${#retransmission_data[@]}" -gt "0" ]
+	then
+		data=("${retransmission_data[@]}")
+	else
+		data=("${g_job_data[@]}")
+	fi
+
+	case "${c_obsessing_interface:-}" in
 		nrdp)
-			printf "%s\\n" "${g_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
+			printf "%s\\n" "${data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
 			;;
 		nsca)
-			printf "%s\\n\\x17" "${g_job_data[@]}" | eval "${job_command}" 2>&1 | logHandler
+			printf "%s\\n\\x17" "${data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
 			;;
 	esac
 
 	rc="${PIPESTATUS[1]}"
 
-	if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+	if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
 	then
 		debugLog
 	fi
@@ -1316,34 +1351,81 @@ jobExec()
 	return "${rc}"
 }
 
+retransmissionHandler()
+{
+	local data=("${@}")
+	local pid=
+	local rc=
+
+	if [ "${c_job_nok_retransmit}" == "1" ]
+	then
+		jobExec "${data[@]}" &
+		pid="${!}"
+		g_job_retransmission_pids+=("${pid}")
+
+		if [ "${#g_job_retransmission_pids[@]}" -gt "0" ]
+		then
+			for pid in "${!g_job_retransmission_pids[@]}"
+			do
+				if ! ${kill_bin} -0 "${g_job_retransmission_pids[${pid}]}"
+				then
+					wait "${g_job_retransmission_pids[${pid}]}"
+					rc="${?}"
+					counterHandler "${rc}" "1" "${g_job_retransmission_pids[${pid}]}"
+					unset 'g_job_retransmission_pids[${pid}]'
+				fi
+			done
+		fi
+	fi
+}
+
 counterHandler()
 {
 	local rc="${1:-}"
+	local retransmission="${2:-}"
+	local pid="${3:-}"
 
 	g_job_counter_total="$(( g_job_counter_total + 1 ))"
+
+	if [ "${retransmission}" == "1" ]
+	then
+		g_job_counter_retransmitted_total="$(( g_job_counter_retransmitted_total + 1 ))"
+
+		if [ "${rc}" == "0" ]
+		then
+			g_job_counter_retransmitted_ok="$(( g_job_counter_retransmitted_ok + 1 ))"
+		elif [ "${c_job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
+		then
+			g_job_counter_retransmitted_timeout="$(( g_job_counter_retransmitted_timeout + 1 ))"
+		else
+			g_job_counter_retransmitted_nok="$(( g_job_counter_retransmitted_nok + 1 ))"
+		fi
+
+		return
+	fi
 
 	if [ "${rc}" == "0" ]
 	then
 		g_job_counter_ok="$(( g_job_counter_ok + 1 ))"
 
-		if [ "${job_command_log_ok}" == "1" ]
+		if [ "${c_job_command_log_ok}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' was successful"
+			logHandler "Command: '${g_job_command}' was successful"
 		fi
-	elif [ "${job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
+	elif [ "${c_job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
 	then
 		g_job_counter_timeout="$(( g_job_counter_timeout + 1 ))"
 
-		if [ "${job_command_log_timeout}" == "1" ]
+		if [ "${c_job_command_log_timeout}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' timed out"
+			logHandler "Command: '${g_job_command}' timed out"
 		fi
 	else
 		g_job_counter_nok="$(( g_job_counter_nok + 1 ))"
 
-		if [ "${job_command_log_nok}" == "1" ]
+		if [ "${c_job_command_log_nok}" == "1" ]
 		then
-			logHandler "Command: '${job_command}' was not successful"
+			logHandler "Command: '${g_job_command}' was not successful"
 		fi
 	fi
 }
@@ -1356,38 +1438,114 @@ jobHandler()
 	then
 		jobExec &
 		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
 	elif [ -n "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
 	then
 		jobExec &
 		g_job_pid_2="${!}"
+		g_job_data_2=("${g_job_data[@]}")
 
 		wait "${g_job_pid_1}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_1[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_1[@]}"
+		else
+			g_job_data_1=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_1=
 	elif [ -z "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
 		jobExec &
 		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
 
 		wait "${g_job_pid_2}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_2[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_2[@]}"
+		else
+			g_job_data_2=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_2=
 	elif [ -n "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
 		wait "${g_job_pid_1}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_1[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_1[@]}"
+		else
+			g_job_data_1=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_1=
 
 		wait "${g_job_pid_2}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_2[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_2[@]}"
+		else
+			g_job_data_2=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_2=
 
 		jobExec &
 		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
 	fi
 }
 
@@ -1441,6 +1599,56 @@ validateData()
 	return 0
 }
 
+logStatsHandler()
+{
+	local timer_interval_stats="300"
+
+	if timerHandler "${timer_interval_stats}" "${g_timer_result_last_stats}"
+	then
+		g_timer_result_last_stats="$(( g_timer_result_last_stats + 1 ))"
+		logStats
+		resetCounters
+	fi
+}
+
+debugLogHandler()
+{
+	local timer_interval_debug_mode_warning="300"
+
+	if timerHandler "${timer_interval_debug_mode_warning}" "${g_timer_result_last_debug_mode_warning}"
+	then
+		g_timer_result_last_debug_mode_warning="$(( g_timer_result_last_debug_mode_warning + 1 ))"
+		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+	fi
+
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
+	then
+		if [ -z "${junk}" ]
+		then
+			g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}")
+		else
+			g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}${g_md_sep}${junk}")
+		fi
+	fi
+
+	if timerHandler "${c_debug_log_truncate_interval}" "${g_timer_result_last_debug_log_truncation}"
+	then
+		g_timer_result_last_debug_log_truncation="$(( g_timer_result_last_debug_log_truncation + 1 ))"
+		truncateDebugLogs
+	fi
+}
+
+errorModeHandler()
+{
+	local timer_interval_error_mode_warning="300"
+
+	if timerHandler "${timer_interval_error_mode_warning}" "${g_timer_result_last_error_mode_warning}"
+	then
+		g_timer_result_last_error_mode_warning="$(( g_timer_result_last_error_mode_warning + 1 ))"
+		logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
+	fi
+}
+
 dataProcessor()
 {
 	local host_name=
@@ -1448,16 +1656,33 @@ dataProcessor()
 	local state_id=
 	local plugin_output=
 	local junk=
-	local job_interval_helper="$(( SECONDS + job_exec_interval ))"
-	local timer_interval_debug_mode_warning="300"
-	local timer_interval_error_mode_warning="300"
-	local timer_result_last_stats="1"
-	local timer_result_last_debug_mode_warning="1"
-	local timer_result_last_debug_log_truncation="1"
-	local timer_result_last_error_mode_warning="1"
+	local job_interval_helper="$(( SECONDS + c_job_exec_interval ))"
+	local read_timeout="60"
 
-	while IFS=${g_md_sep} read -u 3 -r host_name service_description state_id plugin_output junk
+	while true
 	do
+		if ! IFS=${g_md_sep} read -t "${read_timeout}" -u 3 -r host_name service_description state_id plugin_output junk
+		then
+			logHandler "WARNING: No monitoring data received within the last ${read_timeout} seconds! Is the monitoring system running?"
+
+			if [ "${c_stats_enabled}" == "1" ]
+			then
+				logStatsHandler
+			fi
+
+			if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
+			then
+				debugLogHandler
+			fi
+
+			if [ "${g_error_mode}" == "1" ]
+			then
+				errorModeHandler
+			fi
+
+			continue
+		fi
+
 		if validateData "${host_name}" "${service_description}" "${state_id}" "${plugin_output}" "${junk}"
 		then
 			if [ "${service_description}" != "NULL" ]
@@ -1469,62 +1694,33 @@ dataProcessor()
 		else
 			g_invalid_data_counter="$(( g_invalid_data_counter + 1 ))"
 
-			if [ "${log_invalid_data}" == "1" ]
+			if [ "${c_log_invalid_data}" == "1" ]
 			then
 				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${g_md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
 			fi
 		fi
 
-		if [ "${stats_enabled}" == "1" ]
+		if [ "${c_stats_enabled}" == "1" ]
 		then
-			if timerHandler "${stats_interval}" "${timer_result_last_stats}"
-			then
-				timer_result_last_stats="$(( timer_result_last_stats + 1 ))"
-				logStats
-				resetCounters
-			fi
+			logStatsHandler
 		fi
 
-		if [ "${debug_log_monitoring_data}" == "1" ] || [ "${debug_log_obsessing_data}" == "1" ]
+		if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
 		then
-			if timerHandler "${timer_interval_debug_mode_warning}" "${timer_result_last_debug_mode_warning}"
-			then
-				timer_result_last_debug_mode_warning="$(( timer_result_last_debug_mode_warning + 1 ))"
-				logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
-			fi
-
-			if [ "${debug_log_monitoring_data}" == "1" ]
-			then
-				if [ -z "${junk}" ]
-				then
-					g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}")
-				else
-					g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}${g_md_sep}${junk}")
-				fi
-			fi
-
-			if timerHandler "${debug_log_truncate_interval}" "${timer_result_last_debug_log_truncation}"
-			then
-				timer_result_last_debug_log_truncation="$(( timer_result_last_debug_log_truncation + 1 ))"
-				truncateDebugLogs
-			fi
+			debugLogHandler
 		fi
 
 		if [ "${g_error_mode}" == "1" ]
 		then
-			if timerHandler "${timer_interval_error_mode_warning}" "${timer_result_last_error_mode_warning}"
-			then
-				timer_result_last_error_mode_warning="$(( timer_result_last_error_mode_warning + 1 ))"
-				logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
-			fi
+			errorModeHandler
 		fi
 
-		if [ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${job_max_bulk_size}" ]
+		if [ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${c_job_max_bulk_size}" ]
 		then
 			jobHandler
 			g_job_data=()
 			g_job_raw_data=()
-			job_interval_helper="$(( SECONDS + job_exec_interval ))"
+			job_interval_helper="$(( SECONDS + c_job_exec_interval ))"
 		fi
 	done
 }
@@ -1561,7 +1757,7 @@ _main()
 		if timerHandler "${timer_interval_warning_message}" "${timer_result_last_warning_message}"
 		then
 			timer_result_last_warning_message="$(( timer_result_last_warning_message + 1 ))"
-			logHandler "WARNING: Data processor left in main loop! Maybe the named pipe '${g_named_pipe_file}' doesnt exist"
+			logHandler "WARNING: Data processor left in main loop!"
 		fi
 
 		# shellcheck disable=SC2154
@@ -1578,11 +1774,11 @@ _main()
 g_pid="${$}"
 g_argc="${#}"
 g_name="${0##*/}"
-g_version="2.3.0"
+g_version="2.3.1"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
-g_last_modification_date="2020-12-13"
+g_last_modification_date="2021-01-07"
 g_minimal_required_bash_version="3"
 g_license="GNU GPLv2"
 g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
@@ -1615,8 +1811,12 @@ g_date_cmd_format_suffix=
 g_monitoring_data_separator="\\x1e"
 g_od_sep=
 g_md_sep=
+g_job_command=
 g_job_pid_1=
 g_job_pid_2=
+g_job_data_1=()
+g_job_data_2=()
+g_job_retransmission_pids=()
 g_host_counter="0"
 g_service_counter="0"
 g_invalid_data_counter="0"
@@ -1624,8 +1824,16 @@ g_job_counter_total="0"
 g_job_counter_ok="0"
 g_job_counter_nok="0"
 g_job_counter_timeout="0"
+g_job_counter_retransmitted_total="0"
+g_job_counter_retransmitted_ok="0"
+g_job_counter_retransmitted_nok="0"
+g_job_counter_retransmitted_timeout="0"
 g_job_data=()
 g_job_raw_data=()
+g_timer_result_last_stats="1"
+g_timer_result_last_debug_mode_warning="1"
+g_timer_result_last_debug_log_truncation="1"
+g_timer_result_last_error_mode_warning="1"
 
 
 
