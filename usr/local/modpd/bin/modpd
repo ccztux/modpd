@@ -1450,6 +1450,16 @@ jobHandler()
 
 		if [ "${rc}" != "0" ]
 		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_1[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
 			retransmissionHandler "${g_job_data_1[@]}"
 		else
 			g_job_data_1=()
@@ -1468,6 +1478,16 @@ jobHandler()
 
 		if [ "${rc}" != "0" ]
 		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_2[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
 			retransmissionHandler "${g_job_data_2[@]}"
 		else
 			g_job_data_2=()
@@ -1482,6 +1502,16 @@ jobHandler()
 
 		if [ "${rc}" != "0" ]
 		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_1[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
 			retransmissionHandler "${g_job_data_1[@]}"
 		else
 			g_job_data_1=()
@@ -1495,6 +1525,16 @@ jobHandler()
 
 		if [ "${rc}" != "0" ]
 		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_2[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
 			retransmissionHandler "${g_job_data_2[@]}"
 		else
 			g_job_data_2=()
