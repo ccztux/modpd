@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2020-12-14
+#						2021-01-07
 #
 #  Version				2.3.1
 #
@@ -421,6 +421,12 @@ logStats()
 	logHandler "Unsuccessful processed jobs: '${g_job_counter_nok}'"
 	logHandler "Timed out jobs: '${g_job_counter_timeout}'"
 	logHandler " "
+	logHandler "Retransmission jobs:"
+	logHandler "Total retransmission jobs: '${g_job_counter_retransmitted_total}'"
+	logHandler "Successful retransmission jobs: '${g_job_counter_retransmitted_ok}'"
+	logHandler "Unsuccessful retransmission jobs: '${g_job_counter_retransmitted_nok}'"
+	logHandler "Timed out retransmission jobs: '${g_job_counter_retransmitted_timeout}'"
+	logHandler " "
 	logHandler "Handled checks:"
 	logHandler "Host checks: '${g_host_counter}'"
 	logHandler "Service checks: '${g_service_counter}'"
@@ -436,6 +442,10 @@ resetCounters()
 	g_job_counter_ok="0"
 	g_job_counter_nok="0"
 	g_job_counter_timeout="0"
+	g_job_counter_retransmitted_total="0"
+	g_job_counter_retransmitted_ok="0"
+	g_job_counter_retransmitted_nok="0"
+	g_job_counter_retransmitted_timeout="0"
 	g_host_counter="0"
 	g_service_counter="0"
 	g_invalid_data_counter="0"
@@ -1311,14 +1321,23 @@ buildJobCommand()
 
 jobExec()
 {
+	local retransmission_data=("${@}")
+	local data=
 	local rc=
+
+	if [ "${#retransmission_data[@]}" -gt "0" ]
+	then
+		data=("${retransmission_data[@]}")
+	else
+		data=("${g_job_data[@]}")
+	fi
 
 	case "${c_obsessing_interface:-}" in
 		nrdp)
-			printf "%s\\n" "${g_job_data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
+			printf "%s\\n" "${data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
 			;;
 		nsca)
-			printf "%s\\n\\x17" "${g_job_data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
+			printf "%s\\n\\x17" "${data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
 			;;
 	esac
 
@@ -1332,11 +1351,58 @@ jobExec()
 	return "${rc}"
 }
 
+retransmissionHandler()
+{
+	local data=("${@}")
+	local pid=
+	local rc=
+
+	if [ "${c_job_nok_retransmit}" == "1" ]
+	then
+		jobExec "${data[@]}" &
+		pid="${!}"
+		g_job_retransmission_pids+=("${pid}")
+
+		if [ "${#g_job_retransmission_pids[@]}" -gt "0" ]
+		then
+			for pid in "${!g_job_retransmission_pids[@]}"
+			do
+				if ! ${kill_bin} -0 "${g_job_retransmission_pids[${pid}]}"
+				then
+					wait "${g_job_retransmission_pids[${pid}]}"
+					rc="${?}"
+					counterHandler "${rc}" "1" "${g_job_retransmission_pids[${pid}]}"
+					unset 'g_job_retransmission_pids[${pid}]'
+				fi
+			done
+		fi
+	fi
+}
+
 counterHandler()
 {
 	local rc="${1:-}"
+	local retransmission="${2:-}"
+	local pid="${3:-}"
 
 	g_job_counter_total="$(( g_job_counter_total + 1 ))"
+
+	if [ "${retransmission}" == "1" ]
+	then
+		g_job_counter_retransmitted_total="$(( g_job_counter_retransmitted_total + 1 ))"
+
+		if [ "${rc}" == "0" ]
+		then
+			g_job_counter_retransmitted_ok="$(( g_job_counter_retransmitted_ok + 1 ))"
+		elif [ "${c_job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
+		then
+			g_job_counter_retransmitted_timeout="$(( g_job_counter_retransmitted_timeout + 1 ))"
+		else
+			g_job_counter_retransmitted_nok="$(( g_job_counter_retransmitted_nok + 1 ))"
+		fi
+
+		return
+	fi
 
 	if [ "${rc}" == "0" ]
 	then
@@ -1372,38 +1438,74 @@ jobHandler()
 	then
 		jobExec &
 		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
 	elif [ -n "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
 	then
 		jobExec &
 		g_job_pid_2="${!}"
+		g_job_data_2=("${g_job_data[@]}")
 
 		wait "${g_job_pid_1}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			retransmissionHandler "${g_job_data_1[@]}"
+		else
+			g_job_data_1=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_1=
 	elif [ -z "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
 		jobExec &
 		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
 
 		wait "${g_job_pid_2}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			retransmissionHandler "${g_job_data_2[@]}"
+		else
+			g_job_data_2=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_2=
 	elif [ -n "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
 	then
 		wait "${g_job_pid_1}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			retransmissionHandler "${g_job_data_1[@]}"
+		else
+			g_job_data_1=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_1=
 
 		wait "${g_job_pid_2}"
 		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			retransmissionHandler "${g_job_data_2[@]}"
+		else
+			g_job_data_2=()
+		fi
+
 		counterHandler "${rc}"
 		g_job_pid_2=
 
 		jobExec &
 		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
 	fi
 }
 
@@ -1636,7 +1738,7 @@ g_version="2.3.1"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
-g_last_modification_date="2020-12-14"
+g_last_modification_date="2021-01-07"
 g_minimal_required_bash_version="3"
 g_license="GNU GPLv2"
 g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
@@ -1672,6 +1774,9 @@ g_md_sep=
 g_job_command=
 g_job_pid_1=
 g_job_pid_2=
+g_job_data_1=()
+g_job_data_2=()
+g_job_retransmission_pids=()
 g_host_counter="0"
 g_service_counter="0"
 g_invalid_data_counter="0"
@@ -1679,6 +1784,10 @@ g_job_counter_total="0"
 g_job_counter_ok="0"
 g_job_counter_nok="0"
 g_job_counter_timeout="0"
+g_job_counter_retransmitted_total="0"
+g_job_counter_retransmitted_ok="0"
+g_job_counter_retransmitted_nok="0"
+g_job_counter_retransmitted_timeout="0"
 g_job_data=()
 g_job_raw_data=()
 g_timer_result_last_stats="1"
