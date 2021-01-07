@@ -678,6 +678,14 @@ c_job_command_log_timeout="1"
 # (valid values: 1|0)
 c_job_command_log_ok="0"
 
+# log raw data in case a job was not processed successfully
+# (valid values: 1|0)
+c_job_command_log_nok_data="1"
+
+# retransmit data in case a job was not processed successfully
+# (valid values: 1|0)
+c_job_nok_retransmit="1"
+
 
 
 #------
