@@ -163,16 +163,16 @@ event_broker_options=-1
 
 Restart your monitoring engine:
 ```bash
-service nagios restart
-service naemon restart
+systemctl restart nagios
+systemctl restart naemon
 ```
 
 
 
 Check if naemon is running:
 ```bash
-service nagios status
-service naemon status
+systemctl status nagios
+systemctl status naemon
 ```
 
 
@@ -221,13 +221,13 @@ vim /usr/local/modpd/etc/modpd.conf
 
 Start the modpd daemon:
 ```bash
-service modpd start
+systemctl start modpd
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-service modpd status
+systemctl status modpd
 tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
@@ -351,16 +351,16 @@ make install
 
 Restart your monitoring engine:
 ```bash
-service nagios restart
-service naemon restart
+systemctl restart nagios
+systemctl restart naemon
 ```
 
 
 
 Check if your monitoring engine is running:
 ```bash
-service nagios status
-service naemon status
+systemctl status nagios
+systemctl status naemon
 ```
 
 
@@ -403,13 +403,13 @@ vimdiff ./usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 
 Restart the modpd daemon:
 ```bash
-service modpd restart
+systemctl restart modpd
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-service modpd status
+systemctl status modpd
 tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
@@ -464,12 +464,11 @@ OPTIONS:
 
 
 ## Daemon options
-- ```service modpd status``` shows the state of the daemon
-- ```service modpd start``` starts the daemon
-- ```service modpd start_error_mode``` starts the daemon in error mode (bash errors are logged)
-- ```service modpd stop``` stops the daemon
-- ```service modpd restart``` restarts the daemon
-- ```service modpd reload``` reloads the daemon (config will be re-readed)
+- ```systemctl status modpd``` shows the state of the daemon
+- ```systemctl start modpd``` starts the daemon
+- ```systemctl stop modpd``` stops the daemon
+- ```systemctl restart modpd``` restarts the daemon
+- ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
 
 
 
@@ -714,10 +713,10 @@ c_stats_enabled="1"
 # Example log snippets
 ## modpd daemon log snippet
 ```
-10:10:58 [root@lab01]:~# service modpd status
+10:10:58 [root@lab01]:~# systemctl status modpd
 modpd (PID 7084) is running                               [  OK  ]
 
-10:11:22 [root@lab01]:~# service modpd stop
+10:11:22 [root@lab01]:~# systemctl stop modpd
 Stopping modpd                                             [  OK  ]
 
 10:11:25 [root@lab01]:~# grep 7084 /usr/local/modpd/var/log/modpd.log
