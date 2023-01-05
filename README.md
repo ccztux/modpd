@@ -169,7 +169,7 @@ service nagios status
 Check if the modpd NEB module was loaded by Nagios®:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -355,7 +355,7 @@ service nagios status
 Check if the modpd NEB module was loaded by Nagios®:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -436,7 +436,7 @@ Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
 Last modification:      2021-01-07
-Version:                2.3.1
+Version:                3.0.0
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
@@ -478,7 +478,7 @@ OPTIONS:
 #  Last Modification:	Christian Zettel (ccztux)
 #						2021-01-07
 #
-#  Version				2.3.1
+#  Version				3.0.0
 #
 #  Description:			Config file for modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -708,7 +708,7 @@ modpd (PID 7084) is running                               [  OK  ]
 Stopping modpd                                             [  OK  ]
 
 10:11:25 [root@lab01]:~# grep 7084 /usr/local/modpd/var/log/modpd.log
-2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 2.3.1 starting... (PID=7084)
+2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'
 2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
 2021-01-07 16:10:01 |   7084 |                 getExecUser | modpd was started as user: 'nagios'
@@ -792,7 +792,7 @@ Stopping modpd                                             [  OK  ]
 ## modpd NEB module log snippet
 ```
 10:11:39 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1607849563] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1607849563] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1607849563] modpd: Starting...
 [1607849563] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 [1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s
