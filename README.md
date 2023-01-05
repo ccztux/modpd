@@ -18,14 +18,14 @@
    * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features)
    * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module)
 * [Installation](#installation)
-   * [Installation on the Nagios® site with active checks](#installation-on-the-nagios-site-with-active-checks)
+   * [Installation on the monitoring engine site executing the active checks](#installation-on-the-monitoring-engine-site-executing-the-active-checks)
       * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
       * [Installation of the modpd NEB module part](#installation-of-the-modpd-neb-module-part)
       * [Installation of the modpd daemon part](#installation-of-the-modpd-daemon-part)
       * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
          * [send_nrdp.php](#send_nrdpphp)
          * [send_nsca](#send_nsca)
-   * [Installation on the Nagios® site with passive checks](#installation-on-the-nagios-site-with-passive-checks)
+   * [Installation on the monitoring engine site accepting the passive checks](#installation-on-the-monitoring-engine-site-accepting-the-passive-checks)
       * [Installation of the server software (of your choice)](#installation-of-the-server-software-of-your-choice)
          * [NRDP](#nrdp)
          * [NSCA](#nsca)
@@ -65,6 +65,12 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
 Nevertheless you should prefere the reload function over the restart function if you have only changed
 something in the configuration, because in case of a restart more than one datasets are getting lost.
+
+
+
+# Supported monitoring engines
+* Nagios® 3.4.x
+* Naemon 1.3.x
 
 
 
@@ -115,7 +121,7 @@ something in the configuration, because in case of a restart more than one datas
 
 
 # Installation
-## Installation on the Nagios® site with active checks
+## Installation on the monitoring engine site executing the active checks
 ### Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
@@ -135,9 +141,10 @@ make install
 
 
 
-Add the modpd NEB module with the editor of your choice to your main Nagios® config file:
+Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
 ```
@@ -147,26 +154,29 @@ broker_module=/usr/local/nagios/include/modpd.o
 Set the eventbroker options with the editor of your choice in your main nagios config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
 ```bash
 event_broker_options=-1
 ```
 
 
-Restart nagios:
+Restart your monitoring engine:
 ```bash
 service nagios restart
+service naemon restart
 ```
 
 
 
-Check if nagios is running:
+Check if naemon is running:
 ```bash
 service nagios status
+service naemon status
 ```
 
 
 
-Check if the modpd NEB module was loaded by Nagios®:
+Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
 [1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
@@ -300,7 +310,7 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 ```
 
 
-## Installation on the Nagios® site with passive checks
+## Installation on the monitoring engine site accepting the passive checks
 ### Installation of the server software (of your choice)
 #### NRDP
 
@@ -338,21 +348,23 @@ make install
 
 
 
-Restart nagios:
+Restart your monitoring engine:
 ```bash
 service nagios restart
+service naemon restart
 ```
 
 
 
-Check if nagios is running:
+Check if your monitoring engine is running:
 ```bash
 service nagios status
+service naemon status
 ```
 
 
 
-Check if the modpd NEB module was loaded by Nagios®:
+Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
 [1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
