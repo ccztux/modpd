@@ -9,6 +9,7 @@
 
 # Table of contents
 * [What is modpd?](#what-is-modpd)
+* [Supported monitoring engines](#supported-monitoring-engines)
 * [Known Issues](#known-issues)
 * [Flowchart](#flowchart)
 * [Registered trademarks](#registered-trademarks)
