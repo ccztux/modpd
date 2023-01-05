@@ -76,7 +76,7 @@ something in the configuration, because in case of a restart more than one datas
 
 
 # Flowchart
-![Alt](images/modpd.png)
+![Alt](images/modpd.drawio.svg)
 
 
 
