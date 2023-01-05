@@ -34,18 +34,45 @@
 #========================================================================================================
 
 
-# Source code directory
+# Source code directories
 SRC_DIR=./src
 
 
 
-all:	modpd.o
+all:	modpd-nagios3 modpd-naemon
 
-modpd.o:
-	cd $(SRC_DIR) && $(MAKE)
+modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) modpd-nagios3
 
-clean:
-	cd $(SRC_DIR) && $(MAKE) clean
+modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) modpd-naemon
 
-install:
-	cd $(SRC_DIR) && $(MAKE) install
+
+
+clean: clean-modpd-nagios3 clean-modpd-naemon
+
+clean-modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) clean-modpd-nagios3
+
+clean-modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) clean-modpd-naemon
+
+
+
+install: install-modpd-nagios3 install-modpd-naemon
+
+install-modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) install-modpd-nagios3
+
+install-modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) install-modpd-naemon
+
+
+
+uninstall: uninstall-modpd-nagios3 uninstall-modpd-naemon
+
+uninstall-modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) uninstall-modpd-nagios3
+
+uninstall-modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) uninstall-modpd-naemon

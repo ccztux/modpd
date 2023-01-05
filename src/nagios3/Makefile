@@ -35,45 +35,36 @@
 
 
 # Source code directories
-NAGIOS3_DIR=./nagios3
-NAEMON_DIR=./naemon
+SRC_INCLUDE=../../nagios3
 
+CC=gcc
+MOD_CFLAGS=-fPIC
+CFLAGS=-g -O2 -DHAVE_CONFIG_H
+MOD_LDFLAGS=-shared
+LDFLAGS=
+LIBS=
 
+prefix=/usr/lib64/modpd
+exec_prefix=${prefix}
+INSTALL=/usr/bin/install -c
+INSTALL_DIR_OPTS=-m 755 -o root -g root -d
+INSTALL_FILE_OPTS=-s -m 755 -o nagios -g nagios
 
-all:	modpd-nagios3 modpd-naemon
+DESTDIR=${prefix}
 
+all:	modpd-nagios3
+
+#modpd-nagios3: modpd_nagios3.c
 modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) modpd-nagios3
-
-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) modpd-naemon
-
-
-
-clean: clean-modpd-nagios3 clean-modpd-naemon
+	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd_nagios3.o modpd_nagios3.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
 
 clean-modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) clean-modpd-nagios3
-
-clean-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) clean-modpd-naemon
-
-
-
-install: install-modpd-nagios3 install-modpd-naemon
+	rm -f modpd_nagios3.o
+	rm -f *~ *.*~
 
 install-modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) install-modpd-nagios3
-
-install-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) install-modpd-naemon
-
-
-
-uninstall: uninstall-modpd-nagios3 uninstall-modpd-naemon
+	$(INSTALL) $(INSTALL_DIR_OPTS) $(DESTDIR)
+	$(INSTALL) $(INSTALL_FILE_OPTS) modpd_nagios3.o $(DESTDIR)
 
 uninstall-modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) uninstall-modpd-nagios3
-
-uninstall-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) uninstall-modpd-naemon
+	rm -f $(DESTDIR)/modpd_nagios3.o
