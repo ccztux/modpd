@@ -9,6 +9,7 @@
 
 # Table of contents
 * [What is modpd?](#what-is-modpd)
+* [Supported monitoring engines](#supported-monitoring-engines)
 * [Known Issues](#known-issues)
 * [Flowchart](#flowchart)
 * [Registered trademarks](#registered-trademarks)
@@ -18,14 +19,14 @@
    * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features)
    * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module)
 * [Installation](#installation)
-   * [Installation on the Nagios® site with active checks](#installation-on-the-nagios-site-with-active-checks)
+   * [Installation on the monitoring engine site executing the active checks](#installation-on-the-monitoring-engine-site-executing-the-active-checks)
       * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
       * [Installation of the modpd NEB module part](#installation-of-the-modpd-neb-module-part)
       * [Installation of the modpd daemon part](#installation-of-the-modpd-daemon-part)
       * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
          * [send_nrdp.php](#send_nrdpphp)
          * [send_nsca](#send_nsca)
-   * [Installation on the Nagios® site with passive checks](#installation-on-the-nagios-site-with-passive-checks)
+   * [Installation on the monitoring engine site accepting the passive checks](#installation-on-the-monitoring-engine-site-accepting-the-passive-checks)
       * [Installation of the server software (of your choice)](#installation-of-the-server-software-of-your-choice)
          * [NRDP](#nrdp)
          * [NSCA](#nsca)
@@ -68,13 +69,19 @@ something in the configuration, because in case of a restart more than one datas
 
 
 
+# Supported monitoring engines
+* Nagios® 3.4.x
+* Naemon 1.3.x
+
+
+
 # Flowchart
-![Alt](images/modpd.png)
+![Alt](images/modpd.drawio.svg)
 
 
 
 # Registered trademarks
-[Nagios®](https://www.nagios.org/) is a registered trademark
+[Nagios®](https://www.nagios.org/), Nagios Core, NRDP, NSCA, and the Nagios logo are trademarks, servicemarks, registered servicemarks or registered trademarks of Nagios Enterprises. All other trademarks, servicemarks, registered trademarks, and registered servicemarks mentioned herein may be the property of their respective owner(s). The information contained herein is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
 # Required binaries
@@ -115,7 +122,7 @@ something in the configuration, because in case of a restart more than one datas
 
 
 # Installation
-## Installation on the Nagios® site with active checks
+## Installation on the monitoring engine site executing the active checks
 ### Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
@@ -135,9 +142,10 @@ make install
 
 
 
-Add the modpd NEB module with the editor of your choice to your main Nagios® config file:
+Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
 ```
@@ -147,29 +155,32 @@ broker_module=/usr/local/nagios/include/modpd.o
 Set the eventbroker options with the editor of your choice in your main nagios config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
 ```bash
 event_broker_options=-1
 ```
 
 
-Restart nagios:
+Restart your monitoring engine:
 ```bash
-service nagios restart
+systemctl restart nagios
+systemctl restart naemon
 ```
 
 
 
-Check if nagios is running:
+Check if naemon is running:
 ```bash
-service nagios status
+systemctl status nagios
+systemctl status naemon
 ```
 
 
 
-Check if the modpd NEB module was loaded by Nagios®:
+Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -210,13 +221,13 @@ vim /usr/local/modpd/etc/modpd.conf
 
 Start the modpd daemon:
 ```bash
-service modpd start
+systemctl start modpd
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-service modpd status
+systemctl status modpd
 tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
@@ -300,7 +311,7 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 ```
 
 
-## Installation on the Nagios® site with passive checks
+## Installation on the monitoring engine site accepting the passive checks
 ### Installation of the server software (of your choice)
 #### NRDP
 
@@ -338,24 +349,26 @@ make install
 
 
 
-Restart nagios:
+Restart your monitoring engine:
 ```bash
-service nagios restart
+systemctl restart nagios
+systemctl restart naemon
 ```
 
 
 
-Check if nagios is running:
+Check if your monitoring engine is running:
 ```bash
-service nagios status
+systemctl status nagios
+systemctl status naemon
 ```
 
 
 
-Check if the modpd NEB module was loaded by Nagios®:
+Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -390,13 +403,13 @@ vimdiff ./usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 
 Restart the modpd daemon:
 ```bash
-service modpd restart
+systemctl restart modpd
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-service modpd status
+systemctl status modpd
 tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
@@ -436,7 +449,7 @@ Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
 Last modification:      2021-01-07
-Version:                2.3.1
+Version:                3.0.0
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
@@ -451,12 +464,11 @@ OPTIONS:
 
 
 ## Daemon options
-- ```service modpd status``` shows the state of the daemon
-- ```service modpd start``` starts the daemon
-- ```service modpd start_error_mode``` starts the daemon in error mode (bash errors are logged)
-- ```service modpd stop``` stops the daemon
-- ```service modpd restart``` restarts the daemon
-- ```service modpd reload``` reloads the daemon (config will be re-readed)
+- ```systemctl status modpd``` shows the state of the daemon
+- ```systemctl start modpd``` starts the daemon
+- ```systemctl stop modpd``` stops the daemon
+- ```systemctl restart modpd``` restarts the daemon
+- ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
 
 
 
@@ -478,7 +490,7 @@ OPTIONS:
 #  Last Modification:	Christian Zettel (ccztux)
 #						2021-01-07
 #
-#  Version				2.3.1
+#  Version				3.0.0
 #
 #  Description:			Config file for modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -701,14 +713,14 @@ c_stats_enabled="1"
 # Example log snippets
 ## modpd daemon log snippet
 ```
-10:10:58 [root@lab01]:~# service modpd status
+10:10:58 [root@lab01]:~# systemctl status modpd
 modpd (PID 7084) is running                               [  OK  ]
 
-10:11:22 [root@lab01]:~# service modpd stop
+10:11:22 [root@lab01]:~# systemctl stop modpd
 Stopping modpd                                             [  OK  ]
 
 10:11:25 [root@lab01]:~# grep 7084 /usr/local/modpd/var/log/modpd.log
-2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 2.3.1 starting... (PID=7084)
+2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'
 2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
 2021-01-07 16:10:01 |   7084 |                 getExecUser | modpd was started as user: 'nagios'
@@ -792,7 +804,7 @@ Stopping modpd                                             [  OK  ]
 ## modpd NEB module log snippet
 ```
 10:11:39 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1607849563] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1607849563] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1607849563] modpd: Starting...
 [1607849563] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 [1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s

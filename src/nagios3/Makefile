@@ -13,8 +13,7 @@
 #
 #  Version				3.0.0
 #
-#  Description:			Config parameters for the init script of the modpd daemon
-#						(Monitoring Obsessing Data Processor Daemon)
+#  Description:			Makefile for the modpd NEB module
 #
 #  License:				GNU GPLv2
 #
@@ -35,9 +34,37 @@
 #========================================================================================================
 
 
-DAEMON_PATH="/usr/local/modpd/bin/modpd"
-DAEMON_NAME="${DAEMON_PATH##*/}"
-DAEMON_RUN_DIR="/var/run"
-DAEMON_RUN_FILE="${DAEMON_RUN_DIR}/${DAEMON_NAME}.pid"
-DAEMON_ARGS=""
-DAEMON_USER="modpd"
+# Source code directories
+SRC_INCLUDE=../../nagios3
+
+CC=gcc
+MOD_CFLAGS=-fPIC
+CFLAGS=-g -O2 -DHAVE_CONFIG_H
+MOD_LDFLAGS=-shared
+LDFLAGS=
+LIBS=
+
+prefix=/usr/lib64/modpd
+exec_prefix=${prefix}
+INSTALL=/usr/bin/install -c
+INSTALL_DIR_OPTS=-m 755 -o root -g root -d
+INSTALL_FILE_OPTS=-s -m 755 -o nagios -g nagios
+
+DESTDIR=${prefix}
+
+all:	modpd-nagios3
+
+#modpd-nagios3: modpd_nagios3.c
+modpd-nagios3:
+	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd_nagios3.o modpd_nagios3.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
+
+clean-modpd-nagios3:
+	rm -f modpd_nagios3.o
+	rm -f *~ *.*~
+
+install-modpd-nagios3:
+	$(INSTALL) $(INSTALL_DIR_OPTS) $(DESTDIR)
+	$(INSTALL) $(INSTALL_FILE_OPTS) modpd_nagios3.o $(DESTDIR)
+
+uninstall-modpd-nagios3:
+	rm -f $(DESTDIR)/modpd_nagios3.o

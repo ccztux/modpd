@@ -4,14 +4,14 @@
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
 #						2021-01-07
 #
-#  Version				2.3.1
+#  Version				3.0.0
 #
 #  Description:			Makefile for the modpd NEB module
 #
@@ -34,32 +34,46 @@
 #========================================================================================================
 
 
-# Source code directory
-SRC_INCLUDE=../nagios
+# Source code directories
+NAGIOS3_DIR=./nagios3
+NAEMON_DIR=./naemon
 
-CC=gcc
-MOD_CFLAGS=-fPIC
-CFLAGS=-g -O2 -DHAVE_CONFIG_H
-MOD_LDFLAGS=-shared
-LDFLAGS=
-LIBS=
 
-prefix=/usr/local/nagios
-exec_prefix=${prefix}
-INSTALL=/usr/bin/install -c
-INSTALL_OPTS=-o nagios -g nagios
 
-DESTDIR=${prefix}/include
+all:	modpd-nagios3 modpd-naemon
 
-all:	modpd.o
+modpd-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) modpd-nagios3
 
-modpd.o: modpd.c
-	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd.o modpd.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
+modpd-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) modpd-naemon
 
-clean:
-	rm -f modpd.o
-	rm -f *~ *.*~
 
-install:
-	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)
-	$(INSTALL) -s -m 774 $(INSTALL_OPTS) modpd.o $(DESTDIR)
+
+clean: clean-modpd-nagios3 clean-modpd-naemon
+
+clean-modpd-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) clean-modpd-nagios3
+
+clean-modpd-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) clean-modpd-naemon
+
+
+
+install: install-modpd-nagios3 install-modpd-naemon
+
+install-modpd-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) install-modpd-nagios3
+
+install-modpd-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) install-modpd-naemon
+
+
+
+uninstall: uninstall-modpd-nagios3 uninstall-modpd-naemon
+
+uninstall-modpd-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) uninstall-modpd-nagios3
+
+uninstall-modpd-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) uninstall-modpd-naemon

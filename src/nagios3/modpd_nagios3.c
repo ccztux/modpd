@@ -4,14 +4,14 @@
 *						2017-05-14
 *						http://linuxinside.at
 *
-*  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+*  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
 *
 *  Project website:		https://github.com/ccztux/modpd
 *
 *  Last Modification:	Christian Zettel (ccztux)
 *						2021-01-07
 *
-*  Version				2.3.1
+*  Version				3.0.0
 *
 *  Description:			NEB module to write obsessing data to unix socket
 *						Based on example: nagioscore/module/helloworld.c
@@ -55,9 +55,10 @@ NEB_API_VERSION(CURRENT_NEB_API_VERSION);
 
 void *modpd_module_handle = NULL;
 
-void log_modpd_stats(void);
-int modpd_event_handler(int, void *);
+static void log_modpd_stats(void);
+static int modpd_event_handler(int, void *);
 
+unsigned int log_stats_interval = 300;
 unsigned int host_cmds_ok_counter = 0;
 unsigned int host_cmds_nok_counter = 0;
 unsigned int service_cmds_ok_counter = 0;
@@ -82,20 +83,20 @@ int nebmodule_init(int flags, char *args, nebmodule *handle)
 	/* set some info - this is completely optional, as Nagios doesn't do anything with this data */
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "modpd");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_AUTHOR, "Christian Zettel (ccztux)");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "2.3.1");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "3.0.0");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_DESC, "Obsessing NEB Module.");
 
 	/* log module info to the Nagios log file */
-	write_to_all_logs("modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1", NSLOG_INFO_MESSAGE);
+	write_to_all_logs("modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0", NSLOG_INFO_MESSAGE);
 
 	/* log a message to the Nagios log file */
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: Starting...\n");
 	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
 	write_to_all_logs(temp_buffer, NSLOG_INFO_MESSAGE);
 
-	/* log a status message every 5 minutes (how's that for annoying? :-)) */
+	/* log a status message every N seconds (how's that for annoying? :-)) */
 	time(&current_time);
 	schedule_new_event(EVENT_USER_FUNCTION, TRUE, current_time + log_stats_interval, TRUE, log_stats_interval, NULL, TRUE, (void *)log_modpd_stats, NULL, 0);
 
@@ -115,9 +116,6 @@ int nebmodule_deinit(int flags, int reason)
 	time_t current_time;
 	unsigned int timediff;
 
-	time(&current_time);
-	timediff = current_time - start_time;
-
 	/* deregister for all events we previously registered for... */
 	neb_deregister_callback(NEBCALLBACK_HOST_CHECK_DATA, modpd_event_handler);
 	neb_deregister_callback(NEBCALLBACK_SERVICE_CHECK_DATA, modpd_event_handler);
@@ -125,6 +123,8 @@ int nebmodule_deinit(int flags, int reason)
 	/* write stats data to the Nagios log file */
 	log_modpd_stats();
 
+	time(&current_time);
+	timediff = current_time - start_time;
 	get_time_breakdown(timediff, &days, &hours, &minutes, &seconds);
 
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: The modpd NEB module was running %dd %dh %dm %ds", days, hours, minutes, seconds);
@@ -139,8 +139,8 @@ int nebmodule_deinit(int flags, int reason)
 }
 
 
-/* gets called every X minutes by an event in the scheduling queue */
-void log_modpd_stats()
+/* gets called every N seconds by an event in the scheduling queue */
+static void log_modpd_stats()
 {
 	char temp_buffer[1024];
 	int days, hours, minutes, seconds;
@@ -171,6 +171,9 @@ void log_modpd_stats()
 		timediff = current_time - last_stats_logged;
 	}
 
+	/* set the timestamp of the last stats logged */
+	time(&last_stats_logged);
+
 	/* log the stats to the Nagios log file */
 	snprintf(temp_buffer, sizeof(temp_buffer) - 1, "modpd: *** Stats of processed checks for the last %u seconds: Hosts: %u (OK: %u/NOK: %u), Services: %u (OK: %u/NOK: %u) ***\n", timediff, host_cmds_total_counter, host_cmds_ok_counter, host_cmds_nok_counter, service_cmds_total_counter, service_cmds_ok_counter, service_cmds_nok_counter);
 	temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
@@ -182,15 +185,12 @@ void log_modpd_stats()
 	service_cmds_ok_counter = 0;
 	service_cmds_nok_counter = 0;
 
-	/* set the timestamp of the last stats logged */
-	time(&last_stats_logged);
-
 	return;
 }
 
 
 /* handle data from Nagios daemon */
-int modpd_event_handler(int callback_type, void *data)
+static int modpd_event_handler(int callback_type, void *data)
 {
 	nebstruct_host_check_data *hostdata = NULL;
 	nebstruct_service_check_data *servicedata = NULL;

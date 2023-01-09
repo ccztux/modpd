@@ -4,14 +4,14 @@
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
 #						2021-01-07
 #
-#  Version				2.3.1
+#  Version				3.0.0
 #
 #  Description:			Makefile for the modpd NEB module
 #
@@ -39,13 +39,40 @@ SRC_DIR=./src
 
 
 
-all:	modpd.o
+all:	modpd-nagios3 modpd-naemon
 
-modpd.o:
-	cd $(SRC_DIR) && $(MAKE)
+modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) modpd-nagios3
 
-clean:
-	cd $(SRC_DIR) && $(MAKE) clean
+modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) modpd-naemon
 
-install:
-	cd $(SRC_DIR) && $(MAKE) install
+
+
+clean: clean-modpd-nagios3 clean-modpd-naemon
+
+clean-modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) clean-modpd-nagios3
+
+clean-modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) clean-modpd-naemon
+
+
+
+install: install-modpd-nagios3 install-modpd-naemon
+
+install-modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) install-modpd-nagios3
+
+install-modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) install-modpd-naemon
+
+
+
+uninstall: uninstall-modpd-nagios3 uninstall-modpd-naemon
+
+uninstall-modpd-nagios3:
+	cd $(SRC_DIR) && $(MAKE) uninstall-modpd-nagios3
+
+uninstall-modpd-naemon:
+	cd $(SRC_DIR) && $(MAKE) uninstall-modpd-naemon
