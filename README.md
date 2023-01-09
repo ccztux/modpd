@@ -1,5 +1,5 @@
-[![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/master?label=shellcheck%20%28master%29)](https://travis-ci.org/ccztux/modpd)
-[![Travis (.org) branch](https://img.shields.io/travis/ccztux/modpd/devel?label=shellcheck%20%28devel%29)](https://travis-ci.org/ccztux/modpd)
+[![ShellCheck (master)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml/badge.svg?branch=master)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml?query=branch%3Amaster)
+[![ShellCheck (devel)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml/badge.svg?branch=devel)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml?query=branch%3Adevel)
 [![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20%28pre-%29release)](https://github.com/ccztux/modpd/releases)
 [![GitHub milestones](https://img.shields.io/github/milestones/open/ccztux/modpd)](https://github.com/ccztux/modpd/milestones)
 [![GitHub issues](https://img.shields.io/github/issues-raw/ccztux/modpd)](https://github.com/ccztux/modpd/issues)
