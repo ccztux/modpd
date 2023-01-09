@@ -35,7 +35,7 @@
 #========================================================================================================
 
 
-DAEMON_PATH="/usr/local/modpd/bin/modpd"
+DAEMON_PATH="/usr/bin/modpd"
 DAEMON_NAME="${DAEMON_PATH##*/}"
 DAEMON_RUN_DIR="/var/run"
 DAEMON_RUN_FILE="${DAEMON_RUN_DIR}/${DAEMON_NAME}.pid"

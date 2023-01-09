@@ -457,20 +457,23 @@ setRequiredVariables()
 	# Global variables
 	#-----------------
 
-	# define base path of modpd
-	g_base_path="/usr/local/${g_name}"
+	# define path of modpd binary
+	g_bin_file="/usr/local/${g_name}"
+
+	# path to lib directory
+	g_state_directory="/var/lib/${g_name}"
 
 	# path to lock directory
-	g_lock_directory="${g_base_path}/var/lock"
+	g_lock_directory="${g_state_directory}/lock"
 
 	# path to libexec directory
-	g_libexec_directory="${g_base_path}/libexec"
+	g_libexec_directory="/usr/libexec/${g_name}"
 
 	# log directory
-	g_log_directory="${g_base_path}/var/log"
+	g_log_directory="/var/log/${g_name}"
 
 	# etc directory
-	g_etc_directory="${g_base_path}/etc"
+	g_etc_directory="/etc/${g_name}"
 
 	# default config file
 	g_config_file="${g_config_file:=${g_etc_directory}/${g_name}.conf}"
@@ -488,7 +491,7 @@ setRequiredVariables()
 	g_debug_log_file_obsessing="${g_log_directory}/${g_name}.obsessing.debug.log"
 
 	# named pipe
-	g_named_pipe_file="${g_base_path}/var/rw/${g_name}.cmd"
+	g_named_pipe_file="${g_state_directory}/rw/${g_name}.cmd"
 }
 
 reloadHandler()
@@ -1081,7 +1084,7 @@ checkAlreadyRunningInstance()
 	session_pids+=("${g_pid}")
 	# shellcheck disable=SC2154
 	# shellcheck disable=SC2207
-	running_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${g_base_path}/bin/${g_name}(.*)$"))
+	running_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${g_bin_file}/bin/${g_name}(.*)$"))
 
 	for running_pid in "${!running_pids[@]}"
 	do
