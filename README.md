@@ -1,5 +1,5 @@
-[![ShellCheck (master)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml/badge.svg?branch=master)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml?query=branch%3Amaster)
-[![ShellCheck (devel)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml/badge.svg?branch=devel)](https://github.com/ccztux/modpd/actions/workflows/shellcheck.yml?query=branch%3Adevel)
+[![ShellCheck (master)](https://github.com/ccztux/modpd/actions/workflows/shellcheck-master.yml/badge.svg?branch=master)](https://github.com/ccztux/modpd/actions/workflows/shellcheck-master.yml?query=branch%3Amaster)
+[![ShellCheck (devel)](https://github.com/ccztux/modpd/actions/workflows/shellcheck-devel.yml/badge.svg?branch=devel)](https://github.com/ccztux/modpd/actions/workflows/shellcheck-devel.yml?query=branch%3Adevel)
 [![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/ccztux/modpd?include_prereleases&label=latest%20%28pre-%29release)](https://github.com/ccztux/modpd/releases)
 [![GitHub milestones](https://img.shields.io/github/milestones/open/ccztux/modpd)](https://github.com/ccztux/modpd/milestones)
 [![GitHub issues](https://img.shields.io/github/issues-raw/ccztux/modpd)](https://github.com/ccztux/modpd/issues)
