@@ -4,14 +4,14 @@
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
 #						2021-01-07
 #
-#  Version				3.0.0
+#  Version				2.3.1
 #
 #  Description:			Config parameters for the init script of the modpd daemon
 #						(Monitoring Obsessing Data Processor Daemon)
@@ -41,5 +41,5 @@ DAEMON_NAME="${DAEMON_PATH##*/}"
 DAEMON_LOCK_FILE="${DAEMON_BASE_PATH}/var/lock/${DAEMON_NAME}.lock"
 DAEMON_CONFIG_FILE="${DAEMON_BASE_PATH}/etc/${DAEMON_NAME}.conf"
 DAEMON_ARGS="-c ${DAEMON_CONFIG_FILE}"
-DAEMON_USER="nagios"
+DAEMON_USER="modpd"
 DAEMON_RETVAL="255"

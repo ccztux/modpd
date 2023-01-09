@@ -451,17 +451,6 @@ resetCounters()
 	g_invalid_data_counter="0"
 }
 
-checkCliOptions()
-{
-	if [ "${g_argc}" -eq "0" ]
-	then
-		printUsage
-		g_bypass_exit_routines="1"
-		g_exit_code="10"
-		exit
-	fi
-}
-
 setRequiredVariables()
 {
 	#-----------------
@@ -639,7 +628,7 @@ includeConfig()
 			logHandler "Terminating..."
 
 			g_bypass_exit_routines="1"
-			g_exit_code="20"
+			g_exit_code="10"
 			exit
 		fi
 	elif [ "$(( g_file_permission & g_regular_file_exists ))" -eq "0" ]
@@ -648,7 +637,7 @@ includeConfig()
 		logHandler "Terminating..."
 
 		g_bypass_exit_routines="1"
-		g_exit_code="21"
+		g_exit_code="11"
 		exit
 	elif [ "$(( g_file_permission & g_regular_file_is_not_empty ))" -eq "0" ]
 	then
@@ -656,7 +645,7 @@ includeConfig()
 		logHandler "Terminating..."
 
 		g_bypass_exit_routines="1"
-		g_exit_code="22"
+		g_exit_code="12"
 		exit
 	elif [ "$(( g_file_permission & g_permission_read ))" -eq "0" ]
 	then
@@ -664,7 +653,7 @@ includeConfig()
 		logHandler "Terminating..."
 
 		g_bypass_exit_routines="1"
-		g_exit_code="23"
+		g_exit_code="13"
 		exit
 	fi
 }
@@ -749,7 +738,7 @@ checkLogDir()
 		then
 			logHandler "Log file exists but we dont have write permissions, terminating"
 			g_bypass_exit_routines="1"
-			g_exit_code="30"
+			g_exit_code="20"
 			exit
 		else
 			g_log_requirements_ok="1"
@@ -768,13 +757,13 @@ checkLogDir()
 		else
 			logHandler "Creating log directory was not successful"
 			g_bypass_exit_routines="1"
-			g_exit_code="31"
+			g_exit_code="21"
 			exit
 		fi
 	else
 		logHandler "Log directory exists but permissions are not ok, terminating"
 		g_bypass_exit_routines="1"
-		g_exit_code="32"
+		g_exit_code="22"
 		exit
 	fi
 }
@@ -925,12 +914,12 @@ setLock()
 			logHandler "Creating daemon lock directory was successful"
 		else
 			logHandler "Creating daemon lock directory was not successful"
-			g_exit_code="40"
+			g_exit_code="30"
 			exit
 		fi
 	else
 		logHandler "Script lock directory exists but permissions are not ok, terminating"
-		g_exit_code="41"
+		g_exit_code="31"
 		exit
 	fi
 
@@ -941,7 +930,7 @@ setLock()
 		logHandler "Setting lock was successful"
 	else
 		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock"
-		g_exit_code="42"
+		g_exit_code="32"
 		exit
 	fi
 }
@@ -956,7 +945,7 @@ removeLock()
 		logHandler "Removing lock was successful"
 	else
 		logHandler "Removing lock was not successful"
-		g_exit_code="50"
+		g_exit_code="40"
 		exit
 	fi
 }
@@ -1045,7 +1034,7 @@ checkBashVersion()
 	if [ -z "${BASH_VERSINFO[0]}" ]
 	then
 		logHandler "Could not determine bash version, terminating"
-		g_exit_code="60"
+		g_exit_code="50"
 		exit
 	else
 		if [ "${BASH_VERSINFO[0]}" -lt "${g_minimal_required_bash_version}" ]
@@ -1053,7 +1042,7 @@ checkBashVersion()
 			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating"
 
 			g_bypass_exit_routines="1"
-			g_exit_code="61"
+			g_exit_code="51"
 			exit
 		else
 			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements"
@@ -1126,14 +1115,14 @@ checkAlreadyRunningInstance()
 		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' exists and the following processes: '${running_pids[*]}' are running)"
 
 		g_another_instance_is_running="1"
-		g_exit_code="70"
+		g_exit_code="60"
 		exit
 	elif [ "${rc}" != "0" ] && [ -n "${running_pids[*]:-}" ]
 	then
 		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and the following processes: '${running_pids[*]}' are running)"
 
 		g_another_instance_is_running="1"
-		g_exit_code="71"
+		g_exit_code="61"
 		exit
 	fi
 }
@@ -1145,12 +1134,12 @@ createNamedPipe()
 		logHandler "Creating named pipe..."
 
 		# shellcheck disable=SC2154
-		if ${mkfifo_bin} "${g_named_pipe_file}" 2>&1 | logHandler
+		if ${mkfifo_bin} --mode=774 "${g_named_pipe_file}" 2>&1 | logHandler
 		then
 			logHandler "Creating named pipe was successful"
 		else
 			logHandler "Creating named pipe was not successful, terminating"
-			g_exit_code="80"
+			g_exit_code="70"
 			exit
 		fi
 	fi
@@ -1171,7 +1160,7 @@ removeNamedPipe()
 		exec 3<&-
 	else
 		logHandler "Removing named pipe was not successful, terminating"
-		g_exit_code="90"
+		g_exit_code="80"
 		exit
 	fi
 }
@@ -1192,7 +1181,7 @@ checkNamedPipe()
 		return 0
 	else
 		logHandler "Named pipe exists, but it is not read/writeable, terminating"
-		g_exit_code="100"
+		g_exit_code="90"
 		exit
 	fi
 }
@@ -1311,7 +1300,7 @@ buildJobCommand()
 			;;
 		*)
 			logHandler "Invalid obsessing interface defined in config file: '${g_config_file}', terminating"
-			g_exit_code="110"
+			g_exit_code="100"
 			exit
 			;;
 	esac
@@ -1663,7 +1652,7 @@ dataProcessor()
 	do
 		if ! IFS=${g_md_sep} read -t "${read_timeout}" -u 3 -r host_name service_description state_id plugin_output junk
 		then
-			logHandler "WARNING: No monitoring data received within the last ${read_timeout} seconds! Is the monitoring system running?"
+			logHandler "WARNING: No monitoring data received within the last ${read_timeout} seconds! Is the monitoring engine running?"
 
 			if [ "${c_stats_enabled}" == "1" ]
 			then
@@ -1734,7 +1723,6 @@ _main()
 	local timer_interval_warning_message="60"
 	local timer_result_last_warning_message="1"
 
-	checkCliOptions
 	setRequiredVariables
 	includeConfig
 	checkRequiredBinaries

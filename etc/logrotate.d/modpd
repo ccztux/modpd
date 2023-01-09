@@ -36,11 +36,11 @@
 
 /usr/local/modpd/var/log/modpd.log
 {
-	su nagios nagios
-	weekly
-	rotate 6
-	missingok
-	notifempty
-	sharedscripts
-	compress
+    weekly
+    rotate 6
+    missingok
+    notifempty
+    compress
+    copytruncate
+    create 0644 modpd modpd
 }
