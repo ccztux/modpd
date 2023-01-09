@@ -622,7 +622,7 @@ includeConfig()
 
 	if [ "$(( g_file_permission & g_regular_file_exists ))" -gt "0" ] && [ "$(( g_file_permission & g_regular_file_is_not_empty ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ]
 	then
-		# shellcheck source=/scripts/usr/local/modpd/etc/modpd.sample.conf
+		# shellcheck source=/scripts/etc/modpd/modpd.sample.conf
 		if source "${g_config_file}"
 		then
 			g_config_file_included="1"
