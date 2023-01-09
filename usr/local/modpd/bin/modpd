@@ -1434,6 +1434,11 @@ jobHandler()
 {
 	local rc=
 
+	if [ "${#g_job_data[@]}" -eq "0" ]
+	then
+		return
+	fi
+
 	if [ -z "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
 	then
 		jobExec &
@@ -1663,7 +1668,7 @@ dataProcessor()
 	do
 		if ! IFS=${g_md_sep} read -t "${read_timeout}" -u 3 -r host_name service_description state_id plugin_output junk
 		then
-			logHandler "WARNING: No monitoring data received within the last ${read_timeout} seconds! Is the monitoring system running?"
+			logHandler "WARNING: No monitoring data received within the last ${read_timeout} seconds! Is the monitoring engine running?"
 
 			if [ "${c_stats_enabled}" == "1" ]
 			then
