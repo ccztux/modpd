@@ -54,7 +54,6 @@ DESTDIR=${prefix}
 
 all:	modpd-naemon
 
-#modpd-naemon: modpd_naemon.c
 modpd-naemon:
 	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd_naemon.o modpd_naemon.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
 

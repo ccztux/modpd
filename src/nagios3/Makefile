@@ -54,7 +54,6 @@ DESTDIR=${prefix}
 
 all:	modpd-nagios3
 
-#modpd-nagios3: modpd_nagios3.c
 modpd-nagios3:
 	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd_nagios3.o modpd_nagios3.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
 
