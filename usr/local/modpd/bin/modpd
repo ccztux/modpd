@@ -1423,6 +1423,11 @@ jobHandler()
 {
 	local rc=
 
+	if [ "${#g_job_data[@]}" -eq "0" ]
+	then
+		return
+	fi
+
 	if [ -z "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
 	then
 		jobExec &
