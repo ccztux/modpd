@@ -180,7 +180,7 @@ systemctl status naemon
 Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -368,7 +368,7 @@ systemctl status naemon
 Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
@@ -483,7 +483,7 @@ OPTIONS:
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
@@ -804,7 +804,7 @@ Stopping modpd                                             [  OK  ]
 ## modpd NEB module log snippet
 ```
 10:11:39 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1607849563] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1607849563] modpd: Starting...
 [1607849563] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 [1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s

@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2021-01-07
+#						2023-01-09
 #
 #  Version				3.0.0
 #
@@ -1773,7 +1773,7 @@ g_version="3.0.0"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
-g_last_modification_date="2021-01-07"
+g_last_modification_date="2023-01-09"
 g_minimal_required_bash_version="3"
 g_license="GNU GPLv2"
 g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
