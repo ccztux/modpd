@@ -1768,7 +1768,6 @@ _main()
 #-----------------
 
 g_pid="${$}"
-g_argc="${#}"
 g_name="${0##*/}"
 g_version="3.0.0"
 g_author="Christian Zettel (ccztux)"
