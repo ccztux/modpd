@@ -13,8 +13,7 @@
 #
 #  Version				3.0.0
 #
-#  Description:			Config parameters for the init script of the modpd daemon
-#						(Monitoring Obsessing Data Processor Daemon)
+#  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
 #  License:				GNU GPLv2
 #
@@ -35,9 +34,24 @@
 #========================================================================================================
 
 
-DAEMON_PATH="/usr/local/modpd/bin/modpd"
-DAEMON_NAME="${DAEMON_PATH##*/}"
-DAEMON_RUN_DIR="/var/run"
-DAEMON_RUN_FILE="${DAEMON_RUN_DIR}/${DAEMON_NAME}.pid"
-DAEMON_ARGS=""
-DAEMON_USER="modpd"
+[Unit]
+Description=Monitoring Obsessing Data Processor Daemon
+Wants=network.target network-online.target
+After=network.target network-online.target
+After=systemd-journald.service
+
+[Service]
+Restart=on-failure
+User=modpd
+Group=modpd
+StandardOutput=null
+StandardError=journal
+EnvironmentFile=/etc/sysconfig/modpd
+PermissionsStartOnly=true
+ExecStartPre=/usr/bin/touch /var/run/modpd.pid
+ExecStartPre=/usr/bin/chown modpd:modpd /var/run/modpd.pid
+ExecStart=/usr/local/modpd/bin/modpd $DAEMON_ARGS
+ExecReload=/bin/kill -SIGHUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
