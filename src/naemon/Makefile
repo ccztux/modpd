@@ -48,22 +48,22 @@ prefix=/usr/lib64/modpd
 exec_prefix=${prefix}
 INSTALL=/usr/bin/install -c
 INSTALL_DIR_OPTS=-m 755 -o root -g root -d
-INSTALL_FILE_OPTS=-s -m 755 -o naemon -g naemon
+INSTALL_FILE_OPTS=-s -m 755 -o root -g root
 
 DESTDIR=${prefix}
 
-all:	modpd-naemon
+all:	neb-naemon
 
-modpd-naemon:
+neb-naemon: modpd_naemon.c
 	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd_naemon.o modpd_naemon.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
 
-clean-modpd-naemon:
+clean-neb-naemon:
 	rm -f modpd_naemon.o
 	rm -f *~ *.*~
 
-install-modpd-naemon:
+install-neb-naemon:
 	$(INSTALL) $(INSTALL_DIR_OPTS) -d $(DESTDIR)
 	$(INSTALL) $(INSTALL_FILE_OPTS) modpd_naemon.o $(DESTDIR)
 
-uninstall-modpd-naemon:
+uninstall-neb-naemon:
 	rm -f $(DESTDIR)/modpd_naemon.o

@@ -48,22 +48,22 @@ prefix=/usr/lib64/modpd
 exec_prefix=${prefix}
 INSTALL=/usr/bin/install -c
 INSTALL_DIR_OPTS=-m 755 -o root -g root -d
-INSTALL_FILE_OPTS=-s -m 755 -o nagios -g nagios
+INSTALL_FILE_OPTS=-s -m 755 -o root -g root
 
 DESTDIR=${prefix}
 
-all:	modpd-nagios3
+all:	neb-nagios3
 
-modpd-nagios3:
+neb-nagios3: modpd_nagios3.c
 	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd_nagios3.o modpd_nagios3.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
 
-clean-modpd-nagios3:
+clean-neb-nagios3:
 	rm -f modpd_nagios3.o
 	rm -f *~ *.*~
 
-install-modpd-nagios3:
+install-neb-nagios3:
 	$(INSTALL) $(INSTALL_DIR_OPTS) $(DESTDIR)
 	$(INSTALL) $(INSTALL_FILE_OPTS) modpd_nagios3.o $(DESTDIR)
 
-uninstall-modpd-nagios3:
+uninstall-neb-nagios3:
 	rm -f $(DESTDIR)/modpd_nagios3.o

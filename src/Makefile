@@ -40,40 +40,40 @@ NAEMON_DIR=./naemon
 
 
 
-all:	modpd-nagios3 modpd-naemon
+all:	neb-nagios3 neb-naemon
 
-modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) modpd-nagios3
+neb-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) neb-nagios3
 
-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) modpd-naemon
-
-
-
-clean: clean-modpd-nagios3 clean-modpd-naemon
-
-clean-modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) clean-modpd-nagios3
-
-clean-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) clean-modpd-naemon
+neb-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) neb-naemon
 
 
 
-install: install-modpd-nagios3 install-modpd-naemon
+clean: clean-neb-nagios3 clean-neb-naemon
 
-install-modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) install-modpd-nagios3
+clean-neb-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) clean-neb-nagios3
 
-install-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) install-modpd-naemon
+clean-neb-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) clean-neb-naemon
 
 
 
-uninstall: uninstall-modpd-nagios3 uninstall-modpd-naemon
+install: install-neb-nagios3 install-neb-naemon
 
-uninstall-modpd-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) uninstall-modpd-nagios3
+install-neb-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) install-neb-nagios3
 
-uninstall-modpd-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) uninstall-modpd-naemon
+install-neb-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) install-neb-naemon
+
+
+
+uninstall: uninstall-neb-nagios3 uninstall-neb-naemon
+
+uninstall-neb-nagios3:
+	cd $(NAGIOS3_DIR) && $(MAKE) uninstall-neb-nagios3
+
+uninstall-neb-naemon:
+	cd $(NAEMON_DIR) && $(MAKE) uninstall-neb-naemon
