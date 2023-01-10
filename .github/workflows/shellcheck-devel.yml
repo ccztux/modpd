@@ -1,8 +1,7 @@
 name: ShellCheck (devel)
-on:
-  push:
-    branches:
-      - devel
+on: [push, pull_request]
+  branches:
+    - devel
 
 permissions:
   contents: read
