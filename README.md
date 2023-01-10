@@ -70,12 +70,14 @@ via NRDP or NSCA to another monitoring server.
 There were two reasons:
 
 1. Performance
+
 It increases the performance of an existing Nagios® 3.x.x installation greatly, because the obsessing
 commands will be executed by modpd and not by the Nagios® process itself. Nagios® executes the obsessing
 command after every check, where obsessing is activated and then Nagios® waits, till every obsessing
 command was executed successfully or timed out.
 
 2. Nagios® 3.x.x stops executing active checks
+
 On some systems Nagios® 3.x.x stops randomly executing active checks when obsessing is enabled.
 
 
@@ -141,6 +143,371 @@ something in the configuration, because in case of a restart more than one datas
 - **gcc** to compile the modpd NEB module
 - **install** to install the modpd NEB module
 - **strip** to strip the modpd NEB binary
+
+
+
+## Installation
+### Installation on the monitoring engine site executing the active checks
+#### Download the latest sources of modpd
+Download the latest tarball and extract it:
+```bash
+cd /tmp
+wget "https://api.github.com/repos/ccztux/modpd/tarball" -O modpd.latest.tar.gz
+tar -xvzf modpd.latest.tar.gz
+cd ccztux-modpd-*
+```
+
+
+#### Installation of the modpd NEB modules part
+Build the modpd NEB modules:
+```bash
+make
+make install
+```
+
+
+
+##### Nagios®
+Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
+
+(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+```bash
+broker_module=/usr/lib64/modpd/modpd_nagios3.o
+```
+
+
+Set the eventbroker options with the editor of your choice in your main nagios config file:
+
+(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+```bash
+event_broker_options=-1
+```
+
+
+Restart nagios:
+```bash
+systemctl restart nagios
+```
+
+
+Check if nagios is running:
+```bash
+systemctl status nagios
+```
+
+
+
+Check if the modpd NEB module was loaded by nagios:
+```bash
+[root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_nagios3.o' initialized successfully.
+```
+
+
+
+##### Naemon
+Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
+
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
+```bash
+broker_module=/usr/lib64/modpd/modpd_naemon.o
+```
+
+
+Set the eventbroker options with the editor of your choice in your main naemon config file:
+
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
+```bash
+event_broker_options=-1
+```
+
+
+Restart naemon:
+```bash
+systemctl restart naemon
+```
+
+
+Check if naemon is running:
+```bash
+systemctl status naemon
+```
+
+
+
+Check if the modpd NEB module was loaded by naeon:
+```bash
+[root@lab01]:~# grep -i modpd /var/log/naeon/naemon.log
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
+```
+
+
+
+#### Installation of the modpd daemon part
+Copy the files:
+```bash
+cp -av ./usr/local/modpd/ /usr/local/
+cp -av ./etc/* /etc/
+```
+
+
+Change the file ownerships:
+```bash
+chown -R nagios:nagios /usr/local/modpd/
+chown root:root /etc/logrotate.d/modpd
+chmod 644 /etc/logrotate.d/modpd
+chown root:root /etc/init.d/modpd
+chmod 755 /etc/init.d/modpd
+chown root:root /etc/sysconfig/modpd
+chmod 644 /etc/sysconfig/modpd
+```
+
+
+Copy the sample modpd daemon config file:
+```bash
+cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+```
+
+
+Edit the modpd daemon config to meet your requirements:
+```bash
+vim /usr/local/modpd/etc/modpd.conf
+```
+
+
+Start the modpd daemon:
+```bash
+service modpd start
+```
+
+
+Check if the modpd daemon is running:
+```bash
+service modpd status
+tail -f /usr/local/modpd/var/log/modpd.log
+```
+
+
+Enable the modpd daemon at system boot:
+```bash
+chkconfig --add modpd
+chkconfig modpd on
+```
+
+
+Check for which runlevels modpd is activated:
+```bash
+chkconfig --list modpd
+```
+
+
+#### Installation of the clients (of your choice)
+##### send_nrdp.php
+
+[Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
+
+Download the latest tarball and extract it:
+```bash
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nrdp/tarball" -O nrdp.latest.tar.gz
+tar -xvzf nrdp.latest.tar.gz
+cd NagiosEnterprises-nrdp-*
+```
+
+
+Copy the send_nrdp.php script:
+```bash
+cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
+```
+
+
+Change the file ownership:
+```bash
+chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
+```
+
+
+##### send_nsca
+
+[Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
+
+Download the latest tarball and extract it:
+```bash
+cd /tmp
+wget "https://api.github.com/repos/NagiosEnterprises/nsca/tarball" -O nsca.latest.tar.gz
+tar -xvzf nsca.latest.tar.gz
+cd NagiosEnterprises-nsca-*
+```
+
+
+Build and compile the send_nsca binary:
+```bash
+./configure
+make send_nsca
+```
+
+
+Copy the files:
+```bash
+cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
+cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
+```
+
+
+Change the file ownerships:
+```bash
+chown nagios:nagios /usr/local/modpd/libexec/send_nsca
+chown nagios:nagios /usr/local/nagios/etc/send_nsca.cfg
+```
+
+
+Edit the send_nsca config to meet your requirements:
+```bash
+vim /usr/local/nagios/etc/send_nsca.cfg
+```
+
+
+### Installation on the monitoring engine site accepting the passive checks
+#### Installation of the server software (of your choice)
+##### NRDP
+
+[Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
+
+
+##### NSCA
+
+[Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
+
+
+
+## Updating modpd
+### Make a backup
+Make a backup of your existing installation as described [here](https://github.com/ccztux/modpd#backup-your-modpd-installation)
+
+
+### Download the latest sources of modpd
+Download the latest tarball and extract it:
+```bash
+cd /tmp
+wget "https://api.github.com/repos/ccztux/modpd/tarball" -O modpd.latest.tar.gz
+tar -xvzf modpd.latest.tar.gz
+cd ccztux-modpd-*
+```
+
+
+
+### Updating the modpd NEB module
+Build the modpd NEB module:
+```bash
+make
+make install
+```
+
+
+
+Restart your monitoring engine:
+```bash
+service nagios restart
+```
+
+
+
+Check if your monitoring engine is running:
+```bash
+service nagios status
+```
+
+
+
+Check if the modpd NEB module was loaded by your monitoring engine:
+```bash
+[root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
+```
+
+
+
+### Updating the modpd daemon
+Copy the files:
+```bash
+cp -av ./usr/local/modpd/ /usr/local/
+cp -av ./etc/* /etc/
+```
+
+
+Change the file ownerships:
+```bash
+chown -R nagios:nagios /usr/local/modpd/
+chown root:root /etc/logrotate.d/modpd
+chmod 644 /etc/logrotate.d/modpd
+chown root:root /etc/init.d/modpd
+chmod 755 /etc/init.d/modpd
+chown root:root /etc/sysconfig/modpd
+chmod 644 /etc/sysconfig/modpd
+```
+
+
+Merge possible changes between the new sample config and your productive one using the tool of your choice like vimdiff:
+```bash
+vimdiff ./usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+```
+
+
+Restart the modpd daemon:
+```bash
+service modpd restart
+```
+
+
+Check if the modpd daemon is running:
+```bash
+service modpd status
+tail -f /usr/local/modpd/var/log/modpd.log
+```
+
+
+
+## File overview
+- ```/etc/init.d/modpd``` init script for the modpd daemon
+- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
+- ```/etc/sysconfig/modpd``` default configuration values for the modpd init script
+- ```/usr/local/modpd/bin/modpd``` modpd daemon
+- ```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
+- ```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
+- ```/usr/local/modpd/var/log/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
+- ```/usr/local/modpd/var/log/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
+- ```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
+- ```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
+- ```/usr/local/nagios/include/modpd.o``` modpd NEB module
+
+
+
+### Daemon options
+- ```service modpd status``` shows the state of the daemon
+- ```service modpd start``` starts the daemon
+- ```service modpd start_error_mode``` starts the daemon in error mode (bash errors are logged)
+- ```service modpd stop``` stops the daemon
+- ```service modpd restart``` restarts the daemon
+- ```service modpd reload``` reloads the daemon (config will be re-readed)
+
+
+
+
+## Backup your modpd installation
+Make a backup of your existing installation:
+```bash
+tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
+                                       /etc/logrotate.d/modpd \
+                                       /etc/sysconfig/modpd \
+                                       /usr/local/modpd/ \
+                                       /usr/local/nagios/include/modpd.o
+```
 
 
 
@@ -528,8 +895,8 @@ Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
 OPTIONS:
    -h           Shows this help.
-   -c           Path to config file. (Default: /usr/local/modpd/etc/modpd.conf)
-   -e           Error mode. Log bash errors additionally to: /usr/local/modpd/var/log/modpd.log
+   -c           Path to config file. (Default: /etc/modpd/modpd.conf)
+   -e           Error mode. Log bash errors additionally to: /var/log/modpd/modpd.log
                 WARNING: This is not intended for use in a production environment!
    -v           Shows detailed version information.
 ```
