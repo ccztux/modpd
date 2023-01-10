@@ -19,26 +19,26 @@
 * [Example log snippets](#example-log-snippets)
    * [modpd daemon log snippet](#modpd-daemon-log-snippet)
    * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
-* [modpd &gt;= 3.x.x](#modpd--3xx)
-   * [Supported monitoring engines](#supported-monitoring-engines)
+* [Supported monitoring engines](#supported-monitoring-engines)
+   * [modpd &lt; 3.x.x](#modpd--3xx)
+   * [modpd &gt;= 3.x.x](#modpd--3xx-1)
+* [modpd &gt;= 3.x.x](#modpd--3xx-2)
    * [Requirements](#requirements)
       * [Required binaries to install modpd](#required-binaries-to-install-modpd)
       * [Required by the daemon part of modpd](#required-by-the-daemon-part-of-modpd)
       * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features)
       * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module)
-   * [Installation](#installation)
-      * [Installation on the monitoring engine site executing the active checks](#installation-on-the-monitoring-engine-site-executing-the-active-checks)
-         * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
-         * [Installation of the modpd NEB modules part](#installation-of-the-modpd-neb-modules-part)
-            * [Add the NEB module to Nagios®](#add-the-neb-module-to-nagios)
-            * [Add the NEB module to Naemon](#add-the-neb-module-to-naemon)
-         * [Installation of the modpd daemon part](#installation-of-the-modpd-daemon-part)
-            * [Create the required linux user and set a password](#create-the-required-linux-user-and-set-a-password)
-            * [Add the user nagios to the modpd group](#add-the-user-nagios-to-the-modpd-group)
-            * [Add the user naemon to the modpd group](#add-the-user-naemon-to-the-modpd-group)
-         * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
-            * [send_nrdp.php](#send_nrdpphp)
-            * [send_nsca](#send_nsca)
+   * [Installation on the monitoring engine site executing the active checks](#installation-on-the-monitoring-engine-site-executing-the-active-checks)
+      * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
+      * [Create the required linux user and set a password](#create-the-required-linux-user-and-set-a-password)
+      * [Add the user nagios to the modpd group](#add-the-user-nagios-to-the-modpd-group)
+      * [Add the user naemon to the modpd group](#add-the-user-naemon-to-the-modpd-group)
+      * [Build the modpd NEB modules and install them and the modpd daemon:](#build-the-modpd-neb-modules-and-install-them-and-the-modpd-daemon)
+      * [Add the NEB module to Nagios®](#add-the-neb-module-to-nagios)
+      * [Add the NEB module to Naemon](#add-the-neb-module-to-naemon)
+   * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
+      * [send_nrdp.php](#send_nrdpphp)
+      * [send_nsca](#send_nsca)
       * [Installation on the monitoring engine site accepting the passive checks](#installation-on-the-monitoring-engine-site-accepting-the-passive-checks)
          * [Installation of the server software (of your choice)](#installation-of-the-server-software-of-your-choice)
             * [NRDP](#nrdp)
@@ -53,17 +53,8 @@
    * [File overview](#file-overview)
    * [Daemon control options](#daemon-control-options)
    * [Backup your modpd installation](#backup-your-modpd-installation)
-* [modpd &lt; 3.x.x](#modpd--3xx-1)
-   * [Supported monitoring engines](#supported-monitoring-engines-1)
-   * [Requirements](#requirements-1)
-      * [Required binaries to install modpd](#required-binaries-to-install-modpd-1)
-      * [Required by the daemon part of modpd](#required-by-the-daemon-part-of-modpd-1)
-      * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features-1)
-      * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module-1)
-   * [File overview](#file-overview-1)
-   * [Daemon control options](#daemon-control-options-1)
+* [modpd &lt; 3.x.x](#modpd--3xx-3)
    * [Backup your modpd installation](#backup-your-modpd-installation-1)
-
 
 
 
@@ -515,9 +506,8 @@ c_stats_enabled="1"
 
 
 
-## Installation
-### Installation on the monitoring engine site executing the active checks
-#### Download the latest sources of modpd
+## Installation on the monitoring engine site executing the active checks
+### Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
 cd /tmp
@@ -527,16 +517,66 @@ cd ccztux-modpd-*
 ```
 
 
-#### Installation of the modpd NEB modules part
-Build the modpd NEB modules:
+### Create the required linux user and set a password
+```bash
+useradd -s /sbin/nologin modpd
+passwd modpd
+```
+
+
+### Add the user nagios to the modpd group
+Do this only, if you use Nagios®!
+```bash
+usermod -aG modpd nagios
+```
+
+
+### Add the user naemon to the modpd group
+Do this only, if you use Naemon!
+```bash
+usermod -aG modpd naemon
+```
+
+
+### Build the modpd NEB modules and install them and the modpd daemon:
 ```bash
 make
 make install
 ```
 
 
+Edit the modpd daemon config to meet your requirements:
+```bash
+vim /etc/modpd/modpd.conf
+```
 
-##### Add the NEB module to Nagios®
+
+Start the modpd daemon:
+```bash
+systemctl start modpd
+```
+
+
+Check if the modpd daemon is running:
+```bash
+systemctl status modpd
+tail -f /var/log/modpd/modpd.log
+```
+
+
+Enable the modpd daemon at system boot:
+```bash
+systemctl enable modpd
+```
+
+
+Check if modpd is activated:
+```bash
+systemctl status modpd
+```
+
+
+### Add the NEB module to Nagios®
 Do this only, if you use Nagios®!
 
 Add the modpd NEB module with the editor of your choice to your Nagios® main config file:
@@ -578,7 +618,7 @@ Check if the modpd NEB module was loaded by nagios:
 
 
 
-##### Add the NEB module to Naemon
+### Add the NEB module to Naemon
 Do this only, if you use Naemon!
 
 Add the modpd NEB module with the editor of your choice to your Naemon main config file:
@@ -620,87 +660,9 @@ Check if the modpd NEB module was loaded by naemon:
 
 
 
-#### Installation of the modpd daemon part
-##### Create the required linux user and set a password
-```bash
-useradd -m -s /sbin/nologin modpd
-passwd modpd
-```
 
-##### Add the user nagios to the modpd group
-Do this only, if you use Nagios®!
-```bash
-usermod -aG modpd nagios
-```
-
-##### Add the user naemon to the modpd group
-Do this only, if you use Naemon!
-```bash
-usermod -aG modpd naemon
-```
-
-Copy the files:
-```bash
-cp -av ./etc/* /etc/
-cp -av ./usr/* /usr/
-cp -av ./var/* /var/
-```
-
-
-Change the file ownerships:
-```bash
-chown root:root /etc/logrotate.d/modpd
-chmod 644 /etc/logrotate.d/modpd
-chown root:root /etc/sysconfig/modpd
-chmod 644 /etc/sysconfig/modpd
-chown -R root:root /etc/modpd/
-chmod 755 /etc/modpd/
-chmod 644 /etc/modpd/*
-chown root:root /usr/bin/modpd
-chmod 755 /usr/bin/modpd
-chown root:root /usr/lib64/modpd/
-chmod 755 /usr/lib64/modpd/
-chown root:root /usr/libexec/modpd/
-chmod 755 /usr/libexec/modpd/
-chown modpd:modpd /var/lib/modpd/
-chmod 755 /var/lib/modpd/
-
-```
-
-
-Edit the modpd daemon config to meet your requirements:
-```bash
-vim /etc/modpd/modpd.conf
-```
-
-
-Start the modpd daemon:
-```bash
-systemctl start modpd
-```
-
-
-Check if the modpd daemon is running:
-```bash
-systemctl status modpd
-tail -f /var/log/modpd/modpd.log
-```
-
-
-Enable the modpd daemon at system boot:
-```bash
-systemctl enable modpd
-```
-
-
-Check if modpd is activated:
-```bash
-systemctl status modpd
-```
-
-
-#### Installation of the clients (of your choice)
-##### send_nrdp.php
+## Installation of the clients (of your choice)
+### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 
@@ -725,7 +687,7 @@ chown modpd:modpd /usr/libexec/modpd/send_nrdp.php
 ```
 
 
-##### send_nsca
+### send_nsca
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
@@ -763,6 +725,7 @@ Edit the send_nsca config to meet your requirements:
 ```bash
 vim /etc/modpd/send_nsca.cfg
 ```
+
 
 
 ### Installation on the monitoring engine site accepting the passive checks
