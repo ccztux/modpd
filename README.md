@@ -137,7 +137,7 @@ OPTIONS:
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
@@ -231,7 +231,7 @@ c_nrdp_password="mySecret"
 #----------------------------------------------------------------------
 
 # define the path to the config file of send_nsca binary
-c_nsca_config_file="/usr/local/nagios/etc/send_nsca.cfg"
+c_nsca_config_file="/etc/modpd/send_nsca.cfg"
 
 
 
@@ -530,8 +530,8 @@ make install
 
 
 
-##### Nagios®
-Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
+##### Add the NEB module to Nagios®
+Add the modpd NEB module with the editor of your choice to your Nagios® main config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
 ```bash
@@ -570,8 +570,8 @@ Check if the modpd NEB module was loaded by nagios:
 
 
 
-##### Naemon
-Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
+##### Add the NEB module to Naemon
+Add the modpd NEB module with the editor of your choice to your Naemon main config file:
 
 (Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
 ```bash
@@ -611,19 +611,18 @@ Check if the modpd NEB module was loaded by naemon:
 
 
 #### Installation of the modpd daemon part
-Create the required linux user and set a password
+##### Create the required linux user and set a password
 ```bash
 useradd -m -s /sbin/nologin modpd
 passwd modpd
 ```
 
-Add the user your monitoring engine runs as to the modpd group
-For Nagios®:
+##### Add the user nagios to the modpd group
 ```bash
 usermod -aG modpd nagios
 ```
 
-For Naemon:
+##### Add the user naemon to the modpd group
 ```bash
 usermod -aG modpd naemon
 ```
@@ -889,7 +888,7 @@ tail -f /var/log/modpd/modpd.log
 
 
 
-### Daemon control options
+## Daemon control options
 - ```systemctl status modpd``` shows the state of the daemon
 - ```systemctl start modpd``` starts the daemon
 - ```systemctl stop modpd``` stops the daemon
@@ -974,7 +973,7 @@ tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/logrotate.d/modpd \
 
 
 
-### Daemon control options
+## Daemon control options
 - ```service modpd status``` shows the state of the daemon
 - ```service modpd start``` starts the daemon
 - ```service modpd start_error_mode``` starts the daemon in error mode (bash errors are logged)
