@@ -137,7 +137,7 @@ something in the configuration, because in case of a restart more than one datas
 
 
 ### Required by the daemon part of modpd
-- **systemcl** to control the modpd daemon
+- **systemctl** to control the modpd daemon
 - **bash** (version >= 3)
 - **whoami** to check the user who has started modpd
 - **pgrep** to check if an instance of modpd is already running
@@ -390,7 +390,7 @@ cp -av ./sample-config/send_nsca.cfg /etc/modpd/
 Change the file ownerships:
 ```bash
 chown modpd:modpd /usr/libexec/modpd/send_nsca
-chown modpd:modpd /etc/modpd/
+chown modpd:modpd /etc/modpd/send_nsca.cfg
 ```
 
 
@@ -438,26 +438,52 @@ make install
 
 
 
-Restart your monitoring engine:
+##### Nagios
+Restart nagios:
 ```bash
-service nagios restart
+systemctl restart nagios
 ```
 
 
 
 Check if your monitoring engine is running:
 ```bash
-service nagios status
+systemctl status nagios
 ```
 
 
 
-Check if the modpd NEB module was loaded by your monitoring engine:
+Check if the modpd NEB module was loaded by naemon:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
-[1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_nagios3.o' initialized successfully.
+```
+
+
+
+##### Naemon
+Restart naemon:
+```bash
+systemctl restart naemon
+```
+
+
+
+Check if naemon is running:
+```bash
+systemctl status naemon
+```
+
+
+
+Check if the modpd NEB module was loaded by naemon:
+```bash
+[root@lab01]:~# grep -i modpd /var/log/naemon/naemon.log
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
 ```
 
 
@@ -484,46 +510,47 @@ chmod 644 /etc/sysconfig/modpd
 
 Merge possible changes between the new sample config and your productive one using the tool of your choice like vimdiff:
 ```bash
-vimdiff ./usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+vimdiff ./etc/modpd/modpd.sample.conf /etc/modpd/modpd.conf
 ```
 
 
 Restart the modpd daemon:
 ```bash
-service modpd restart
+systemctl restart modpd
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-service modpd status
-tail -f /usr/local/modpd/var/log/modpd.log
+systemctl status modpd
+tail -f /var/log/modpd/modpd.log
 ```
 
 
 
 ## File overview
-- ```/etc/init.d/modpd``` init script for the modpd daemon
 - ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
-- ```/etc/sysconfig/modpd``` default configuration values for the modpd init script
-- ```/usr/local/modpd/bin/modpd``` modpd daemon
-- ```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
-- ```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
-- ```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
-- ```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
-- ```/usr/local/nagios/include/modpd.o``` modpd NEB module
+- ```/etc/sysconfig/modpd``` default configuration values for the system unit file
+- ```/usr/bin/modpd``` modpd daemon
+- ```/etc/modpd/modpd.conf``` configuration file for the modpd daemon
+- ```/etc/modpd/modpd.sample.conf``` sample configuration file for the modpd daemon
+- ```/usr/lib/systemd/system/modpd.service``` systemd unit file for modpd
+- ```/usr/lib64/modpd/modpd_nagios3.o``` modpd NEB module for Nagios® 3.x.x
+- ```/usr/lib64/modpd/modpd_naemon.o``` modpd NEB module for Naemon 1.3.x
+- ```/var/lib/modpd/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
+- ```/var/lib/modpd/rw/modpd.cmd``` named pipe (will be created by the daemon)
+- ```/var/log/modpd/modpd.log``` modpd daemon logfile (will be created by the daemon)
+- ```/var/log/modpd/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
+- ```/var/log/modpd/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
 
 
 
 ### Daemon options
-- ```service modpd status``` shows the state of the daemon
-- ```service modpd start``` starts the daemon
-- ```service modpd start_error_mode``` starts the daemon in error mode (bash errors are logged)
-- ```service modpd stop``` stops the daemon
-- ```service modpd restart``` restarts the daemon
-- ```service modpd reload``` reloads the daemon (config will be re-readed)
+- ```systemctl status modpd``` shows the state of the daemon
+- ```systemctl start modpd``` starts the daemon
+- ```systemctl stop modpd``` stops the daemon
+- ```systemctl restart modpd``` restarts the daemon
+- ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
 
 
 
@@ -531,11 +558,14 @@ tail -f /usr/local/modpd/var/log/modpd.log
 ## Backup your modpd installation
 Make a backup of your existing installation:
 ```bash
-tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
-                                       /etc/logrotate.d/modpd \
+tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/logrotate.d/modpd \
+                                       /etc/modpd/ \
                                        /etc/sysconfig/modpd \
-                                       /usr/local/modpd/ \
-                                       /usr/local/nagios/include/modpd.o
+                                       /usr/bin/modpd \
+                                       /usr/lib/systemd/system/modpd.service \
+                                       /usr/lib64/modpd/ \
+                                       /var/lib/modpd/ \
+                                       /var/log/modpd/
 ```
 
 
