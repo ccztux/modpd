@@ -54,10 +54,20 @@
 
 modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
 it to a named pipe. The daemon part reads the data from the named pipe and sends the check results
-via NRDP or NSCA to another Nagios® server. It increases the performance of an existing Nagios® 3.x.x
-installation greatly, because the obsessing commands will be executed by modpd and not by the Nagios®
-process itself. Nagios® executes the obsessing command after every check, where obsessing is activated
-and then Nagios® waits, till every obsessing command was executed successfully or timed out.
+via NRDP or NSCA to another monitoring server.
+
+
+# What was the motivation to develop modpd?
+There were two reasons:
+
+1.) Performance
+It increases the performance of an existing Nagios® 3.x.x installation greatly, because the obsessing
+commands will be executed by modpd and not by the Nagios® process itself. Nagios® executes the obsessing
+command after every check, where obsessing is activated and then Nagios® waits, till every obsessing
+command was executed successfully or timed out.
+
+2.) Nagios® 3.x.x stops executing active checks
+On some systems Nagios® 3.x.x stops randomly executing active checks when obsessing is enabled.
 
 
 
@@ -66,12 +76,6 @@ and then Nagios® waits, till every obsessing command was executed successfully 
 If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
 Nevertheless you should prefere the reload function over the restart function if you have only changed
 something in the configuration, because in case of a restart more than one datasets are getting lost.
-
-
-
-# Supported monitoring engines
-* Nagios® 3.4.x
-* Naemon 1.3.x
 
 
 
@@ -84,8 +88,15 @@ something in the configuration, because in case of a restart more than one datas
 [Nagios®](https://www.nagios.org/), Nagios Core, NRDP, NSCA, and the Nagios logo are trademarks, servicemarks, registered servicemarks or registered trademarks of Nagios Enterprises. All other trademarks, servicemarks, registered trademarks, and registered servicemarks mentioned herein may be the property of their respective owner(s). The information contained herein is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
-# Required binaries
-## Required binaries to install modpd
+
+# modpd >= 3.x.x
+## Supported monitoring engines
+* Nagios® 3.4.x
+* Naemon 1.3.x
+
+
+## Requirements
+### Required binaries to install modpd
 - **wget** to download the latest release of modpd
 - **tar** to untar the downloaded package of modpd
 - **cp** to copy the files
@@ -93,7 +104,8 @@ something in the configuration, because in case of a restart more than one datas
 - **chmod** to change the permission of files
 
 
-## Required by the daemon part of modpd
+### Required by the daemon part of modpd
+- **systemcl** to control the modpd daemon
 - **bash** (version >= 3)
 - **whoami** to check the user who has started modpd
 - **pgrep** to check if an instance of modpd is already running
@@ -106,14 +118,58 @@ something in the configuration, because in case of a restart more than one datas
 - **logrotate** to rotate modpd's logfile
 
 
-## Optionally used binaries which depends on configured features
+### Optionally used binaries which depends on configured features
 - **logger** to log to the system log
 - **systemd-cat** to log to the system journal
 - **timeout** to start the obsessing jobs with a timeout value
 - **php** in case obsessing_interface is nrdp
 
 
-## Required for building, compiling and installing the modpd NEB module
+### Required for building, compiling and installing the modpd NEB module
+- **make** to build the modpd NEB module
+- **gcc** to compile the modpd NEB module
+- **install** to install the modpd NEB module
+- **strip** to strip the modpd NEB binary
+
+
+
+# modpd < 3.x.x
+## Supported monitoring engines
+* Nagios® 3.4.x
+
+
+
+## Requirements
+### Required binaries to install modpd
+- **wget** to download the latest release of modpd
+- **tar** to untar the downloaded package of modpd
+- **cp** to copy the files
+- **chown** to change the ownership of files
+- **chmod** to change the permission of files
+
+
+### Required by the daemon part of modpd
+- **service** to control the modpd daemon
+- **bash** (version >= 3)
+- **whoami** to check the user who has started modpd
+- **pgrep** to check if an instance of modpd is already running
+- **date** for logging purposes (Only required if bash version < 4.2, else bash's printf builtin will be used.)
+- **rm** to delete the named_pipe_filename
+- **mkdir** to create directories
+- **mkfifo** to create the named_pipe_filename
+- **kill** to send signals to modpd
+- **sleep** to do nothing :)
+- **logrotate** to rotate modpd's logfile
+
+
+### Optionally used binaries which depends on configured features
+- **logger** to log to the system log
+- **systemd-cat** to log to the system journal
+- **timeout** to start the obsessing jobs with a timeout value
+- **php** in case obsessing_interface is nrdp
+
+
+### Required for building, compiling and installing the modpd NEB module
 - **make** to build the modpd NEB module
 - **gcc** to compile the modpd NEB module
 - **install** to install the modpd NEB module
