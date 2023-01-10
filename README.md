@@ -44,7 +44,7 @@
    * [Make a backup](#make-a-backup)
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
    * [Build the modpd NEB modules and install them and the modpd daemon](#build-the-modpd-neb-modules-and-install-them-and-the-modpd-daemon-1)
-   * [Restart you monitoring engine](#restart-you-monitoring-engine)
+   * [Restart your monitoring engine](#restart-your-monitoring-engine)
       * [Nagios](#nagios)
       * [Naemon](#naemon)
    * [Check and merge eventual new configuration variables](#check-and-merge-eventual-new-configuration-variables)
@@ -412,7 +412,7 @@ make install
 
 
 
-## Restart you monitoring engine
+## Restart your monitoring engine
 ### Nagios
 Restart nagios:
 ```bash
