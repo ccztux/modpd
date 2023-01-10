@@ -51,12 +51,12 @@
       * [tbd](#tbd)
 * [The daemon](#the-daemon)
    * [Daemon help output](#daemon-help-output)
-   * [Default sample config](#default-sample-config)
-* [Example log snippets](#example-log-snippets)
-   * [modpd daemon log snippet](#modpd-daemon-log-snippet)
-   * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
    * [File overview](#file-overview)
    * [Daemon control options](#daemon-control-options)
+   * [Default sample config](#default-sample-config)
+   * [Example log snippets](#example-log-snippets)
+      * [modpd daemon log snippet](#modpd-daemon-log-snippet)
+      * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
 * [Backup your modpd installation](#backup-your-modpd-installation)
 * [Upgrading modpd from 2.x.x to 3.x.x](#upgrading-modpd-from-2xx-to-3xx)
    * [Backup your modpd installation](#backup-your-modpd-installation-1)
@@ -508,6 +508,32 @@ OPTIONS:
 
 
 
+## File overview
+- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
+- ```/etc/sysconfig/modpd``` default configuration values for the system unit file
+- ```/usr/bin/modpd``` modpd daemon
+- ```/etc/modpd/modpd.conf``` configuration file for the modpd daemon
+- ```/etc/modpd/modpd.sample.conf``` sample configuration file for the modpd daemon
+- ```/usr/lib/systemd/system/modpd.service``` systemd unit file for modpd
+- ```/usr/lib64/modpd/modpd_nagios3.o``` modpd NEB module for Nagios® 3.x.x
+- ```/usr/lib64/modpd/modpd_naemon.o``` modpd NEB module for Naemon 1.3.x
+- ```/var/lib/modpd/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
+- ```/var/lib/modpd/rw/modpd.cmd``` named pipe (will be created by the daemon)
+- ```/var/log/modpd/modpd.log``` modpd daemon logfile (will be created by the daemon)
+- ```/var/log/modpd/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
+- ```/var/log/modpd/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
+
+
+
+## Daemon control options
+- ```systemctl status modpd``` shows the state of the daemon
+- ```systemctl start modpd``` starts the daemon
+- ```systemctl stop modpd``` stops the daemon
+- ```systemctl restart modpd``` restarts the daemon
+- ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
+
+
+
 ## Default sample config
 ```bash
 #!/usr/bin/env bash
@@ -745,8 +771,8 @@ c_stats_enabled="1"
 
 
 
-# Example log snippets
-## modpd daemon log snippet
+## Example log snippets
+### modpd daemon log snippet
 ```
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/etc/modpd/modpd.conf'
@@ -829,7 +855,7 @@ c_stats_enabled="1"
 ```
 
 
-## modpd NEB module log snippet
+### modpd NEB module log snippet
 ```
 [1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1607849563] modpd: Starting...
@@ -842,32 +868,6 @@ c_stats_enabled="1"
 [1607850463] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9684 (OK: 9684/NOK: 0), Services: 7452 (OK: 7452/NOK: 0) ***
 [1607850763] modpd: The modpd NEB module is running 0d 0h 20m 0s
 ```
-
-
-## File overview
-- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
-- ```/etc/sysconfig/modpd``` default configuration values for the system unit file
-- ```/usr/bin/modpd``` modpd daemon
-- ```/etc/modpd/modpd.conf``` configuration file for the modpd daemon
-- ```/etc/modpd/modpd.sample.conf``` sample configuration file for the modpd daemon
-- ```/usr/lib/systemd/system/modpd.service``` systemd unit file for modpd
-- ```/usr/lib64/modpd/modpd_nagios3.o``` modpd NEB module for Nagios® 3.x.x
-- ```/usr/lib64/modpd/modpd_naemon.o``` modpd NEB module for Naemon 1.3.x
-- ```/var/lib/modpd/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
-- ```/var/lib/modpd/rw/modpd.cmd``` named pipe (will be created by the daemon)
-- ```/var/log/modpd/modpd.log``` modpd daemon logfile (will be created by the daemon)
-- ```/var/log/modpd/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
-- ```/var/log/modpd/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
-
-
-
-## Daemon control options
-- ```systemctl status modpd``` shows the state of the daemon
-- ```systemctl start modpd``` starts the daemon
-- ```systemctl stop modpd``` stops the daemon
-- ```systemctl restart modpd``` restarts the daemon
-- ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
-
 
 
 
