@@ -91,14 +91,12 @@ via NRDP or NSCA to another monitoring server.
 There were two reasons:
 
 1. Performance
-
 It increases the performance of an existing Nagios® 3.x.x installation greatly, because the obsessing
 commands will be executed by modpd and not by the Nagios® process itself. Nagios® executes the obsessing
 command after every check, where obsessing is activated and then Nagios® waits, till every obsessing
 command was executed successfully or timed out.
 
 2. Nagios® 3.x.x stops executing active checks
-
 On some systems Nagios® 3.x.x stops randomly executing active checks when obsessing is enabled.
 
 
