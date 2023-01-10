@@ -21,7 +21,7 @@
    * [Required by the daemon part of modpd](#required-by-the-daemon-part-of-modpd)
    * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features)
    * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module)
-* [Installation on the monitoring engine site executing the active checks](#installation-on-the-monitoring-engine-site-executing-the-active-checks)
+* [Installation on the monitoring site which executes the active checks](#installation-on-the-monitoring-site-which-executes-the-active-checks)
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
    * [Create the required linux user and set a password](#create-the-required-linux-user-and-set-a-password)
    * [Add the user nagios to the modpd group](#add-the-user-nagios-to-the-modpd-group)
@@ -32,22 +32,26 @@
    * [Check if the modpd daemon is running](#check-if-the-modpd-daemon-is-running)
    * [Enable the modpd daemon at system boot](#enable-the-modpd-daemon-at-system-boot)
    * [Check if modpd is activated](#check-if-modpd-is-activated)
-   * [Add the NEB module to Nagios®](#add-the-neb-module-to-nagios)
-   * [Add the NEB module to Naemon](#add-the-neb-module-to-naemon)
+   * [Add the NEB module to your monitoring engine](#add-the-neb-module-to-your-monitoring-engine)
+      * [Add the NEB module to Nagios®](#add-the-neb-module-to-nagios)
+      * [Add the NEB module to Naemon](#add-the-neb-module-to-naemon)
    * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
       * [send_nrdp.php](#send_nrdpphp)
       * [send_nsca](#send_nsca)
-* [Installation on the monitoring engine site accepting the passive checks](#installation-on-the-monitoring-engine-site-accepting-the-passive-checks)
+* [Installation on the monitoring site which accepts the passive checks](#installation-on-the-monitoring-site-which-accepts-the-passive-checks)
    * [Installation of the server software (of your choice)](#installation-of-the-server-software-of-your-choice)
       * [NRDP](#nrdp)
       * [NSCA](#nsca)
 * [Updating modpd](#updating-modpd)
    * [Make a backup](#make-a-backup)
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
-   * [Updating the modpd NEB module](#updating-the-modpd-neb-module)
-   * [Nagios](#nagios)
-   * [Naemon](#naemon)
-   * [tbd](#tbd)
+   * [Build the modpd NEB modules and install them and the modpd daemon](#build-the-modpd-neb-modules-and-install-them-and-the-modpd-daemon-1)
+   * [Restart you monitoring engine](#restart-you-monitoring-engine)
+      * [Nagios](#nagios)
+      * [Naemon](#naemon)
+   * [Check and merge eventual new configuration variables](#check-and-merge-eventual-new-configuration-variables)
+   * [Restart the modpd daemon:](#restart-the-modpd-daemon)
+   * [Check if the modpd daemon is running:](#check-if-the-modpd-daemon-is-running-1)
 * [The daemon](#the-daemon)
    * [Daemon help output](#daemon-help-output)
    * [File overview](#file-overview)
@@ -153,7 +157,7 @@ something in the configuration, because in case of a restart more than one datas
 
 
 
-# Installation on the monitoring engine site executing the active checks
+# Installation on the monitoring site which executes the active checks
 ## Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
@@ -223,7 +227,8 @@ systemctl status modpd
 ```
 
 
-## Add the NEB module to Nagios®
+## Add the NEB module to your monitoring engine
+### Add the NEB module to Nagios®
 Do this only, if you use Nagios®!
 
 Add the modpd NEB module with the editor of your choice to your Nagios® main config file:
@@ -241,18 +246,15 @@ Set the eventbroker options with the editor of your choice in your main nagios c
 event_broker_options=-1
 ```
 
-
 Restart nagios:
 ```bash
 systemctl restart nagios
 ```
 
-
 Check if nagios is running:
 ```bash
 systemctl status nagios
 ```
-
 
 
 Check if the modpd NEB module was loaded by nagios:
@@ -265,7 +267,7 @@ Check if the modpd NEB module was loaded by nagios:
 
 
 
-## Add the NEB module to Naemon
+### Add the NEB module to Naemon
 Do this only, if you use Naemon!
 
 Add the modpd NEB module with the editor of your choice to your Naemon main config file:
@@ -283,18 +285,15 @@ Set the eventbroker options with the editor of your choice in your main naemon c
 event_broker_options=-1
 ```
 
-
 Restart naemon:
 ```bash
 systemctl restart naemon
 ```
 
-
 Check if naemon is running:
 ```bash
 systemctl status naemon
 ```
-
 
 
 Check if the modpd NEB module was loaded by naemon:
@@ -375,7 +374,7 @@ vim /etc/modpd/send_nsca.cfg
 
 
 
-# Installation on the monitoring engine site accepting the passive checks
+# Installation on the monitoring site which accepts the passive checks
 ## Installation of the server software (of your choice)
 ### NRDP
 
@@ -390,7 +389,7 @@ vim /etc/modpd/send_nsca.cfg
 
 # Updating modpd
 ## Make a backup
-Make a backup of your existing installation as described [here](https://github.com/ccztux/modpd#backup-your-modpd-installation)
+Make a backup of your existing installation as described [here](#backup-your-modpd-installation)
 
 
 ## Download the latest sources of modpd
@@ -404,8 +403,7 @@ cd ccztux-modpd-*
 
 
 
-## Updating the modpd NEB module
-Build the modpd NEB module:
+## Build the modpd NEB modules and install them and the modpd daemon
 ```bash
 make
 make install
@@ -413,22 +411,20 @@ make install
 
 
 
-## Nagios
+## Restart you monitoring engine
+### Nagios
 Restart nagios:
 ```bash
 systemctl restart nagios
 ```
 
-
-
-Check if your monitoring engine is running:
+Check if nagios is running:
 ```bash
 systemctl status nagios
 ```
 
 
-
-Check if the modpd NEB module was loaded by naemon:
+Check if the modpd NEB module was loaded by nagios:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
 [1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
@@ -438,19 +434,17 @@ Check if the modpd NEB module was loaded by naemon:
 
 
 
-## Naemon
+### Naemon
 Restart naemon:
 ```bash
 systemctl restart naemon
 ```
 
 
-
 Check if naemon is running:
 ```bash
 systemctl status naemon
 ```
-
 
 
 Check if the modpd NEB module was loaded by naemon:
@@ -463,21 +457,21 @@ Check if the modpd NEB module was loaded by naemon:
 
 
 
-## tbd
+## Check and merge eventual new configuration variables
 Merge possible changes between the new sample config and your productive one using the tool of your choice like vimdiff:
 ```bash
 vimdiff /etc/modpd/modpd.sample.conf /etc/modpd/modpd.conf
 ```
 
 
-Restart the modpd daemon:
+## Restart the modpd daemon:
 ```bash
 systemctl daemon-reload
 systemctl restart modpd
 ```
 
 
-Check if the modpd daemon is running:
+## Check if the modpd daemon is running:
 ```bash
 systemctl status modpd
 tail -f /var/log/modpd/modpd.log
