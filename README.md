@@ -8,7 +8,6 @@
 
 
 # Table of contents
-* [Table of contents](#table-of-contents)
 * [What is modpd?](#what-is-modpd)
 * [What was the motivation to develop modpd?](#what-was-the-motivation-to-develop-modpd)
 * [Flowchart](#flowchart)
@@ -214,7 +213,6 @@ make install
 Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
 ```bash
 broker_module=/usr/local/nagios/include/modpd.o
 ```
@@ -224,7 +222,6 @@ broker_module=/usr/local/nagios/include/modpd.o
 Set the eventbroker options with the editor of your choice in your main nagios config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
 ```bash
 event_broker_options=-1
 ```
@@ -780,25 +777,25 @@ c_stats_enabled="1"
 ## modpd daemon log snippet
 ```
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
-2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'
+2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/etc/modpd/modpd.conf'
 2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
 2021-01-07 16:10:01 |   7084 |                 getExecUser | modpd was started as user: 'nagios'
 2021-01-07 16:10:01 |   7084 |            checkBashVersion | Checking bash version...
 2021-01-07 16:10:01 |   7084 |            checkBashVersion | Bash version: '4' meets requirements
 2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
-2021-01-07 16:10:01 |   7084 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
+2021-01-07 16:10:01 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
 2021-01-07 16:10:01 |   7084 |                   checkLock | Lock file doesnt exist
-2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running)
-2021-01-07 16:10:01 |   7084 |                     setLock | Check if daemon lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
+2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/var/lib/modpd/lock/modpd.lock' doesnt exist and no processes are running)
+2021-01-07 16:10:01 |   7084 |                     setLock | Check if daemon lock directory: '/var/lib/modpd/lock' exists and permissions to set lock are ok...
 2021-01-07 16:10:01 |   7084 |                     setLock | Script lock directory exists and permissions are ok
 2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock...
 2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock was successful
-2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
 2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Named pipe doesnt exist
 2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe...
 2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe was successful
 2021-01-07 16:10:01 |   7084 |             buildJobCommand | Building job command...
-2021-01-07 16:10:01 |   7084 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
+2021-01-07 16:10:01 |   7084 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/libexec/modpd/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
 2021-01-07 16:10:01 |   7084 |                       _main | Ready to handle jobs...
 2021-01-07 16:11:01 |   7084 |               dataProcessor | WARNING: No monitoring data received within the last 60 seconds! Is the monitoring system running?
 2021-01-07 16:15:03 |   7084 |                    logStats | -------------- Stats for the last 302 seconds --------------
@@ -846,11 +843,11 @@ c_stats_enabled="1"
 2021-01-07 16:15:31 |   7084 |                    logStats | Invalid datasets received: '0'
 2021-01-07 16:15:31 |   7084 |                    logStats |
 2021-01-07 16:15:31 |   7084 |               signalHandler | Caught: 'EXIT', shutting down...
-2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
 2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Named pipe exists and it is read/writeable
 2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Remove named pipe...
 2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Removing named pipe was successful
-2021-01-07 16:15:31 |   7084 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
+2021-01-07 16:15:31 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
 2021-01-07 16:15:31 |   7084 |                   checkLock | Lock file exists and it is read/writeable
 2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock...
 2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock was successful
@@ -864,7 +861,7 @@ c_stats_enabled="1"
 ```
 [1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1607849563] modpd: Starting...
-[1607849563] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
+[1607849563] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
 [1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s
 [1607849863] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9941 (OK: 9941/NOK: 0), Services: 7127 (OK: 7077/NOK: 50) ***
 [1607850163] modpd: The modpd NEB module is running 0d 0h 10m 0s
