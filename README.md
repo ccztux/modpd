@@ -60,22 +60,14 @@ via NRDP or NSCA to another monitoring server.
 # What was the motivation to develop modpd?
 There were two reasons:
 
-1.) Performance
+1. Performance
 It increases the performance of an existing Nagios® 3.x.x installation greatly, because the obsessing
 commands will be executed by modpd and not by the Nagios® process itself. Nagios® executes the obsessing
 command after every check, where obsessing is activated and then Nagios® waits, till every obsessing
 command was executed successfully or timed out.
 
-2.) Nagios® 3.x.x stops executing active checks
+2. Nagios® 3.x.x stops executing active checks
 On some systems Nagios® 3.x.x stops randomly executing active checks when obsessing is enabled.
-
-
-
-# Known Issues
-* [Reloading modpd is causing one invalid dataset #118](https://github.com/ccztux/modpd/issues/118)
-If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
-Nevertheless you should prefere the reload function over the restart function if you have only changed
-something in the configuration, because in case of a restart more than one datasets are getting lost.
 
 
 
@@ -86,6 +78,16 @@ something in the configuration, because in case of a restart more than one datas
 
 # Registered trademarks
 [Nagios®](https://www.nagios.org/), Nagios Core, NRDP, NSCA, and the Nagios logo are trademarks, servicemarks, registered servicemarks or registered trademarks of Nagios Enterprises. All other trademarks, servicemarks, registered trademarks, and registered servicemarks mentioned herein may be the property of their respective owner(s). The information contained herein is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+# Known Issues
+* [Reloading modpd is causing one invalid dataset #118](https://github.com/ccztux/modpd/issues/118)
+If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
+Nevertheless you should prefere the reload function over the restart function if you have only changed
+something in the configuration, because in case of a restart more than one datasets are getting lost.
+
+
 
 
 
@@ -150,6 +152,7 @@ something in the configuration, because in case of a restart more than one datas
 
 ### Required by the daemon part of modpd
 - **service** to control the modpd daemon
+- **chkconfig** to enable/disable the modpd daemon at startup
 - **bash** (version >= 3)
 - **whoami** to check the user who has started modpd
 - **pgrep** to check if an instance of modpd is already running
@@ -177,9 +180,9 @@ something in the configuration, because in case of a restart more than one datas
 
 
 
-# Installation
-## Installation on the monitoring engine site executing the active checks
-### Download the latest sources of modpd
+## Installation
+### Installation on the monitoring engine site executing the active checks
+#### Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
 cd /tmp
@@ -189,7 +192,7 @@ cd ccztux-modpd-*
 ```
 
 
-### Installation of the modpd NEB module part
+#### Installation of the modpd NEB module part
 Build the modpd NEB module:
 ```bash
 make
@@ -219,16 +222,14 @@ event_broker_options=-1
 
 Restart your monitoring engine:
 ```bash
-systemctl restart nagios
-systemctl restart naemon
+service nagios restart
 ```
 
 
 
 Check if naemon is running:
 ```bash
-systemctl status nagios
-systemctl status naemon
+service nagios status
 ```
 
 
@@ -236,14 +237,14 @@ systemctl status naemon
 Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
 
 
 
-### Installation of the modpd daemon part
+#### Installation of the modpd daemon part
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
@@ -277,13 +278,13 @@ vim /usr/local/modpd/etc/modpd.conf
 
 Start the modpd daemon:
 ```bash
-systemctl start modpd
+service modpd start
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-systemctl status modpd
+service modpd status
 tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
@@ -301,8 +302,8 @@ chkconfig --list modpd
 ```
 
 
-### Installation of the clients (of your choice)
-#### send_nrdp.php
+#### Installation of the clients (of your choice)
+##### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 
@@ -327,7 +328,7 @@ chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
 ```
 
 
-#### send_nsca
+##### send_nsca
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
@@ -367,25 +368,25 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 ```
 
 
-## Installation on the monitoring engine site accepting the passive checks
-### Installation of the server software (of your choice)
-#### NRDP
+### Installation on the monitoring engine site accepting the passive checks
+#### Installation of the server software (of your choice)
+##### NRDP
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 
 
-#### NSCA
+##### NSCA
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
 
 
-# Updating modpd
-## Make a backup
+## Updating modpd
+### Make a backup
 Make a backup of your existing installation as described [here](https://github.com/ccztux/modpd#backup-your-modpd-installation)
 
 
-## Download the latest sources of modpd
+### Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
 cd /tmp
@@ -396,7 +397,7 @@ cd ccztux-modpd-*
 
 
 
-## Updating the modpd NEB module
+### Updating the modpd NEB module
 Build the modpd NEB module:
 ```bash
 make
@@ -407,16 +408,14 @@ make install
 
 Restart your monitoring engine:
 ```bash
-systemctl restart nagios
-systemctl restart naemon
+service nagios restart
 ```
 
 
 
 Check if your monitoring engine is running:
 ```bash
-systemctl status nagios
-systemctl status naemon
+service nagios status
 ```
 
 
@@ -424,14 +423,14 @@ systemctl status naemon
 Check if the modpd NEB module was loaded by your monitoring engine:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved, Version: 2.3.1
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
 ```
 
 
 
-## Updating the modpd daemon
+### Updating the modpd daemon
 Copy the files:
 ```bash
 cp -av ./usr/local/modpd/ /usr/local/
@@ -459,19 +458,19 @@ vimdiff ./usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
 
 Restart the modpd daemon:
 ```bash
-systemctl restart modpd
+service modpd restart
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-systemctl status modpd
+service modpd status
 tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
 
 
-# File overview
+## File overview
 - ```/etc/init.d/modpd``` init script for the modpd daemon
 - ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
 - ```/etc/sysconfig/modpd``` default configuration values for the modpd init script
@@ -486,7 +485,18 @@ tail -f /usr/local/modpd/var/log/modpd.log
 
 
 
-# Backup your modpd installation
+### Daemon options
+- ```service modpd status``` shows the state of the daemon
+- ```service modpd start``` starts the daemon
+- ```service modpd start_error_mode``` starts the daemon in error mode (bash errors are logged)
+- ```service modpd stop``` stops the daemon
+- ```service modpd restart``` restarts the daemon
+- ```service modpd reload``` reloads the daemon (config will be re-readed)
+
+
+
+
+## Backup your modpd installation
 Make a backup of your existing installation:
 ```bash
 tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
@@ -504,7 +514,7 @@ tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2021-01-07
+Last modification:      2023-01-09
 Version:                3.0.0
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
@@ -519,16 +529,6 @@ OPTIONS:
 
 
 
-## Daemon options
-- ```systemctl status modpd``` shows the state of the daemon
-- ```systemctl start modpd``` starts the daemon
-- ```systemctl stop modpd``` stops the daemon
-- ```systemctl restart modpd``` restarts the daemon
-- ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
-
-
-
-
 ## Default sample config
 ```bash
 #!/usr/bin/env bash
@@ -539,12 +539,12 @@ OPTIONS:
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2021-01-07
+#						2023-01-09
 #
 #  Version				3.0.0
 #
@@ -769,13 +769,6 @@ c_stats_enabled="1"
 # Example log snippets
 ## modpd daemon log snippet
 ```
-10:10:58 [root@lab01]:~# systemctl status modpd
-modpd (PID 7084) is running                               [  OK  ]
-
-10:11:22 [root@lab01]:~# systemctl stop modpd
-Stopping modpd                                             [  OK  ]
-
-10:11:25 [root@lab01]:~# grep 7084 /usr/local/modpd/var/log/modpd.log
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'
 2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
@@ -859,7 +852,6 @@ Stopping modpd                                             [  OK  ]
 
 ## modpd NEB module log snippet
 ```
-10:11:39 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
 [1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1607849563] modpd: Starting...
 [1607849563] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
