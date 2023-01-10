@@ -29,9 +29,7 @@
    * [Build the modpd NEB modules and install them and the modpd daemon](#build-the-modpd-neb-modules-and-install-them-and-the-modpd-daemon)
    * [Edit the modpd daemon config to meet your requirements](#edit-the-modpd-daemon-config-to-meet-your-requirements)
    * [Start the modpd daemon](#start-the-modpd-daemon)
-   * [Check if the modpd daemon is running](#check-if-the-modpd-daemon-is-running)
    * [Enable the modpd daemon at system boot](#enable-the-modpd-daemon-at-system-boot)
-   * [Check if modpd is activated](#check-if-modpd-is-activated)
    * [Add the NEB module to your monitoring engine](#add-the-neb-module-to-your-monitoring-engine)
       * [Add the NEB module to Nagios®](#add-the-neb-module-to-nagios)
       * [Add the NEB module to Naemon](#add-the-neb-module-to-naemon)
@@ -50,8 +48,7 @@
       * [Nagios](#nagios)
       * [Naemon](#naemon)
    * [Check and merge eventual new configuration variables](#check-and-merge-eventual-new-configuration-variables)
-   * [Restart the modpd daemon:](#restart-the-modpd-daemon)
-   * [Check if the modpd daemon is running:](#check-if-the-modpd-daemon-is-running-1)
+   * [Restart the modpd daemon](#restart-the-modpd-daemon)
 * [The daemon](#the-daemon)
    * [Daemon help output](#daemon-help-output)
    * [File overview](#file-overview)
@@ -63,6 +60,12 @@
 * [Backup your modpd installation](#backup-your-modpd-installation)
 * [Upgrading modpd from 2.x.x to 3.x.x](#upgrading-modpd-from-2xx-to-3xx)
    * [Backup your modpd installation](#backup-your-modpd-installation-1)
+   * [Remove the old installation](#remove-the-old-installation)
+      * [Stop the modpd daemon](#stop-the-modpd-daemon)
+      * [Remove the files](#remove-the-files)
+      * [Remove the NEB module from Nagios®](#remove-the-neb-module-from-nagios)
+      * [Restart Nagios®](#restart-nagios)
+   * [Install modpd 3.x.x](#install-modpd-3xx)
 
 
 
@@ -208,7 +211,7 @@ systemctl start modpd
 ```
 
 
-## Check if the modpd daemon is running
+Check if the modpd daemon is running
 ```bash
 systemctl status modpd
 tail -f /var/log/modpd/modpd.log
@@ -220,8 +223,7 @@ tail -f /var/log/modpd/modpd.log
 systemctl enable modpd
 ```
 
-
-## Check if modpd is activated
+Check if modpd is activated at system boot
 ```bash
 systemctl status modpd
 ```
@@ -464,14 +466,14 @@ vimdiff /etc/modpd/modpd.sample.conf /etc/modpd/modpd.conf
 ```
 
 
-## Restart the modpd daemon:
+## Restart the modpd daemon
 ```bash
 systemctl daemon-reload
 systemctl restart modpd
 ```
 
 
-## Check if the modpd daemon is running:
+Check if the modpd daemon is running:
 ```bash
 systemctl status modpd
 tail -f /var/log/modpd/modpd.log
@@ -889,3 +891,36 @@ tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
                                        /usr/local/modpd/ \
                                        /usr/local/nagios/include/modpd.o
 ```
+
+
+## Remove the old installation
+### Stop the modpd daemon
+```bash
+service modpd stop
+```
+
+### Remove the files
+```bash
+chkconfig --del modpd
+rm /etc/init.d/modpd
+rm /etc/logrotate.d/modpd
+rm /etc/sysconfig/modpd
+rm -rf /usr/local/modpd/
+rm /usr/local/nagios/include/modpd.o
+```
+
+### Remove the NEB module from Nagios®
+Remove the modpd NEB module with the editor of your choice to your Nagios® main config file:
+
+(Default Nagios® main config file: /usr/local/nagios/etc/nagios.cfg)
+```bash
+broker_module=/usr/local/nagios/include/modpd.o
+```
+
+### Restart Nagios®
+```bash
+service modpd restart
+```
+
+## Install modpd 3.x.x
+Use the [regular install guide](#installation-on-the-monitoring-site-which-executes-the-active-checks)
