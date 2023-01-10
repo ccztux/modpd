@@ -50,7 +50,7 @@ EnvironmentFile=/etc/sysconfig/modpd
 PermissionsStartOnly=true
 ExecStartPre=/usr/bin/touch /var/run/modpd.pid
 ExecStartPre=/usr/bin/chown modpd:modpd /var/run/modpd.pid
-ExecStart=$DAEMON_PATH $DAEMON_ARGS
+ExecStart=/usr/bin/modpd $DAEMON_ARGS
 ExecReload=/bin/kill -SIGHUP $MAINPID
 
 [Install]
