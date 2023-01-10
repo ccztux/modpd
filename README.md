@@ -256,9 +256,9 @@ systemctl status naemon
 
 
 
-Check if the modpd NEB module was loaded by naeon:
+Check if the modpd NEB module was loaded by naemon:
 ```bash
-[root@lab01]:~# grep -i modpd /var/log/naeon/naemon.log
+[root@lab01]:~# grep -i modpd /var/log/naemon/naemon.log
 [1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
@@ -300,27 +300,26 @@ vim /usr/local/modpd/etc/modpd.conf
 
 Start the modpd daemon:
 ```bash
-service modpd start
+systemctl start modpd
 ```
 
 
 Check if the modpd daemon is running:
 ```bash
-service modpd status
+systemctl status modpd
 tail -f /usr/local/modpd/var/log/modpd.log
 ```
 
 
 Enable the modpd daemon at system boot:
 ```bash
-chkconfig --add modpd
-chkconfig modpd on
+systemctl enable modpd
 ```
 
 
-Check for which runlevels modpd is activated:
+Check if modpd is activated:
 ```bash
-chkconfig --list modpd
+systemctl status modpd
 ```
 
 
