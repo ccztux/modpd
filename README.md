@@ -7,44 +7,65 @@
 
 
 
-# Table of contents
+# Table of Contents
 * [What is modpd?](#what-is-modpd)
-* [Supported monitoring engines](#supported-monitoring-engines)
-* [Known Issues](#known-issues)
+* [What was the motivation to develop modpd?](#what-was-the-motivation-to-develop-modpd)
 * [Flowchart](#flowchart)
 * [Registered trademarks](#registered-trademarks)
-* [Required binaries](#required-binaries)
+* [Known Issues](#known-issues)
+* [Supported monitoring engines](#supported-monitoring-engines)
+   * [modpd &gt;= 3.x.x](#modpd--3xx)
+   * [modpd &lt; 3.x.x](#modpd--3xx-1)
+* [Requirements](#requirements)
    * [Required binaries to install modpd](#required-binaries-to-install-modpd)
    * [Required by the daemon part of modpd](#required-by-the-daemon-part-of-modpd)
    * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features)
-   * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module)
-* [Installation](#installation)
-   * [Installation on the monitoring engine site executing the active checks](#installation-on-the-monitoring-engine-site-executing-the-active-checks)
-      * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
-      * [Installation of the modpd NEB module part](#installation-of-the-modpd-neb-module-part)
-      * [Installation of the modpd daemon part](#installation-of-the-modpd-daemon-part)
-      * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
-         * [send_nrdp.php](#send_nrdpphp)
-         * [send_nsca](#send_nsca)
-   * [Installation on the monitoring engine site accepting the passive checks](#installation-on-the-monitoring-engine-site-accepting-the-passive-checks)
-      * [Installation of the server software (of your choice)](#installation-of-the-server-software-of-your-choice)
-         * [NRDP](#nrdp)
-         * [NSCA](#nsca)
+   * [Required for building, compiling and installing the modpd NEB modules](#required-for-building-compiling-and-installing-the-modpd-neb-modules)
+* [Installation on the monitoring site which executes the active checks](#installation-on-the-monitoring-site-which-executes-the-active-checks)
+   * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
+   * [Create the required linux user and set a password](#create-the-required-linux-user-and-set-a-password)
+   * [Add the user nagios to the modpd group](#add-the-user-nagios-to-the-modpd-group)
+   * [Add the user naemon to the modpd group](#add-the-user-naemon-to-the-modpd-group)
+   * [Build the modpd NEB modules and install them and the modpd daemon](#build-the-modpd-neb-modules-and-install-them-and-the-modpd-daemon)
+   * [Edit the modpd daemon config to meet your requirements](#edit-the-modpd-daemon-config-to-meet-your-requirements)
+   * [Start the modpd daemon](#start-the-modpd-daemon)
+   * [Enable the modpd daemon at system boot](#enable-the-modpd-daemon-at-system-boot)
+   * [Add the NEB module to your monitoring engine](#add-the-neb-module-to-your-monitoring-engine)
+      * [Add the NEB module to Nagios®](#add-the-neb-module-to-nagios)
+      * [Add the NEB module to Naemon](#add-the-neb-module-to-naemon)
+   * [Installation of the clients (of your choice)](#installation-of-the-clients-of-your-choice)
+      * [send_nrdp.php](#send_nrdpphp)
+      * [send_nsca](#send_nsca)
+* [Installation on the monitoring site which accepts the passive checks](#installation-on-the-monitoring-site-which-accepts-the-passive-checks)
+   * [Installation of the server software (of your choice)](#installation-of-the-server-software-of-your-choice)
+      * [NRDP](#nrdp)
+      * [NSCA](#nsca)
 * [Updating modpd](#updating-modpd)
    * [Make a backup](#make-a-backup)
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
-   * [Updating the modpd NEB module](#updating-the-modpd-neb-module)
-   * [Updating the modpd daemon](#updating-the-modpd-daemon)
-* [File overview](#file-overview)
-* [Backup your modpd installation](#backup-your-modpd-installation)
+   * [Build the modpd NEB modules and install them and the modpd daemon](#build-the-modpd-neb-modules-and-install-them-and-the-modpd-daemon-1)
+   * [Restart your monitoring engine](#restart-your-monitoring-engine)
+      * [Nagios](#nagios)
+      * [Naemon](#naemon)
+   * [Check and merge eventual new configuration variables](#check-and-merge-eventual-new-configuration-variables)
+   * [Restart the modpd daemon](#restart-the-modpd-daemon)
 * [The daemon](#the-daemon)
    * [Daemon help output](#daemon-help-output)
-   * [Daemon options](#daemon-options)
+   * [File overview](#file-overview)
+   * [Daemon control options](#daemon-control-options)
    * [Default sample config](#default-sample-config)
-* [Example log snippets](#example-log-snippets)
-   * [modpd daemon log snippet](#modpd-daemon-log-snippet)
-   * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
-
+   * [Example log snippets](#example-log-snippets)
+      * [modpd daemon log snippet](#modpd-daemon-log-snippet)
+      * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
+* [Backup your modpd installation](#backup-your-modpd-installation)
+* [Upgrading modpd from 2.x.x to 3.x.x](#upgrading-modpd-from-2xx-to-3xx)
+   * [Backup your modpd installation](#backup-your-modpd-installation-1)
+   * [Remove the old installation](#remove-the-old-installation)
+      * [Stop the modpd daemon](#stop-the-modpd-daemon)
+      * [Remove the files](#remove-the-files)
+      * [Remove the NEB module from Nagios®](#remove-the-neb-module-from-nagios)
+      * [Restart Nagios®](#restart-nagios)
+   * [Install modpd 3.x.x](#install-modpd-3xx)
 
 
 
@@ -54,24 +75,20 @@
 
 modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
 it to a named pipe. The daemon part reads the data from the named pipe and sends the check results
-via NRDP or NSCA to another Nagios® server. It increases the performance of an existing Nagios® 3.x.x
-installation greatly, because the obsessing commands will be executed by modpd and not by the Nagios®
-process itself. Nagios® executes the obsessing command after every check, where obsessing is activated
-and then Nagios® waits, till every obsessing command was executed successfully or timed out.
+via NRDP or NSCA to another monitoring server.
 
 
+# What was the motivation to develop modpd?
+There were two reasons:
 
-# Known Issues
-* [Reloading modpd is causing one invalid dataset #118](https://github.com/ccztux/modpd/issues/118)
-If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
-Nevertheless you should prefere the reload function over the restart function if you have only changed
-something in the configuration, because in case of a restart more than one datasets are getting lost.
+1. Performance \
+It increases the performance of an existing Nagios® 3.x.x installation greatly, because the obsessing
+commands will be executed by modpd and not by the Nagios® process itself. Nagios® executes the obsessing
+command after every check, where obsessing is activated and then Nagios® waits, till every obsessing
+command was executed successfully or timed out.
 
-
-
-# Supported monitoring engines
-* Nagios® 3.4.x
-* Naemon 1.3.x
+2. Nagios® 3.x.x stops executing active checks \
+On some systems Nagios® 3.x.x stops randomly executing active checks when obsessing is enabled.
 
 
 
@@ -84,7 +101,26 @@ something in the configuration, because in case of a restart more than one datas
 [Nagios®](https://www.nagios.org/), Nagios Core, NRDP, NSCA, and the Nagios logo are trademarks, servicemarks, registered servicemarks or registered trademarks of Nagios Enterprises. All other trademarks, servicemarks, registered trademarks, and registered servicemarks mentioned herein may be the property of their respective owner(s). The information contained herein is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
-# Required binaries
+
+# Known Issues
+* [Reloading modpd is causing one invalid dataset #118](https://github.com/ccztux/modpd/issues/118)
+If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
+Nevertheless you should prefere the reload function over the restart function if you have only changed
+something in the configuration, because in case of a restart more than one datasets are getting lost.
+
+
+# Supported monitoring engines
+## modpd >= 3.x.x
+* Nagios® 3.4.x
+* Naemon 1.3.x
+
+
+## modpd < 3.x.x
+* Nagios® 3.4.x
+
+
+
+# Requirements
 ## Required binaries to install modpd
 - **wget** to download the latest release of modpd
 - **tar** to untar the downloaded package of modpd
@@ -94,6 +130,7 @@ something in the configuration, because in case of a restart more than one datas
 
 
 ## Required by the daemon part of modpd
+- **systemctl** to control the modpd daemon
 - **bash** (version >= 3)
 - **whoami** to check the user who has started modpd
 - **pgrep** to check if an instance of modpd is already running
@@ -113,17 +150,17 @@ something in the configuration, because in case of a restart more than one datas
 - **php** in case obsessing_interface is nrdp
 
 
-## Required for building, compiling and installing the modpd NEB module
-- **make** to build the modpd NEB module
-- **gcc** to compile the modpd NEB module
-- **install** to install the modpd NEB module
+## Required for building, compiling and installing the modpd NEB modules
+- **make** to build the modpd NEB modules
+- **gcc** to compile the modpd NEB modules
+- **install** to install the modpd NEB modules
 - **strip** to strip the modpd NEB binary
 
 
 
-# Installation
-## Installation on the monitoring engine site executing the active checks
-### Download the latest sources of modpd
+
+# Installation on the monitoring site which executes the active checks
+## Download the latest sources of modpd
 Download the latest tarball and extract it:
 ```bash
 cd /tmp
@@ -133,120 +170,146 @@ cd ccztux-modpd-*
 ```
 
 
-### Installation of the modpd NEB module part
-Build the modpd NEB module:
+## Create the required linux user and set a password
+```bash
+useradd -s /sbin/nologin modpd
+passwd modpd
+```
+
+
+## Add the user nagios to the modpd group
+**Do this only, if you use Nagios®!**
+```bash
+usermod -aG modpd nagios
+```
+
+
+## Add the user naemon to the modpd group
+**Do this only, if you use Naemon!**
+```bash
+usermod -aG modpd naemon
+```
+
+
+## Build the modpd NEB modules and install them and the modpd daemon
 ```bash
 make
 make install
 ```
 
 
-
-Add the modpd NEB module with the editor of your choice to your monitoring engine main config file:
-
-(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
+## Edit the modpd daemon config to meet your requirements
 ```bash
-broker_module=/usr/local/nagios/include/modpd.o
+vim /etc/modpd/modpd.conf
 ```
 
 
-
-Set the eventbroker options with the editor of your choice in your main nagios config file:
-
-(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
-(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
-```bash
-event_broker_options=-1
-```
-
-
-Restart your monitoring engine:
-```bash
-systemctl restart nagios
-systemctl restart naemon
-```
-
-
-
-Check if naemon is running:
-```bash
-systemctl status nagios
-systemctl status naemon
-```
-
-
-
-Check if the modpd NEB module was loaded by your monitoring engine:
-```bash
-[root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
-[1582272717] modpd: Starting...
-[1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
-```
-
-
-
-### Installation of the modpd daemon part
-Copy the files:
-```bash
-cp -av ./usr/local/modpd/ /usr/local/
-cp -av ./etc/* /etc/
-```
-
-
-Change the file ownerships:
-```bash
-chown -R nagios:nagios /usr/local/modpd/
-chown root:root /etc/logrotate.d/modpd
-chmod 644 /etc/logrotate.d/modpd
-chown root:root /etc/init.d/modpd
-chmod 755 /etc/init.d/modpd
-chown root:root /etc/sysconfig/modpd
-chmod 644 /etc/sysconfig/modpd
-```
-
-
-Copy the sample modpd daemon config file:
-```bash
-cp -av /usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
-```
-
-
-Edit the modpd daemon config to meet your requirements:
-```bash
-vim /usr/local/modpd/etc/modpd.conf
-```
-
-
-Start the modpd daemon:
+## Start the modpd daemon
 ```bash
 systemctl start modpd
 ```
 
 
-Check if the modpd daemon is running:
+Check if the modpd daemon is running
 ```bash
 systemctl status modpd
-tail -f /usr/local/modpd/var/log/modpd.log
+tail -f /var/log/modpd/modpd.log
 ```
 
 
-Enable the modpd daemon at system boot:
+## Enable the modpd daemon at system boot
 ```bash
-chkconfig --add modpd
-chkconfig modpd on
+systemctl enable modpd
 ```
 
-
-Check for which runlevels modpd is activated:
+Check if modpd is activated at system boot
 ```bash
-chkconfig --list modpd
+systemctl status modpd
 ```
 
 
-### Installation of the clients (of your choice)
-#### send_nrdp.php
+## Add the NEB module to your monitoring engine
+### Add the NEB module to Nagios®
+**Do this only, if you use Nagios®!**
+
+Add the modpd NEB module with the editor of your choice to your Nagios® main config file:
+
+(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+```bash
+broker_module=/usr/lib64/modpd/modpd_nagios3.o
+```
+
+
+Set the eventbroker options with the editor of your choice in your main nagios config file:
+
+(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+```bash
+event_broker_options=-1
+```
+
+Restart nagios:
+```bash
+systemctl restart nagios
+```
+
+Check if nagios is running:
+```bash
+systemctl status nagios
+```
+
+
+Check if the modpd NEB module was loaded by nagios:
+```bash
+[root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_nagios3.o' initialized successfully.
+```
+
+
+
+### Add the NEB module to Naemon
+**Do this only, if you use Naemon!**
+
+Add the modpd NEB module with the editor of your choice to your Naemon main config file:
+
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
+```bash
+broker_module=/usr/lib64/modpd/modpd_naemon.o
+```
+
+
+Set the eventbroker options with the editor of your choice in your main naemon config file:
+
+(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
+```bash
+event_broker_options=-1
+```
+
+Restart naemon:
+```bash
+systemctl restart naemon
+```
+
+Check if naemon is running:
+```bash
+systemctl status naemon
+```
+
+
+Check if the modpd NEB module was loaded by naemon:
+```bash
+[root@lab01]:~# grep -i modpd /var/log/naemon/naemon.log
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
+```
+
+
+
+
+## Installation of the clients (of your choice)
+### send_nrdp.php
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 
@@ -261,17 +324,17 @@ cd NagiosEnterprises-nrdp-*
 
 Copy the send_nrdp.php script:
 ```bash
-cp -av ./clients/send_nrdp.php /usr/local/modpd/libexec/
+cp -av ./clients/send_nrdp.php /usr/libexec/modpd/
 ```
 
 
 Change the file ownership:
 ```bash
-chown nagios:nagios /usr/local/modpd/libexec/send_nrdp.php
+chown root:root /usr/libexec/modpd/send_nrdp.php
 ```
 
 
-#### send_nsca
+### send_nsca
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
@@ -293,32 +356,33 @@ make send_nsca
 
 Copy the files:
 ```bash
-cp -av ./src/send_nsca /usr/local/modpd/libexec/send_nsca
-cp -av ./sample-config/send_nsca.cfg /usr/local/nagios/etc/
+cp -av ./src/send_nsca /usr/libexec/modpd/send_nsca
+cp -av ./sample-config/send_nsca.cfg /etc/modpd/
 ```
 
 
 Change the file ownerships:
 ```bash
-chown nagios:nagios /usr/local/modpd/libexec/send_nsca
-chown nagios:nagios /usr/local/nagios/etc/send_nsca.cfg
+chown root:root /usr/libexec/modpd/send_nsca
+chown modpd:modpd /etc/modpd/send_nsca.cfg
 ```
 
 
 Edit the send_nsca config to meet your requirements:
 ```bash
-vim /usr/local/nagios/etc/send_nsca.cfg
+vim /etc/modpd/send_nsca.cfg
 ```
 
 
-## Installation on the monitoring engine site accepting the passive checks
-### Installation of the server software (of your choice)
-#### NRDP
+
+# Installation on the monitoring site which accepts the passive checks
+## Installation of the server software (of your choice)
+### NRDP
 
 [Official NRDP Documentation by Nagios®](https://github.com/NagiosEnterprises/nrdp)
 
 
-#### NSCA
+### NSCA
 
 [Official NSCA Documentation by Nagios®](https://github.com/NagiosEnterprises/nsca)
 
@@ -326,7 +390,7 @@ vim /usr/local/nagios/etc/send_nsca.cfg
 
 # Updating modpd
 ## Make a backup
-Make a backup of your existing installation as described [here](https://github.com/ccztux/modpd#backup-your-modpd-installation)
+Make a backup of your existing installation as described [here](#backup-your-modpd-installation)
 
 
 ## Download the latest sources of modpd
@@ -340,8 +404,7 @@ cd ccztux-modpd-*
 
 
 
-## Updating the modpd NEB module
-Build the modpd NEB module:
+## Build the modpd NEB modules and install them and the modpd daemon
 ```bash
 make
 make install
@@ -349,60 +412,62 @@ make install
 
 
 
-Restart your monitoring engine:
+## Restart your monitoring engine
+### Nagios
+Restart nagios:
 ```bash
 systemctl restart nagios
-systemctl restart naemon
 ```
 
-
-
-Check if your monitoring engine is running:
+Check if nagios is running:
 ```bash
 systemctl status nagios
-systemctl status naemon
 ```
 
 
-
-Check if the modpd NEB module was loaded by your monitoring engine:
+Check if the modpd NEB module was loaded by nagios:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
 [1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1582272717] modpd: Starting...
-[1582272717] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_nagios3.o' initialized successfully.
 ```
 
 
 
-## Updating the modpd daemon
-Copy the files:
+### Naemon
+Restart naemon:
 ```bash
-cp -av ./usr/local/modpd/ /usr/local/
-cp -av ./etc/* /etc/
+systemctl restart naemon
 ```
 
 
-Change the file ownerships:
+Check if naemon is running:
 ```bash
-chown -R nagios:nagios /usr/local/modpd/
-chown root:root /etc/logrotate.d/modpd
-chmod 644 /etc/logrotate.d/modpd
-chown root:root /etc/init.d/modpd
-chmod 755 /etc/init.d/modpd
-chown root:root /etc/sysconfig/modpd
-chmod 644 /etc/sysconfig/modpd
+systemctl status naemon
 ```
 
 
+Check if the modpd NEB module was loaded by naemon:
+```bash
+[root@lab01]:~# grep -i modpd /var/log/naemon/naemon.log
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Starting...
+[1582272717] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
+```
+
+
+
+## Check and merge eventual new configuration variables
 Merge possible changes between the new sample config and your productive one using the tool of your choice like vimdiff:
 ```bash
-vimdiff ./usr/local/modpd/etc/modpd.sample.conf /usr/local/modpd/etc/modpd.conf
+vimdiff /etc/modpd/modpd.sample.conf /etc/modpd/modpd.conf
 ```
 
 
-Restart the modpd daemon:
+## Restart the modpd daemon
 ```bash
+systemctl daemon-reload
 systemctl restart modpd
 ```
 
@@ -410,35 +475,9 @@ systemctl restart modpd
 Check if the modpd daemon is running:
 ```bash
 systemctl status modpd
-tail -f /usr/local/modpd/var/log/modpd.log
+tail -f /var/log/modpd/modpd.log
 ```
 
-
-
-# File overview
-- ```/etc/init.d/modpd``` init script for the modpd daemon
-- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
-- ```/etc/sysconfig/modpd``` default configuration values for the modpd init script
-- ```/usr/local/modpd/bin/modpd``` modpd daemon
-- ```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
-- ```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
-- ```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
-- ```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
-- ```/usr/local/nagios/include/modpd.o``` modpd NEB module
-
-
-
-# Backup your modpd installation
-Make a backup of your existing installation:
-```bash
-tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
-                                       /etc/logrotate.d/modpd \
-                                       /etc/sysconfig/modpd \
-                                       /usr/local/modpd/ \
-                                       /usr/local/nagios/include/modpd.o
-```
 
 
 
@@ -448,28 +487,44 @@ tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2021-01-07
+Last modification:      2023-01-09
 Version:                3.0.0
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
 OPTIONS:
    -h           Shows this help.
-   -c           Path to config file. (Default: /usr/local/modpd/etc/modpd.conf)
-   -e           Error mode. Log bash errors additionally to: /usr/local/modpd/var/log/modpd.log
+   -c           Path to config file. (Default: /etc/modpd/modpd.conf)
+   -e           Error mode. Log bash errors additionally to: /var/log/modpd/modpd.log
                 WARNING: This is not intended for use in a production environment!
    -v           Shows detailed version information.
 ```
 
 
 
-## Daemon options
+## File overview
+- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
+- ```/etc/sysconfig/modpd``` default configuration values for the system unit file
+- ```/usr/bin/modpd``` modpd daemon
+- ```/etc/modpd/modpd.conf``` configuration file for the modpd daemon
+- ```/etc/modpd/modpd.sample.conf``` sample configuration file for the modpd daemon
+- ```/usr/lib/systemd/system/modpd.service``` systemd unit file for modpd
+- ```/usr/lib64/modpd/modpd_nagios3.o``` modpd NEB module for Nagios® 3.x.x
+- ```/usr/lib64/modpd/modpd_naemon.o``` modpd NEB module for Naemon 1.3.x
+- ```/var/lib/modpd/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
+- ```/var/lib/modpd/rw/modpd.cmd``` named pipe (will be created by the daemon)
+- ```/var/log/modpd/modpd.log``` modpd daemon logfile (will be created by the daemon)
+- ```/var/log/modpd/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
+- ```/var/log/modpd/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
+
+
+
+## Daemon control options
 - ```systemctl status modpd``` shows the state of the daemon
 - ```systemctl start modpd``` starts the daemon
 - ```systemctl stop modpd``` stops the daemon
 - ```systemctl restart modpd``` restarts the daemon
 - ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
-
 
 
 
@@ -488,7 +543,7 @@ OPTIONS:
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2021-01-07
+#						2023-01-09
 #
 #  Version				3.0.0
 #
@@ -577,7 +632,7 @@ c_nrdp_password="mySecret"
 #----------------------------------------------------------------------
 
 # define the path to the config file of send_nsca binary
-c_nsca_config_file="/usr/local/nagios/etc/send_nsca.cfg"
+c_nsca_config_file="/etc/modpd/send_nsca.cfg"
 
 
 
@@ -710,36 +765,29 @@ c_stats_enabled="1"
 
 
 
-# Example log snippets
-## modpd daemon log snippet
+## Example log snippets
+### modpd daemon log snippet
 ```
-10:10:58 [root@lab01]:~# systemctl status modpd
-modpd (PID 7084) is running                               [  OK  ]
-
-10:11:22 [root@lab01]:~# systemctl stop modpd
-Stopping modpd                                             [  OK  ]
-
-10:11:25 [root@lab01]:~# grep 7084 /usr/local/modpd/var/log/modpd.log
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
-2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/usr/local/modpd/etc/modpd.conf'
+2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/etc/modpd/modpd.conf'
 2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
 2021-01-07 16:10:01 |   7084 |                 getExecUser | modpd was started as user: 'nagios'
 2021-01-07 16:10:01 |   7084 |            checkBashVersion | Checking bash version...
 2021-01-07 16:10:01 |   7084 |            checkBashVersion | Bash version: '4' meets requirements
 2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
-2021-01-07 16:10:01 |   7084 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
+2021-01-07 16:10:01 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
 2021-01-07 16:10:01 |   7084 |                   checkLock | Lock file doesnt exist
-2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/usr/local/modpd/var/lock/modpd.lock' doesnt exist and no processes are running)
-2021-01-07 16:10:01 |   7084 |                     setLock | Check if daemon lock directory: '/usr/local/modpd/var/lock' exists and permissions to set lock are ok...
+2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/var/lib/modpd/lock/modpd.lock' doesnt exist and no processes are running)
+2021-01-07 16:10:01 |   7084 |                     setLock | Check if daemon lock directory: '/var/lib/modpd/lock' exists and permissions to set lock are ok...
 2021-01-07 16:10:01 |   7084 |                     setLock | Script lock directory exists and permissions are ok
 2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock...
 2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock was successful
-2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
 2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Named pipe doesnt exist
 2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe...
 2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe was successful
 2021-01-07 16:10:01 |   7084 |             buildJobCommand | Building job command...
-2021-01-07 16:10:01 |   7084 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/local/modpd/libexec/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
+2021-01-07 16:10:01 |   7084 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/libexec/modpd/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
 2021-01-07 16:10:01 |   7084 |                       _main | Ready to handle jobs...
 2021-01-07 16:11:01 |   7084 |               dataProcessor | WARNING: No monitoring data received within the last 60 seconds! Is the monitoring system running?
 2021-01-07 16:15:03 |   7084 |                    logStats | -------------- Stats for the last 302 seconds --------------
@@ -787,11 +835,11 @@ Stopping modpd                                             [  OK  ]
 2021-01-07 16:15:31 |   7084 |                    logStats | Invalid datasets received: '0'
 2021-01-07 16:15:31 |   7084 |                    logStats |
 2021-01-07 16:15:31 |   7084 |               signalHandler | Caught: 'EXIT', shutting down...
-2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Check if named pipe: '/usr/local/modpd/var/rw/modpd.cmd' exists and if it is read/writeable...
+2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
 2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Named pipe exists and it is read/writeable
 2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Remove named pipe...
 2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Removing named pipe was successful
-2021-01-07 16:15:31 |   7084 |                   checkLock | Check if lock file: '/usr/local/modpd/var/lock/modpd.lock' exists and if it is read and writeable...
+2021-01-07 16:15:31 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
 2021-01-07 16:15:31 |   7084 |                   checkLock | Lock file exists and it is read/writeable
 2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock...
 2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock was successful
@@ -801,12 +849,11 @@ Stopping modpd                                             [  OK  ]
 ```
 
 
-## modpd NEB module log snippet
+### modpd NEB module log snippet
 ```
-10:11:39 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
 [1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
 [1607849563] modpd: Starting...
-[1607849563] Event broker module '/usr/local/nagios/include/modpd.o' initialized successfully.
+[1607849563] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
 [1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s
 [1607849863] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9941 (OK: 9941/NOK: 0), Services: 7127 (OK: 7077/NOK: 50) ***
 [1607850163] modpd: The modpd NEB module is running 0d 0h 10m 0s
@@ -815,3 +862,64 @@ Stopping modpd                                             [  OK  ]
 [1607850463] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9684 (OK: 9684/NOK: 0), Services: 7452 (OK: 7452/NOK: 0) ***
 [1607850763] modpd: The modpd NEB module is running 0d 0h 20m 0s
 ```
+
+
+
+# Backup your modpd installation
+Make a backup of your existing installation:
+```bash
+tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/logrotate.d/modpd \
+                                       /etc/modpd/ \
+                                       /etc/sysconfig/modpd \
+                                       /usr/bin/modpd \
+                                       /usr/lib/systemd/system/modpd.service \
+                                       /usr/lib64/modpd/ \
+                                       /var/lib/modpd/ \
+                                       /var/log/modpd/
+```
+
+
+
+# Upgrading modpd from 2.x.x to 3.x.x
+## Backup your modpd installation
+Make a backup of your existing installation:
+```bash
+tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/init.d/modpd \
+                                       /etc/logrotate.d/modpd \
+                                       /etc/sysconfig/modpd \
+                                       /usr/local/modpd/ \
+                                       /usr/local/nagios/include/modpd.o
+```
+
+
+## Remove the old installation
+### Stop the modpd daemon
+```bash
+service modpd stop
+```
+
+### Remove the files
+```bash
+chkconfig --del modpd
+rm /etc/init.d/modpd
+rm /etc/logrotate.d/modpd
+rm /etc/sysconfig/modpd
+rm -rf /usr/local/modpd/
+rm /usr/local/nagios/include/modpd.o
+```
+
+### Remove the NEB module from Nagios®
+Remove the modpd NEB module with the editor of your choice to your Nagios® main config file:
+
+(Default Nagios® main config file: /usr/local/nagios/etc/nagios.cfg)
+```bash
+broker_module=/usr/local/nagios/include/modpd.o
+```
+
+### Restart Nagios®
+```bash
+service modpd restart
+```
+
+## Install modpd 3.x.x
+Use the [regular install guide](#installation-on-the-monitoring-site-which-executes-the-active-checks)
