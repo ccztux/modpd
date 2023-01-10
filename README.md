@@ -13,12 +13,6 @@
 * [Flowchart](#flowchart)
 * [Registered trademarks](#registered-trademarks)
 * [Known Issues](#known-issues)
-* [The daemon](#the-daemon)
-   * [Daemon help output](#daemon-help-output)
-   * [Default sample config](#default-sample-config)
-* [Example log snippets](#example-log-snippets)
-   * [modpd daemon log snippet](#modpd-daemon-log-snippet)
-   * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
 * [Supported monitoring engines](#supported-monitoring-engines)
    * [modpd &lt; 3.x.x](#modpd--3xx)
    * [modpd &gt;= 3.x.x](#modpd--3xx-1)
@@ -55,10 +49,16 @@
       * [Nagios](#nagios)
       * [Naemon](#naemon)
       * [tbd](#tbd)
+* [The daemon](#the-daemon)
+   * [Daemon help output](#daemon-help-output)
+   * [Default sample config](#default-sample-config)
+* [Example log snippets](#example-log-snippets)
+   * [modpd daemon log snippet](#modpd-daemon-log-snippet)
+   * [modpd NEB module log snippet](#modpd-neb-module-log-snippet)
    * [File overview](#file-overview)
    * [Daemon control options](#daemon-control-options)
-   * [Backup your modpd installation](#backup-your-modpd-installation)
-* [modpd &lt; 3.x.x](#modpd--3xx-3)
+* [Backup your modpd installation](#backup-your-modpd-installation)
+* [Upgrading modpd from 2.x.x to 3.x.x](#upgrading-modpd-from-2xx-to-3xx)
    * [Backup your modpd installation](#backup-your-modpd-installation-1)
 
 
@@ -102,365 +102,6 @@ On some systems Nagios® 3.x.x stops randomly executing active checks when obses
 If the daemon will be reloaded, one dataset is getting malformed and will be detected as an invalid dataset.
 Nevertheless you should prefere the reload function over the restart function if you have only changed
 something in the configuration, because in case of a restart more than one datasets are getting lost.
-
-
-
-
-# The daemon
-## Daemon help output
-```
-Usage: modpd OPTIONS
-
-Author:                 Christian Zettel (ccztux)
-Last modification:      2023-01-09
-Version:                3.0.0
-
-Description:            modpd (Monitoring Obsessing Data Processor Daemon)
-
-OPTIONS:
-   -h           Shows this help.
-   -c           Path to config file. (Default: /etc/modpd/modpd.conf)
-   -e           Error mode. Log bash errors additionally to: /var/log/modpd/modpd.log
-                WARNING: This is not intended for use in a production environment!
-   -v           Shows detailed version information.
-```
-
-
-
-## Default sample config
-```bash
-#!/usr/bin/env bash
-
-#========================================================================================================
-#
-#  Author:				Christian Zettel (ccztux)
-#						2017-05-14
-#						http://linuxinside.at
-#
-#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
-#
-#  Project website:		https://github.com/ccztux/modpd
-#
-#  Last Modification:	Christian Zettel (ccztux)
-#						2023-01-09
-#
-#  Version				3.0.0
-#
-#  Description:			Config file for modpd (Monitoring Obsessing Data Processor Daemon)
-#
-#  License:				GNU GPLv2
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License along
-#  with this program; if not, write to the Free Software Foundation, Inc.,
-#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-#========================================================================================================
-
-
-#---------------------------------------------------
-# In case of direct execution, write output and exit
-#---------------------------------------------------
-
-if [ "${BASH_SOURCE[0]}" == "${0}" ]
-then
-	printf "\\n%s is a bash config file. Dont execute it directly!\\n\\n" "${0##*/}"
-	exit 1
-fi
-
-
-
-#==========================================================
-#
-# Modify the following parameters to meet your requirements
-#
-#==========================================================
-
-#-------------------
-# Obsessing settings
-#-------------------
-
-# define the obsessing interface
-# (valid values: nrdp|nsca)
-c_obsessing_interface="nrdp"
-
-# define the host, where check results should be sent to
-c_obsessing_host="10.0.0.31"
-
-# define the port, where the obsessing daemon is listening on
-c_obsessing_port="443"
-
-# define the separator which should be used
-c_obsessing_data_separator="\\x1e"
-
-
-
-#----------------------------------------------------------------------
-# NRDP specific settings (Needed in case c_obsessing_interface is nrdp)
-#----------------------------------------------------------------------
-
-# define the connection protocol
-# (valid values: http|https)
-c_nrdp_protocol="https"
-
-# define the url path of the nrdp server
-c_nrdp_url_path="/nrdp"
-
-# define the nrdp token
-c_nrdp_token="12345678"
-
-# define the username, if nrdp basic auth is activated
-c_nrdp_username="nrdpuser"
-
-# define the password of the user you have defined in variable: c_nrdp_username with which we sould connect
-c_nrdp_password="mySecret"
-
-
-
-#----------------------------------------------------------------------
-# NSCA specific settings (Needed in case c_obsessing_interface is nsca)
-#----------------------------------------------------------------------
-
-# define the path to the config file of send_nsca binary
-c_nsca_config_file="/etc/modpd/send_nsca.cfg"
-
-
-
-#-----------------------------------------------------------------------------------------
-# Proxy settings (Needed in case c_obsessing_interface is nrdp and a proxy should be used)
-#-----------------------------------------------------------------------------------------
-
-# enable proxy
-c_proxy_enabled="0"
-
-# username to authenticate on proxy server
-c_proxy_username="ccztux"
-
-# password to authenticate on proxy server
-c_proxy_password="mySecret"
-
-# proxy protocol
-# (valid values: http|https)
-c_proxy_protocol="https"
-
-# proxy ip or hostname
-c_proxy_ip="10.0.0.10"
-
-# proxy port
-c_proxy_port="3128"
-
-
-
-
-
-
-#================================================================
-#
-# ONLY MODIFY THE FOLLOWING PARAMETERS, IF YOU KNOW, WHAT YOU DO!
-#
-#================================================================
-
-#--------
-# Logging
-#--------
-
-# enable log to file
-# (valid values: 1|0)
-c_log_to_file="1"
-
-# enable log to stdout"
-# (valid values: 1|0)
-c_log_to_stdout="0"
-
-# enable log to system logfile
-# (valid values: 1|0)
-c_log_to_syslog="0"
-
-# enable log to system journal
-# (valid values: 1|0)
-c_log_to_journal="0"
-
-# timestamp format for log messages
-# (HINT: have a look at: 'man strftime')
-c_log_timestamp_format="%Y-%m-%d %H:%M:%S"
-
-# log invalid data
-# (valid values: 1|0)
-c_log_invalid_data="1"
-
-
-
-#----------
-# Debugging
-#----------
-
-# enable debug log of the raw data processed via c_obsessing_interface
-# (valid values: 1|0)
-c_debug_log_obsessing_data="0"
-
-# enable debug log of the raw monitoring data submitted to the named pipe
-# (valid values: 1|0)
-c_debug_log_monitoring_data="0"
-
-# time in seconds when the debug logfile should be truncated
-c_debug_log_truncate_interval="604800"
-
-
-
-#-------------
-# Job settings
-#-------------
-
-# enable job timeout
-c_job_timeout_enabled="1"
-
-# job timeout in seconds (recommended: c_job_exec_interval * 2)
-c_job_timeout="8"
-
-# job execution interval in seconds
-c_job_exec_interval="4"
-
-# job max bulk size
-c_job_max_bulk_size="250"
-
-# log unsuccessful job commands
-# (valid values: 1|0)
-c_job_command_log_nok="1"
-
-# log timed out job commands
-# (valid values: 1|0)
-c_job_command_log_timeout="1"
-
-# log successful job commands
-# (valid values: 1|0)
-c_job_command_log_ok="0"
-
-# log raw data in case a job was not processed successfully
-# (valid values: 1|0)
-c_job_command_log_nok_data="1"
-
-# retransmit data in case a job was not processed successfully
-# (valid values: 1|0)
-c_job_nok_retransmit="1"
-
-
-
-#------
-# Stats
-#------
-
-# enable stats logging
-c_stats_enabled="1"
-```
-
-
-
-# Example log snippets
-## modpd daemon log snippet
-```
-2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
-2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/etc/modpd/modpd.conf'
-2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
-2021-01-07 16:10:01 |   7084 |                 getExecUser | modpd was started as user: 'nagios'
-2021-01-07 16:10:01 |   7084 |            checkBashVersion | Checking bash version...
-2021-01-07 16:10:01 |   7084 |            checkBashVersion | Bash version: '4' meets requirements
-2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
-2021-01-07 16:10:01 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
-2021-01-07 16:10:01 |   7084 |                   checkLock | Lock file doesnt exist
-2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/var/lib/modpd/lock/modpd.lock' doesnt exist and no processes are running)
-2021-01-07 16:10:01 |   7084 |                     setLock | Check if daemon lock directory: '/var/lib/modpd/lock' exists and permissions to set lock are ok...
-2021-01-07 16:10:01 |   7084 |                     setLock | Script lock directory exists and permissions are ok
-2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock...
-2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock was successful
-2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
-2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Named pipe doesnt exist
-2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe...
-2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe was successful
-2021-01-07 16:10:01 |   7084 |             buildJobCommand | Building job command...
-2021-01-07 16:10:01 |   7084 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/libexec/modpd/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
-2021-01-07 16:10:01 |   7084 |                       _main | Ready to handle jobs...
-2021-01-07 16:11:01 |   7084 |               dataProcessor | WARNING: No monitoring data received within the last 60 seconds! Is the monitoring system running?
-2021-01-07 16:15:03 |   7084 |                    logStats | -------------- Stats for the last 302 seconds --------------
-2021-01-07 16:15:03 |   7084 |                    logStats | Process info:
-2021-01-07 16:15:03 |   7084 |                    logStats | modpd is running: 0d 0h 5m 2s
-2021-01-07 16:15:03 |   7084 |                    logStats |
-2021-01-07 16:15:03 |   7084 |                    logStats | Processed jobs:
-2021-01-07 16:15:03 |   7084 |                    logStats | Total processed jobs: '50'
-2021-01-07 16:15:03 |   7084 |                    logStats | Successful processed jobs: '50'
-2021-01-07 16:15:03 |   7084 |                    logStats | Unsuccessful processed jobs: '0'
-2021-01-07 16:15:03 |   7084 |                    logStats | Timed out jobs: '0'
-2021-01-07 16:15:03 |   7084 |                    logStats |
-2021-01-07 16:15:03 |   7084 |                    logStats | Retransmission jobs:
-2021-01-07 16:15:03 |   7084 |                    logStats | Total retransmission jobs: '0'
-2021-01-07 16:15:03 |   7084 |                    logStats | Successful retransmission jobs: '0'
-2021-01-07 16:15:03 |   7084 |                    logStats | Unsuccessful retransmission jobs: '0'
-2021-01-07 16:15:03 |   7084 |                    logStats | Timed out retransmission jobs: '0'
-2021-01-07 16:15:03 |   7084 |                    logStats |
-2021-01-07 16:15:03 |   7084 |                    logStats | Handled checks:
-2021-01-07 16:15:03 |   7084 |                    logStats | Host checks: '7106'
-2021-01-07 16:15:03 |   7084 |                    logStats | Service checks: '4202'
-2021-01-07 16:15:03 |   7084 |                    logStats | Invalid datasets received: '0'
-2021-01-07 16:15:03 |   7084 |                    logStats |
-2021-01-07 16:15:03 |   7084 |             debugLogHandler | WARNING: Debug log enabled! This is not intended for use in a production environment!
-2021-01-07 16:15:31 |   7084 |               signalHandler | Caught: 'SIGTERM', preparing for shutdown...
-2021-01-07 16:15:31 |   7084 |                    logStats | -------------- Stats for the last 28 seconds --------------
-2021-01-07 16:15:31 |   7084 |                    logStats | Process info:
-2021-01-07 16:15:31 |   7084 |                    logStats | modpd is running: 0d 0h 5m 30s
-2021-01-07 16:15:31 |   7084 |                    logStats |
-2021-01-07 16:15:31 |   7084 |                    logStats | Processed jobs:
-2021-01-07 16:15:31 |   7084 |                    logStats | Total processed jobs: '7'
-2021-01-07 16:15:31 |   7084 |                    logStats | Successful processed jobs: '7'
-2021-01-07 16:15:31 |   7084 |                    logStats | Unsuccessful processed jobs: '0'
-2021-01-07 16:15:31 |   7084 |                    logStats | Timed out jobs: '0'
-2021-01-07 16:15:31 |   7084 |                    logStats |
-2021-01-07 16:15:31 |   7084 |                    logStats | Retransmission jobs:
-2021-01-07 16:15:31 |   7084 |                    logStats | Total retransmission jobs: '0'
-2021-01-07 16:15:31 |   7084 |                    logStats | Successful retransmission jobs: '0'
-2021-01-07 16:15:31 |   7084 |                    logStats | Unsuccessful retransmission jobs: '0'
-2021-01-07 16:15:31 |   7084 |                    logStats | Timed out retransmission jobs: '0'
-2021-01-07 16:15:31 |   7084 |                    logStats |
-2021-01-07 16:15:31 |   7084 |                    logStats | Handled checks:
-2021-01-07 16:15:31 |   7084 |                    logStats | Host checks: '719'
-2021-01-07 16:15:31 |   7084 |                    logStats | Service checks: '750'
-2021-01-07 16:15:31 |   7084 |                    logStats | Invalid datasets received: '0'
-2021-01-07 16:15:31 |   7084 |                    logStats |
-2021-01-07 16:15:31 |   7084 |               signalHandler | Caught: 'EXIT', shutting down...
-2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
-2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Named pipe exists and it is read/writeable
-2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Remove named pipe...
-2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Removing named pipe was successful
-2021-01-07 16:15:31 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
-2021-01-07 16:15:31 |   7084 |                   checkLock | Lock file exists and it is read/writeable
-2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock...
-2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock was successful
-2021-01-07 16:15:31 |   7084 |               signalHandler | Exitcode: '143'
-2021-01-07 16:15:31 |   7084 |               signalHandler | modpd was running: 0d 0h 5m 30s
-2021-01-07 16:15:31 |   7084 |               signalHandler | Bye, bye...
-```
-
-
-## modpd NEB module log snippet
-```
-[1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
-[1607849563] modpd: Starting...
-[1607849563] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
-[1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s
-[1607849863] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9941 (OK: 9941/NOK: 0), Services: 7127 (OK: 7077/NOK: 50) ***
-[1607850163] modpd: The modpd NEB module is running 0d 0h 10m 0s
-[1607850163] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10276 (OK: 10276/NOK: 0), Services: 7553 (OK: 7553/NOK: 0) ***
-[1607850463] modpd: The modpd NEB module is running 0d 0h 15m 0s
-[1607850463] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9684 (OK: 9684/NOK: 0), Services: 7452 (OK: 7452/NOK: 0) ***
-[1607850763] modpd: The modpd NEB module is running 0d 0h 20m 0s
-```
 
 
 # Supported monitoring engines
@@ -845,6 +486,364 @@ tail -f /var/log/modpd/modpd.log
 
 
 
+
+# The daemon
+## Daemon help output
+```
+Usage: modpd OPTIONS
+
+Author:                 Christian Zettel (ccztux)
+Last modification:      2023-01-09
+Version:                3.0.0
+
+Description:            modpd (Monitoring Obsessing Data Processor Daemon)
+
+OPTIONS:
+   -h           Shows this help.
+   -c           Path to config file. (Default: /etc/modpd/modpd.conf)
+   -e           Error mode. Log bash errors additionally to: /var/log/modpd/modpd.log
+                WARNING: This is not intended for use in a production environment!
+   -v           Shows detailed version information.
+```
+
+
+
+## Default sample config
+```bash
+#!/usr/bin/env bash
+
+#========================================================================================================
+#
+#  Author:				Christian Zettel (ccztux)
+#						2017-05-14
+#						http://linuxinside.at
+#
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
+#
+#  Project website:		https://github.com/ccztux/modpd
+#
+#  Last Modification:	Christian Zettel (ccztux)
+#						2023-01-09
+#
+#  Version				3.0.0
+#
+#  Description:			Config file for modpd (Monitoring Obsessing Data Processor Daemon)
+#
+#  License:				GNU GPLv2
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#========================================================================================================
+
+
+#---------------------------------------------------
+# In case of direct execution, write output and exit
+#---------------------------------------------------
+
+if [ "${BASH_SOURCE[0]}" == "${0}" ]
+then
+	printf "\\n%s is a bash config file. Dont execute it directly!\\n\\n" "${0##*/}"
+	exit 1
+fi
+
+
+
+#==========================================================
+#
+# Modify the following parameters to meet your requirements
+#
+#==========================================================
+
+#-------------------
+# Obsessing settings
+#-------------------
+
+# define the obsessing interface
+# (valid values: nrdp|nsca)
+c_obsessing_interface="nrdp"
+
+# define the host, where check results should be sent to
+c_obsessing_host="10.0.0.31"
+
+# define the port, where the obsessing daemon is listening on
+c_obsessing_port="443"
+
+# define the separator which should be used
+c_obsessing_data_separator="\\x1e"
+
+
+
+#----------------------------------------------------------------------
+# NRDP specific settings (Needed in case c_obsessing_interface is nrdp)
+#----------------------------------------------------------------------
+
+# define the connection protocol
+# (valid values: http|https)
+c_nrdp_protocol="https"
+
+# define the url path of the nrdp server
+c_nrdp_url_path="/nrdp"
+
+# define the nrdp token
+c_nrdp_token="12345678"
+
+# define the username, if nrdp basic auth is activated
+c_nrdp_username="nrdpuser"
+
+# define the password of the user you have defined in variable: c_nrdp_username with which we sould connect
+c_nrdp_password="mySecret"
+
+
+
+#----------------------------------------------------------------------
+# NSCA specific settings (Needed in case c_obsessing_interface is nsca)
+#----------------------------------------------------------------------
+
+# define the path to the config file of send_nsca binary
+c_nsca_config_file="/etc/modpd/send_nsca.cfg"
+
+
+
+#-----------------------------------------------------------------------------------------
+# Proxy settings (Needed in case c_obsessing_interface is nrdp and a proxy should be used)
+#-----------------------------------------------------------------------------------------
+
+# enable proxy
+c_proxy_enabled="0"
+
+# username to authenticate on proxy server
+c_proxy_username="ccztux"
+
+# password to authenticate on proxy server
+c_proxy_password="mySecret"
+
+# proxy protocol
+# (valid values: http|https)
+c_proxy_protocol="https"
+
+# proxy ip or hostname
+c_proxy_ip="10.0.0.10"
+
+# proxy port
+c_proxy_port="3128"
+
+
+
+
+
+
+#================================================================
+#
+# ONLY MODIFY THE FOLLOWING PARAMETERS, IF YOU KNOW, WHAT YOU DO!
+#
+#================================================================
+
+#--------
+# Logging
+#--------
+
+# enable log to file
+# (valid values: 1|0)
+c_log_to_file="1"
+
+# enable log to stdout"
+# (valid values: 1|0)
+c_log_to_stdout="0"
+
+# enable log to system logfile
+# (valid values: 1|0)
+c_log_to_syslog="0"
+
+# enable log to system journal
+# (valid values: 1|0)
+c_log_to_journal="0"
+
+# timestamp format for log messages
+# (HINT: have a look at: 'man strftime')
+c_log_timestamp_format="%Y-%m-%d %H:%M:%S"
+
+# log invalid data
+# (valid values: 1|0)
+c_log_invalid_data="1"
+
+
+
+#----------
+# Debugging
+#----------
+
+# enable debug log of the raw data processed via c_obsessing_interface
+# (valid values: 1|0)
+c_debug_log_obsessing_data="0"
+
+# enable debug log of the raw monitoring data submitted to the named pipe
+# (valid values: 1|0)
+c_debug_log_monitoring_data="0"
+
+# time in seconds when the debug logfile should be truncated
+c_debug_log_truncate_interval="604800"
+
+
+
+#-------------
+# Job settings
+#-------------
+
+# enable job timeout
+c_job_timeout_enabled="1"
+
+# job timeout in seconds (recommended: c_job_exec_interval * 2)
+c_job_timeout="8"
+
+# job execution interval in seconds
+c_job_exec_interval="4"
+
+# job max bulk size
+c_job_max_bulk_size="250"
+
+# log unsuccessful job commands
+# (valid values: 1|0)
+c_job_command_log_nok="1"
+
+# log timed out job commands
+# (valid values: 1|0)
+c_job_command_log_timeout="1"
+
+# log successful job commands
+# (valid values: 1|0)
+c_job_command_log_ok="0"
+
+# log raw data in case a job was not processed successfully
+# (valid values: 1|0)
+c_job_command_log_nok_data="1"
+
+# retransmit data in case a job was not processed successfully
+# (valid values: 1|0)
+c_job_nok_retransmit="1"
+
+
+
+#------
+# Stats
+#------
+
+# enable stats logging
+c_stats_enabled="1"
+```
+
+
+
+# Example log snippets
+## modpd daemon log snippet
+```
+2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
+2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/etc/modpd/modpd.conf'
+2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
+2021-01-07 16:10:01 |   7084 |                 getExecUser | modpd was started as user: 'nagios'
+2021-01-07 16:10:01 |   7084 |            checkBashVersion | Checking bash version...
+2021-01-07 16:10:01 |   7084 |            checkBashVersion | Bash version: '4' meets requirements
+2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | Check if another instance of: 'modpd' is already running...
+2021-01-07 16:10:01 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
+2021-01-07 16:10:01 |   7084 |                   checkLock | Lock file doesnt exist
+2021-01-07 16:10:01 |   7084 | checkAlreadyRunningInstance | No other instance of: 'modpd' is currently running (Lockfile: '/var/lib/modpd/lock/modpd.lock' doesnt exist and no processes are running)
+2021-01-07 16:10:01 |   7084 |                     setLock | Check if daemon lock directory: '/var/lib/modpd/lock' exists and permissions to set lock are ok...
+2021-01-07 16:10:01 |   7084 |                     setLock | Script lock directory exists and permissions are ok
+2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock...
+2021-01-07 16:10:01 |   7084 |                     setLock | Setting lock was successful
+2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
+2021-01-07 16:10:01 |   7084 |              checkNamedPipe | Named pipe doesnt exist
+2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe...
+2021-01-07 16:10:01 |   7084 |             createNamedPipe | Creating named pipe was successful
+2021-01-07 16:10:01 |   7084 |             buildJobCommand | Building job command...
+2021-01-07 16:10:01 |   7084 |             buildJobCommand | We build the following job command: '/usr/bin/timeout --signal=TERM 8 /usr/bin/php /usr/libexec/modpd/send_nrdp.php --usestdin --delim="" --token="[HIDDEN FOR SECURITY]" --url=https://nrdpuser:[HIDDEN FOR SECURITY]@10.0.0.74:443/nrdp'
+2021-01-07 16:10:01 |   7084 |                       _main | Ready to handle jobs...
+2021-01-07 16:11:01 |   7084 |               dataProcessor | WARNING: No monitoring data received within the last 60 seconds! Is the monitoring system running?
+2021-01-07 16:15:03 |   7084 |                    logStats | -------------- Stats for the last 302 seconds --------------
+2021-01-07 16:15:03 |   7084 |                    logStats | Process info:
+2021-01-07 16:15:03 |   7084 |                    logStats | modpd is running: 0d 0h 5m 2s
+2021-01-07 16:15:03 |   7084 |                    logStats |
+2021-01-07 16:15:03 |   7084 |                    logStats | Processed jobs:
+2021-01-07 16:15:03 |   7084 |                    logStats | Total processed jobs: '50'
+2021-01-07 16:15:03 |   7084 |                    logStats | Successful processed jobs: '50'
+2021-01-07 16:15:03 |   7084 |                    logStats | Unsuccessful processed jobs: '0'
+2021-01-07 16:15:03 |   7084 |                    logStats | Timed out jobs: '0'
+2021-01-07 16:15:03 |   7084 |                    logStats |
+2021-01-07 16:15:03 |   7084 |                    logStats | Retransmission jobs:
+2021-01-07 16:15:03 |   7084 |                    logStats | Total retransmission jobs: '0'
+2021-01-07 16:15:03 |   7084 |                    logStats | Successful retransmission jobs: '0'
+2021-01-07 16:15:03 |   7084 |                    logStats | Unsuccessful retransmission jobs: '0'
+2021-01-07 16:15:03 |   7084 |                    logStats | Timed out retransmission jobs: '0'
+2021-01-07 16:15:03 |   7084 |                    logStats |
+2021-01-07 16:15:03 |   7084 |                    logStats | Handled checks:
+2021-01-07 16:15:03 |   7084 |                    logStats | Host checks: '7106'
+2021-01-07 16:15:03 |   7084 |                    logStats | Service checks: '4202'
+2021-01-07 16:15:03 |   7084 |                    logStats | Invalid datasets received: '0'
+2021-01-07 16:15:03 |   7084 |                    logStats |
+2021-01-07 16:15:03 |   7084 |             debugLogHandler | WARNING: Debug log enabled! This is not intended for use in a production environment!
+2021-01-07 16:15:31 |   7084 |               signalHandler | Caught: 'SIGTERM', preparing for shutdown...
+2021-01-07 16:15:31 |   7084 |                    logStats | -------------- Stats for the last 28 seconds --------------
+2021-01-07 16:15:31 |   7084 |                    logStats | Process info:
+2021-01-07 16:15:31 |   7084 |                    logStats | modpd is running: 0d 0h 5m 30s
+2021-01-07 16:15:31 |   7084 |                    logStats |
+2021-01-07 16:15:31 |   7084 |                    logStats | Processed jobs:
+2021-01-07 16:15:31 |   7084 |                    logStats | Total processed jobs: '7'
+2021-01-07 16:15:31 |   7084 |                    logStats | Successful processed jobs: '7'
+2021-01-07 16:15:31 |   7084 |                    logStats | Unsuccessful processed jobs: '0'
+2021-01-07 16:15:31 |   7084 |                    logStats | Timed out jobs: '0'
+2021-01-07 16:15:31 |   7084 |                    logStats |
+2021-01-07 16:15:31 |   7084 |                    logStats | Retransmission jobs:
+2021-01-07 16:15:31 |   7084 |                    logStats | Total retransmission jobs: '0'
+2021-01-07 16:15:31 |   7084 |                    logStats | Successful retransmission jobs: '0'
+2021-01-07 16:15:31 |   7084 |                    logStats | Unsuccessful retransmission jobs: '0'
+2021-01-07 16:15:31 |   7084 |                    logStats | Timed out retransmission jobs: '0'
+2021-01-07 16:15:31 |   7084 |                    logStats |
+2021-01-07 16:15:31 |   7084 |                    logStats | Handled checks:
+2021-01-07 16:15:31 |   7084 |                    logStats | Host checks: '719'
+2021-01-07 16:15:31 |   7084 |                    logStats | Service checks: '750'
+2021-01-07 16:15:31 |   7084 |                    logStats | Invalid datasets received: '0'
+2021-01-07 16:15:31 |   7084 |                    logStats |
+2021-01-07 16:15:31 |   7084 |               signalHandler | Caught: 'EXIT', shutting down...
+2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Check if named pipe: '/var/lib/modpd/rw/modpd.cmd' exists and if it is read/writeable...
+2021-01-07 16:15:31 |   7084 |              checkNamedPipe | Named pipe exists and it is read/writeable
+2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Remove named pipe...
+2021-01-07 16:15:31 |   7084 |             removeNamedPipe | Removing named pipe was successful
+2021-01-07 16:15:31 |   7084 |                   checkLock | Check if lock file: '/var/lib/modpd/lock/modpd.lock' exists and if it is read and writeable...
+2021-01-07 16:15:31 |   7084 |                   checkLock | Lock file exists and it is read/writeable
+2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock...
+2021-01-07 16:15:31 |   7084 |                  removeLock | Removing lock was successful
+2021-01-07 16:15:31 |   7084 |               signalHandler | Exitcode: '143'
+2021-01-07 16:15:31 |   7084 |               signalHandler | modpd was running: 0d 0h 5m 30s
+2021-01-07 16:15:31 |   7084 |               signalHandler | Bye, bye...
+```
+
+
+## modpd NEB module log snippet
+```
+[1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1607849563] modpd: Starting...
+[1607849563] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
+[1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s
+[1607849863] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9941 (OK: 9941/NOK: 0), Services: 7127 (OK: 7077/NOK: 50) ***
+[1607850163] modpd: The modpd NEB module is running 0d 0h 10m 0s
+[1607850163] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 10276 (OK: 10276/NOK: 0), Services: 7553 (OK: 7553/NOK: 0) ***
+[1607850463] modpd: The modpd NEB module is running 0d 0h 15m 0s
+[1607850463] modpd: *** Stats of processed checks for the last 300 seconds: Hosts: 9684 (OK: 9684/NOK: 0), Services: 7452 (OK: 7452/NOK: 0) ***
+[1607850763] modpd: The modpd NEB module is running 0d 0h 20m 0s
+```
+
+
 ## File overview
 - ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
 - ```/etc/sysconfig/modpd``` default configuration values for the system unit file
@@ -872,7 +871,7 @@ tail -f /var/log/modpd/modpd.log
 
 
 
-## Backup your modpd installation
+# Backup your modpd installation
 Make a backup of your existing installation:
 ```bash
 tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/logrotate.d/modpd \
@@ -887,7 +886,7 @@ tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/logrotate.d/modpd \
 
 
 
-# modpd < 3.x.x
+# Upgrading modpd from 2.x.x to 3.x.x
 ## Backup your modpd installation
 Make a backup of your existing installation:
 ```bash
