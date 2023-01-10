@@ -178,14 +178,14 @@ passwd modpd
 
 
 ## Add the user nagios to the modpd group
-Do this only, if you use Nagios®!
+**Do this only, if you use Nagios®!**
 ```bash
 usermod -aG modpd nagios
 ```
 
 
 ## Add the user naemon to the modpd group
-Do this only, if you use Naemon!
+**Do this only, if you use Naemon!**
 ```bash
 usermod -aG modpd naemon
 ```
@@ -230,7 +230,7 @@ systemctl status modpd
 
 ## Add the NEB module to your monitoring engine
 ### Add the NEB module to Nagios®
-Do this only, if you use Nagios®!
+**Do this only, if you use Nagios®!**
 
 Add the modpd NEB module with the editor of your choice to your Nagios® main config file:
 
@@ -269,7 +269,7 @@ Check if the modpd NEB module was loaded by nagios:
 
 
 ### Add the NEB module to Naemon
-Do this only, if you use Naemon!
+**Do this only, if you use Naemon!**
 
 Add the modpd NEB module with the editor of your choice to your Naemon main config file:
 
