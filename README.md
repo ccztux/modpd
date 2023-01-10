@@ -466,14 +466,17 @@ c_stats_enabled="1"
 ```
 
 
+# Supported monitoring engines
+## modpd < 3.x.x
+* Nagios® 3.4.x
 
-
-# modpd >= 3.x.x
-## Supported monitoring engines
+## modpd >= 3.x.x
 * Nagios® 3.4.x
 * Naemon 1.3.x
 
 
+
+# modpd >= 3.x.x
 ## Requirements
 ### Required binaries to install modpd
 - **wget** to download the latest release of modpd
@@ -534,6 +537,8 @@ make install
 
 
 ##### Add the NEB module to Nagios®
+Do this only, if you use Nagios®!
+
 Add the modpd NEB module with the editor of your choice to your Nagios® main config file:
 
 (Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
@@ -574,6 +579,8 @@ Check if the modpd NEB module was loaded by nagios:
 
 
 ##### Add the NEB module to Naemon
+Do this only, if you use Naemon!
+
 Add the modpd NEB module with the editor of your choice to your Naemon main config file:
 
 (Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
@@ -621,31 +628,43 @@ passwd modpd
 ```
 
 ##### Add the user nagios to the modpd group
+Do this only, if you use Nagios®!
 ```bash
 usermod -aG modpd nagios
 ```
 
 ##### Add the user naemon to the modpd group
+Do this only, if you use Naemon!
 ```bash
 usermod -aG modpd naemon
 ```
 
 Copy the files:
 ```bash
-cp -av ./usr/local/modpd/ /usr/local/
 cp -av ./etc/* /etc/
+cp -av ./usr/* /usr/
+cp -av ./var/* /var/
 ```
 
 
 Change the file ownerships:
 ```bash
-chown -R nagios:nagios /usr/local/modpd/
 chown root:root /etc/logrotate.d/modpd
 chmod 644 /etc/logrotate.d/modpd
-chown root:root /etc/init.d/modpd
-chmod 755 /etc/init.d/modpd
 chown root:root /etc/sysconfig/modpd
 chmod 644 /etc/sysconfig/modpd
+chown -R root:root /etc/modpd/
+chmod 755 /etc/modpd/
+chmod 644 /etc/modpd/*
+chown root:root /usr/bin/modpd
+chmod 755 /usr/bin/modpd
+chown root:root /usr/lib64/modpd/
+chmod 755 /usr/lib64/modpd/
+chown root:root /usr/libexec/modpd/
+chmod 755 /usr/libexec/modpd/
+chown modpd:modpd /var/lib/modpd/
+chmod 755 /var/lib/modpd/
+
 ```
 
 
@@ -917,76 +936,6 @@ tar -cvzf modpd.bak_$(date +%s).tar.gz /etc/logrotate.d/modpd \
 
 
 # modpd < 3.x.x
-## Supported monitoring engines
-* Nagios® 3.4.x
-
-
-
-## Requirements
-### Required binaries to install modpd
-- **wget** to download the latest release of modpd
-- **tar** to untar the downloaded package of modpd
-- **cp** to copy the files
-- **chown** to change the ownership of files
-- **chmod** to change the permission of files
-
-
-### Required by the daemon part of modpd
-- **service** to control the modpd daemon
-- **chkconfig** to enable/disable the modpd daemon at startup
-- **bash** (version >= 3)
-- **whoami** to check the user who has started modpd
-- **pgrep** to check if an instance of modpd is already running
-- **date** for logging purposes (Only required if bash version < 4.2, else bash's printf builtin will be used.)
-- **rm** to delete the named_pipe_filename
-- **mkdir** to create directories
-- **mkfifo** to create the named_pipe_filename
-- **kill** to send signals to modpd
-- **sleep** to do nothing :)
-- **logrotate** to rotate modpd's logfile
-
-
-### Optionally used binaries which depends on configured features
-- **logger** to log to the system log
-- **systemd-cat** to log to the system journal
-- **timeout** to start the obsessing jobs with a timeout value
-- **php** in case obsessing_interface is nrdp
-
-
-### Required for building, compiling and installing the modpd NEB module
-- **make** to build the modpd NEB module
-- **gcc** to compile the modpd NEB module
-- **install** to install the modpd NEB module
-- **strip** to strip the modpd NEB binary
-
-
-
-## File overview
-- ```/etc/init.d/modpd``` init script for the modpd daemon
-- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
-- ```/etc/sysconfig/modpd``` default configuration values for the modpd init script
-- ```/usr/local/modpd/bin/modpd``` modpd daemon
-- ```/usr/local/modpd/etc/modpd.conf``` configuration file for the modpd daemon
-- ```/usr/local/modpd/var/log/modpd.log``` modpd daemon logfile (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
-- ```/usr/local/modpd/var/log/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
-- ```/usr/local/modpd/var/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
-- ```/usr/local/modpd/var/rw/modpd.cmd``` named pipe (will be created by the daemon)
-- ```/usr/local/nagios/include/modpd.o``` modpd NEB module
-
-
-
-## Daemon control options
-- ```service modpd status``` shows the state of the daemon
-- ```service modpd start``` starts the daemon
-- ```service modpd start_error_mode``` starts the daemon in error mode (bash errors are logged)
-- ```service modpd stop``` stops the daemon
-- ```service modpd restart``` restarts the daemon
-- ```service modpd reload``` reloads the daemon (config will be re-readed)
-
-
-
-
 ## Backup your modpd installation
 Make a backup of your existing installation:
 ```bash
