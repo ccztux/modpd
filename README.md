@@ -20,7 +20,7 @@
    * [Required binaries to install modpd](#required-binaries-to-install-modpd)
    * [Required by the daemon part of modpd](#required-by-the-daemon-part-of-modpd)
    * [Optionally used binaries which depends on configured features](#optionally-used-binaries-which-depends-on-configured-features)
-   * [Required for building, compiling and installing the modpd NEB module](#required-for-building-compiling-and-installing-the-modpd-neb-module)
+   * [Required for building, compiling and installing the modpd NEB modules](#required-for-building-compiling-and-installing-the-modpd-neb-modules)
 * [Installation on the monitoring site which executes the active checks](#installation-on-the-monitoring-site-which-executes-the-active-checks)
    * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd)
    * [Create the required linux user and set a password](#create-the-required-linux-user-and-set-a-password)
@@ -66,7 +66,6 @@
       * [Remove the NEB module from Nagios®](#remove-the-neb-module-from-nagios)
       * [Restart Nagios®](#restart-nagios)
    * [Install modpd 3.x.x](#install-modpd-3xx)
-
 
 
 
@@ -151,10 +150,10 @@ something in the configuration, because in case of a restart more than one datas
 - **php** in case obsessing_interface is nrdp
 
 
-## Required for building, compiling and installing the modpd NEB module
-- **make** to build the modpd NEB module
-- **gcc** to compile the modpd NEB module
-- **install** to install the modpd NEB module
+## Required for building, compiling and installing the modpd NEB modules
+- **make** to build the modpd NEB modules
+- **gcc** to compile the modpd NEB modules
+- **install** to install the modpd NEB modules
 - **strip** to strip the modpd NEB binary
 
 
@@ -331,7 +330,7 @@ cp -av ./clients/send_nrdp.php /usr/libexec/modpd/
 
 Change the file ownership:
 ```bash
-chown modpd:modpd /usr/libexec/modpd/send_nrdp.php
+chown root:root /usr/libexec/modpd/send_nrdp.php
 ```
 
 
@@ -364,7 +363,7 @@ cp -av ./sample-config/send_nsca.cfg /etc/modpd/
 
 Change the file ownerships:
 ```bash
-chown modpd:modpd /usr/libexec/modpd/send_nsca
+chown root:root /usr/libexec/modpd/send_nsca
 chown modpd:modpd /etc/modpd/send_nsca.cfg
 ```
 
