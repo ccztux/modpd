@@ -8,7 +8,6 @@
 
 
 # Table of Contents
-* [Table of Contents](#table-of-contents)
 * [What is modpd?](#what-is-modpd)
 * [What was the motivation to develop modpd?](#what-was-the-motivation-to-develop-modpd)
 * [Flowchart](#flowchart)
@@ -39,8 +38,8 @@
       * [Make a backup](#make-a-backup)
       * [Download the latest sources of modpd](#download-the-latest-sources-of-modpd-1)
       * [Updating the modpd NEB module](#updating-the-modpd-neb-module)
-            * [Nagios](#nagios-1)
-            * [Naemon](#naemon-1)
+         * [Nagios](#nagios-1)
+         * [Naemon](#naemon-1)
       * [Updating the modpd daemon](#updating-the-modpd-daemon)
    * [File overview](#file-overview)
       * [Daemon options](#daemon-options)
@@ -441,7 +440,7 @@ make install
 
 
 
-##### Nagios
+#### Nagios
 Restart nagios:
 ```bash
 systemctl restart nagios
@@ -466,7 +465,7 @@ Check if the modpd NEB module was loaded by naemon:
 
 
 
-##### Naemon
+#### Naemon
 Restart naemon:
 ```bash
 systemctl restart naemon
