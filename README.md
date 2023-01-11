@@ -918,7 +918,7 @@ broker_module=/usr/local/nagios/include/modpd.o
 
 ### Restart Nagios®
 ```bash
-service modpd restart
+service nagios restart
 ```
 
 ## Install modpd 3.x.x
