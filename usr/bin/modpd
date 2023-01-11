@@ -1,0 +1,1911 @@
+#!/usr/bin/env bash
+
+#========================================================================================================
+#
+#  Author:				Christian Zettel (ccztux)
+#						2017-05-14
+#						http://linuxinside.at
+#
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
+#
+#  Project website:		https://github.com/ccztux/modpd
+#
+#  Last Modification:	Christian Zettel (ccztux)
+#						2023-01-09
+#
+#  Version				3.0.0
+#
+#  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
+#
+#  License:				GNU GPLv2
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#========================================================================================================
+
+
+#-------------------------------
+# Print error messages to stderr
+#-------------------------------
+
+eprintf()
+{
+	printf "%b\\n" "${1}" >&2
+}
+
+
+
+#-----------------
+# Check error mode
+#-----------------
+
+checkErrorMode()
+{
+	local arguments=("${@}")
+	local argument=
+	g_error_mode="0"
+
+	for argument in "${arguments[@]}"
+	do
+		if [ "${argument}" == "-e" ]
+		then
+			g_error_mode="1"
+		fi
+	done
+}
+
+checkErrorMode "${@}"
+
+
+
+#------
+# Traps
+#------
+
+if ! trap 'signalHandler SIGTERM' SIGTERM
+then
+	eprintf "Setting trap for signal: 'SIGTERM' was not successful."
+	eprintf "Terminating..."
+	exit 247
+fi
+
+if ! trap 'signalHandler SIGINT' SIGINT
+then
+	eprintf "Setting trap for signal: 'SIGINT' was not successful."
+	eprintf "Terminating..."
+	exit 247
+fi
+
+if ! trap 'signalHandler SIGHUP' SIGHUP
+then
+	eprintf "Setting trap for signal: 'SIGHUP' was not successful."
+	eprintf "Terminating..."
+	exit 247
+fi
+
+if [ "${g_error_mode}" == "1" ]
+then
+	if ! trap 'signalHandler "ERR" "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}" "${LINENO}" "${BASH_COMMAND}"' ERR
+	then
+		eprintf "Setting trap for signal: 'ERR' was not successful."
+		eprintf "Terminating..."
+		exit 247
+	fi
+fi
+
+if ! trap 'signalHandler "EXIT"' EXIT
+then
+	eprintf "Setting trap for signal: 'EXIT' was not successful."
+	eprintf "Terminating..."
+	exit 247
+fi
+
+
+
+#------------------------
+# propagateSignalToChilds
+#------------------------
+
+propagateSignalToChilds()
+{
+	local signal="${1}"
+
+	# shellcheck disable=SC2154
+	${kill_bin:=kill} -"${signal}" -"${g_pid}"
+}
+
+
+
+#--------------
+# signalHandler
+#--------------
+
+signalHandler()
+{
+	local signal="${1:-}"
+	local bash_source="${2:-}"
+	local bash_lineno="${3:-}"
+	local bash_command="${4:-}"
+	local uptime=
+
+	case "${signal}" in
+		SIGTERM)
+			logHandler "Caught: '${signal}', preparing for shutdown..."
+
+			# propagate signal to all childs
+			propagateSignalToChilds "${signal}"
+
+			g_exit_code="143"
+			exit
+			;;
+		SIGINT)
+			logHandler "Caught: '${signal}', preparing for shutdown..."
+
+			# propagate signal to all childs
+			propagateSignalToChilds "${signal}"
+
+			g_exit_code="130"
+			exit
+			;;
+		SIGHUP)
+			logHandler "Caught: '${signal}', reloading..."
+
+			if reloadHandler
+			then
+				logHandler "Config reload was successful"
+			else
+				logHandler "Config reload was not successful"
+			fi
+			;;
+		ERR)
+			logHandler "Caught: '${signal}', in: '${bash_source}', at line number: '${bash_lineno}', command: '${bash_command}'"
+			;;
+		EXIT)
+			if [ "${g_config_file_included}" -eq "1" ]
+			then
+				if [ "${g_log_requirements_ok}" -eq "1" ]
+				then
+					logStats
+				fi
+
+				logHandler "Caught: '${signal}', shutting down..."
+
+				if [ "${g_bypass_exit_routines}" != "1" ]
+				then
+					if [ "${g_another_instance_is_running}" != "1" ]
+					then
+						if ! checkNamedPipe
+						then
+							removeNamedPipe
+						fi
+
+						if checkLock
+						then
+							removeLock
+						fi
+					fi
+				else
+					logHandler "We hope you are informed better now. :P This was a lazy job. :)"
+				fi
+
+				# propagate signal to all childs
+				propagateSignalToChilds "SIGTERM"
+
+				uptime="$(secondsToTime "${SECONDS}")"
+
+				logHandler "Exitcode: '${g_exit_code}'"
+				logHandler "${g_name} was running: ${uptime}"
+				logHandler "Bye, bye..."
+			fi
+
+			exit ${g_exit_code}
+			;;
+		*)
+			logHandler "Caught: '${signal}', but no handler defined"
+			return 0
+			;;
+	esac
+}
+
+
+
+#------------------------
+# Bash and shell options:
+#------------------------
+
+checkShellOption()
+{
+	local shell_option="${1}"
+
+	if [ -n "${shell_option}" ]
+	then
+		if [[ "${shell_option}" =~ ^([A-Z][a-z])$ ]]
+		then
+			if [[ "${-}" =~ ^(.*)${shell_option}(.*)$ ]]
+			then
+				return 0
+			else
+				return 1
+			fi
+		else
+			if [[ "${SHELLOPTS}" =~ ^(.*)${shell_option}(.*)$ ]]
+			then
+				return 0
+			else
+				return 1
+			fi
+		fi
+	else
+		return 2
+	fi
+}
+
+setShellOption()
+{
+	local shell_option="${1}"
+
+	if [ -n "${shell_option}" ]
+	then
+		if [[ "${shell_option}" =~ ^([A-Z][a-z])$ ]]
+		then
+			if set -"${shell_option}" 2>/dev/null
+			then
+				return 0
+			else
+				return 1
+			fi
+		else
+			if set -o "${shell_option}" 2>/dev/null
+			then
+				return 0
+			else
+				return 1
+			fi
+		fi
+	else
+		return 2
+	fi
+}
+
+checkBashOption()
+{
+	local bash_option="${1}"
+
+	if [ -n "${bash_option}" ]
+	then
+		if shopt -q "${bash_option}" 2>/dev/null
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setBashOption()
+{
+	local bash_option="${1}"
+
+	if [ -n "${bash_option}" ]
+	then
+		if shopt -s "${bash_option}" 2>/dev/null
+		then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+setRequiredShellOptions()
+{
+	local shell_option=
+	local required_shell_options=("noclobber" "nounset" "pipefail" "errtrace")
+
+	for shell_option in "${required_shell_options[@]}"
+	do
+		if ! checkShellOption "${shell_option}"
+		then
+			if ! setShellOption "${shell_option}"
+			then
+				eprintf "Setting required shell option: '${shell_option}' was not successful."
+				eprintf "Terminating..."
+				exit 245
+			fi
+		fi
+	done
+}
+
+setRequiredBashOptions()
+{
+	local bash_option=
+	local required_bash_options=("nullglob")
+
+	for bash_option in "${required_bash_options[@]}"
+	do
+		if ! checkBashOption "${bash_option}"
+		then
+			if ! setBashOption "${bash_option}"
+			then
+				eprintf "Setting required bash option: '${bash_option}' was not successful."
+				eprintf "Terminating..."
+				exit 246
+			fi
+		fi
+	done
+}
+
+
+
+#------------------
+# Various functions
+#------------------
+
+printUsage()
+{
+	setRequiredVariables
+
+	printf "Usage: %s OPTIONS\\n\\n" "${g_name}"
+	printf "Author:\\t\\t\\t%s\\n" "${g_author}"
+	printf "Last modification:\\t%s\\n" "${g_last_modification_date}"
+	printf "Version:\\t\\t%s\\n\\n" "${g_version}"
+	printf "Description:\\t\\t%s\\n\\n" "${g_description}"
+	printf "OPTIONS:\\n"
+	printf "   -h\\t\\tShows this help.\\n"
+	printf "   -c\\t\\tPath to config file. (Default: %s)\\n" "${g_config_file}"
+	printf "   -e\\t\\tError mode. Log bash errors additionally to: %s\\n" "${g_log_file}"
+	printf "     \\t\\tWARNING: This is not intended for use in a production environment!\\n"
+	printf "   -v\\t\\tShows detailed version information.\\n"
+}
+
+printScriptInfos()
+{
+	printf "Author:\\t\\t\\t%s\\n" "${g_author}"
+	printf "Project website:\\t%s\\n" "${g_project_website}"
+	printf "License:\\t\\t%s\\n\\n" "${g_license}"
+	printf "Last modification:\\t%s\\n" "${g_last_modification_date}"
+	printf "Version:\\t\\t%s\\n\\n" "${g_version}"
+	printf "Description:\\t\\t%s\\n\\n" "${g_description}"
+	printf "Copyright:\\t\\t%s\\n" "${g_copyright}"
+}
+
+secondsToTime()
+{
+	local seconds_to_convert="${1:-}"
+	local days="$(( seconds_to_convert / (3600 * 24) ))"
+	local hours="$(( (seconds_to_convert / 3600) % 24 ))"
+	local minutes="$(( (seconds_to_convert / 60) % 60 ))"
+	local seconds="$(( seconds_to_convert % 60 ))"
+
+	printf "%sd %sh %sm %ss\\n" "${days}" "${hours}" "${minutes}" "${seconds}"
+}
+
+logStats()
+{
+	local uptime=
+	local timediff=
+	local current_time=
+	uptime="$(secondsToTime "${SECONDS}")"
+	current_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
+
+	if [ -z "${last_stats_logged:-}" ]
+	then
+		timediff="$(( current_time - g_start_time ))"
+	else
+		timediff="$(( current_time - last_stats_logged ))"
+	fi
+
+	logHandler "-------------- Stats for the last ${timediff} seconds --------------"
+	logHandler "Process info:"
+	logHandler "${g_name} is running: ${uptime}"
+	logHandler " "
+	logHandler "Processed jobs:"
+	logHandler "Total processed jobs: '${g_job_counter_total}'"
+	logHandler "Successful processed jobs: '${g_job_counter_ok}'"
+	logHandler "Unsuccessful processed jobs: '${g_job_counter_nok}'"
+	logHandler "Timed out jobs: '${g_job_counter_timeout}'"
+	logHandler " "
+	logHandler "Retransmission jobs:"
+	logHandler "Total retransmission jobs: '${g_job_counter_retransmitted_total}'"
+	logHandler "Successful retransmission jobs: '${g_job_counter_retransmitted_ok}'"
+	logHandler "Unsuccessful retransmission jobs: '${g_job_counter_retransmitted_nok}'"
+	logHandler "Timed out retransmission jobs: '${g_job_counter_retransmitted_timeout}'"
+	logHandler " "
+	logHandler "Handled checks:"
+	logHandler "Host checks: '${g_host_counter}'"
+	logHandler "Service checks: '${g_service_counter}'"
+	logHandler "Invalid datasets received: '${g_invalid_data_counter}'"
+	logHandler " "
+
+	last_stats_logged="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
+}
+
+resetCounters()
+{
+	g_job_counter_total="0"
+	g_job_counter_ok="0"
+	g_job_counter_nok="0"
+	g_job_counter_timeout="0"
+	g_job_counter_retransmitted_total="0"
+	g_job_counter_retransmitted_ok="0"
+	g_job_counter_retransmitted_nok="0"
+	g_job_counter_retransmitted_timeout="0"
+	g_host_counter="0"
+	g_service_counter="0"
+	g_invalid_data_counter="0"
+}
+
+setRequiredVariables()
+{
+	#-----------------
+	# Global variables
+	#-----------------
+
+	# define path of modpd binary
+	g_bin_file="/usr/local/${g_name}"
+
+	# path to lib directory
+	g_state_directory="/var/lib/${g_name}"
+
+	# path to lock directory
+	g_lock_directory="${g_state_directory}/lock"
+
+	# path to libexec directory
+	g_libexec_directory="/usr/libexec/${g_name}"
+
+	# log directory
+	g_log_directory="/var/log/${g_name}"
+
+	# etc directory
+	g_etc_directory="/etc/${g_name}"
+
+	# default config file
+	g_config_file="${g_config_file:=${g_etc_directory}/${g_name}.conf}"
+
+	# lock file
+	g_lock_file="${g_lock_directory}/${g_name}.lock"
+
+	# log file
+	g_log_file="${g_log_directory}/${g_name}.log"
+
+	# debug log file monitoring rawdata
+	g_debug_log_file_monitoring="${g_log_directory}/${g_name}.monitoring.debug.log"
+
+	# debug log file obsessing data
+	g_debug_log_file_obsessing="${g_log_directory}/${g_name}.obsessing.debug.log"
+
+	# named pipe
+	g_named_pipe_file="${g_state_directory}/rw/${g_name}.cmd"
+}
+
+reloadHandler()
+{
+	if ! includeConfig
+	then
+		return 1
+	fi
+
+	# check if we need additional binaries because of an updated config
+	if ! checkRequiredBinaries
+	then
+		return 2
+	fi
+
+	# set the new config for the logHandler function
+	if ! logHandlerSetConfig
+	then
+		return 3
+	fi
+
+	# get the longest name of functions for field calling function
+	if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
+	then
+		calculateFunctionNameLength
+	fi
+
+	if ! setProxy
+	then
+		return 4
+	fi
+
+	if ! updateExistingData
+	then
+		return 5
+	fi
+
+	if ! buildJobCommand
+	then
+		return 6
+	fi
+}
+
+checkBin()
+{
+	local binary="${1:-}"
+	local bin=
+
+	if bin="$(command -v "${binary}" 2>/dev/null)"
+	then
+		export "${binary//-/_}"_bin="${bin}"
+		return 0
+	else
+		return 1
+	fi
+}
+
+checkRequiredBinaries()
+{
+	local bin=
+	local required_binaries=()
+	local binaries_not_found=()
+	local binaries_not_found_helper=
+
+	if [ "${c_log_to_syslog}" == "1" ]
+	then
+		required_binaries+=("logger")
+	fi
+
+	if [ "${c_log_to_journal}" -eq "1" ]
+	then
+		required_binaries+=("systemd-cat")
+	fi
+
+	if [ "${c_log_to_file}" == "1" ] || [ "${c_log_to_stdout}" == "1" ]
+	then
+		if [ "${BASH_VERSINFO[0]}" -ge "4" ] && [ "${BASH_VERSINFO[1]}" -ge "2" ]
+		then
+			g_date_bin_printf="1"
+			date_bin="printf"
+		else
+			g_date_bin_printf="0"
+			required_binaries+=("date")
+		fi
+	else
+		g_date_bin_printf="0"
+	fi
+
+	if [ "${c_job_timeout_enabled}" == "1" ]
+	then
+		required_binaries+=("timeout")
+	fi
+
+	if [ "${c_obsessing_interface}" == "nrdp" ]
+	then
+		required_binaries+=("php")
+	fi
+
+	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "kill" "sleep")
+
+	for bin in "${required_binaries[@]}"
+	do
+		if ! checkBin "${bin}"
+		then
+			binaries_not_found+=("${bin}")
+		fi
+	done
+
+	if [ "${#binaries_not_found[@]}" -gt "1" ]
+	then
+		binaries_not_found_helper="${binaries_not_found[*]}"
+		binaries_not_found_helper="${binaries_not_found_helper//\ /\,\ }"
+
+		logHandler "Required binaries: '${binaries_not_found_helper}' not found, terminating"
+		g_exit_code="127"
+		exit
+	elif [ "${#binaries_not_found[@]}" -eq "1" ]
+	then
+		logHandler "Required binary: '${binaries_not_found[*]}' not found, terminating"
+		g_exit_code="127"
+		exit
+	fi
+}
+
+includeConfig()
+{
+	checkFileParameters "${g_config_file}"
+
+	if [ "$(( g_file_permission & g_regular_file_exists ))" -gt "0" ] && [ "$(( g_file_permission & g_regular_file_is_not_empty ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ]
+	then
+		# shellcheck source=/scripts/etc/modpd/modpd.conf
+		if source "${g_config_file}"
+		then
+			g_config_file_included="1"
+		else
+			logHandler "Including config file: '${g_config_file}' was not successful"
+			logHandler "Terminating..."
+
+			g_bypass_exit_routines="1"
+			g_exit_code="10"
+			exit
+		fi
+	elif [ "$(( g_file_permission & g_regular_file_exists ))" -eq "0" ]
+	then
+		logHandler "Config file: '${g_config_file}' does not exist"
+		logHandler "Terminating..."
+
+		g_bypass_exit_routines="1"
+		g_exit_code="11"
+		exit
+	elif [ "$(( g_file_permission & g_regular_file_is_not_empty ))" -eq "0" ]
+	then
+		logHandler "Config file: '${g_config_file}' exists, but is empty"
+		logHandler "Terminating..."
+
+		g_bypass_exit_routines="1"
+		g_exit_code="12"
+		exit
+	elif [ "$(( g_file_permission & g_permission_read ))" -eq "0" ]
+	then
+		logHandler "Config file: '${g_config_file}' exists, but it is not readable"
+		logHandler "Terminating..."
+
+		g_bypass_exit_routines="1"
+		g_exit_code="13"
+		exit
+	fi
+}
+
+calculateFunctionNameLength()
+{
+	local function=
+	local function_names=()
+
+	while IFS='' read -r
+	do
+		function_names+=("${REPLY}")
+	done <<< "$(declare -F)"
+
+	for function in "${function_names[@]//declare -f /}"
+	do
+		if [ "${#function}" -gt "${g_function_names_max_length}" ]
+		then
+			g_function_names_max_length="${#function}"
+		fi
+	done
+}
+
+logHandlerSetConfig()
+{
+	g_log_conf="0"
+
+	if [ "${g_date_bin_printf:-}" -eq "1" ]
+	then
+		g_date_cmd_format_prefix="'%("
+		g_date_cmd_format_suffix=")T\\n' -1"
+	else
+		g_date_cmd_format_prefix="'+"
+		g_date_cmd_format_suffix="'"
+	fi
+
+	if [ "${c_log_to_file}" -eq "1" ]
+	then
+		g_log_conf="$(( g_log_conf | g_log_to_file ))"
+	fi
+
+	if [ "${c_log_to_stdout}" -eq "1" ]
+	then
+		g_log_conf="$(( g_log_conf | g_log_to_stdout ))"
+	fi
+
+	if [ "${c_log_to_syslog}" -eq "1" ]
+	then
+		g_log_conf="$(( g_log_conf | g_log_to_syslog ))"
+	fi
+
+	if [ "${c_log_to_journal}" -eq "1" ]
+	then
+		g_log_conf="$(( g_log_conf | g_log_to_journal ))"
+	fi
+
+	if [ -n "${date_bin:-}" ]
+	then
+		g_log_conf="$(( g_log_conf | g_date_bin_available ))"
+	fi
+
+	if [ -n "${logger_bin:-}" ]
+	then
+		g_log_conf="$(( g_log_conf | g_logger_bin_available ))"
+	fi
+
+	if [ -n "${systemd_cat_bin:-}" ]
+	then
+		g_log_conf="$(( g_log_conf | g_systemd_cat_bin_available ))"
+	fi
+}
+
+checkLogDir()
+{
+	checkFileParameters "${g_log_directory}"
+
+	if [ "$(( g_file_permission & g_is_directory ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_execute ))" -gt "0" ]
+	then
+		checkFileParameters "${g_log_file}"
+
+		if [ "$(( g_file_permission & g_regular_file_exists ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_write ))" -eq "0" ]
+		then
+			logHandler "Log file exists but we dont have write permissions, terminating"
+			g_bypass_exit_routines="1"
+			g_exit_code="20"
+			exit
+		else
+			g_log_requirements_ok="1"
+			return 0
+		fi
+	elif [ "$(( g_file_permission & g_is_directory ))" -eq "0" ]
+	then
+		logHandler "Log directory doesnt exist"
+		logHandler "Creating log directory..."
+
+		# shellcheck disable=SC2154
+		if ${mkdir_bin} -p "${g_log_directory}" 2>&1 | logHandler
+		then
+			logHandler "Creating log directory was successful"
+			g_log_requirements_ok="1"
+		else
+			logHandler "Creating log directory was not successful"
+			g_bypass_exit_routines="1"
+			g_exit_code="21"
+			exit
+		fi
+	else
+		logHandler "Log directory exists but permissions are not ok, terminating"
+		g_bypass_exit_routines="1"
+		g_exit_code="22"
+		exit
+	fi
+}
+
+checkLogHandlerRequirements()
+{
+	g_start_time="$(eval "${date_bin} ${g_date_cmd_format_prefix}%s${g_date_cmd_format_suffix}")"
+
+	if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ] || [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
+	then
+		calculateFunctionNameLength
+	fi
+
+	if [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
+	then
+		checkLogDir
+	fi
+
+	logHandler "${g_name} ${g_version} starting... (PID=${g_pid})"
+	logHandler "We are using the config file: '${g_config_file}'"
+}
+
+logHandlerStdinHelper()
+{
+	while read -r
+	do
+		logHandler "${REPLY}"
+	done < "/dev/stdin"
+}
+
+logHandler()
+{
+	local log_message="${1:-}"
+	local log_timestamp=
+	local calling_function=
+	local log_secure_replace_string="[HIDDEN FOR SECURITY]"
+
+	if [ -z "${log_message:-}" ]
+	then
+		if [ ! -t "0" ]
+		then
+			logHandlerStdinHelper
+		fi
+	else
+		log_message="${log_message//\`/}"
+		log_message="${log_message//${c_proxy_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${c_nrdp_password:-}/${log_secure_replace_string}}"
+		log_message="${log_message//${c_nrdp_token:-}/${log_secure_replace_string}}"
+
+		if [ "${g_log_requirements_ok}" -ne "1" ]
+		then
+			eprintf "${log_message}"
+			return
+		fi
+
+		if [ "${FUNCNAME[1]}" != "logHandlerStdinHelper" ]
+		then
+			calling_function="${FUNCNAME[1]}"
+		else
+			calling_function="${FUNCNAME[3]}"
+		fi
+
+		if [ "$(( g_log_conf & g_log_to_stdout ))" -gt "0" ]
+		then
+			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
+			then
+				if [ -z "${log_timestamp}" ]
+				then
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
+				fi
+
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
+			else
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}"
+			fi
+		fi
+
+		if [ "$(( g_log_conf & g_log_to_file ))" -gt "0" ]
+		then
+			if [ "$(( g_log_conf & g_date_bin_available ))" -gt "0" ]
+			then
+				if [ -z "${log_timestamp}" ]
+				then
+					log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
+				fi
+
+				printf "%s | %6d | %*s | %s\\n" "${log_timestamp}" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+			else
+				printf "[Date bin not found] | %6d | %*s | %s\\n" "${g_pid}" "${g_function_names_max_length}" "${calling_function}" "${log_message}" >>"${g_log_file}"
+			fi
+		fi
+
+		if [ "$(( g_log_conf & g_log_to_syslog ))" -gt "0" ]
+		then
+			if [ "$(( g_log_conf & g_logger_bin_available ))" -gt "0" ]
+			then
+				${logger_bin} -t "${g_name}[${g_pid}]" -- "(${calling_function}) ${log_message}"
+			fi
+		fi
+
+		if [ "$(( g_log_conf & g_log_to_journal ))" -gt "0" ]
+		then
+			if [ "$(( g_log_conf & g_systemd_cat_bin_available ))" -gt "0" ]
+			then
+				printf "(%s) %s\\n" "${calling_function}" "${log_message}" | ${systemd_cat_bin} --identifier="${g_name}"
+			fi
+		fi
+	fi
+}
+
+checkLock()
+{
+	logHandler "Check if lock file: '${g_lock_file}' exists and if it is read and writeable..."
+
+	checkFileParameters "${g_lock_file}"
+
+	if [ "$(( g_file_permission & g_regular_file_exists ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_write ))" -gt "0" ]
+	then
+		logHandler "Lock file exists and it is read/writeable"
+		return 0
+	elif [ "$(( g_file_permission & g_regular_file_exists ))" -eq "0" ]
+	then
+		logHandler "Lock file doesnt exist"
+		return 1
+	else
+		logHandler "Lock file exists, but it is not read/writeable"
+		return 2
+	fi
+}
+
+setLock()
+{
+	logHandler "Check if daemon lock directory: '${g_lock_directory}' exists and permissions to set lock are ok..."
+
+	checkFileParameters "${g_lock_directory}"
+
+	if [ "$(( g_file_permission & g_is_directory ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_execute ))" -gt "0" ]
+	then
+		logHandler "Script lock directory exists and permissions are ok"
+	elif [ "$(( g_file_permission & g_is_directory ))" -eq "0" ]
+	then
+		logHandler "Script lock directory doesnt exist"
+		logHandler "Creating daemon lock directory..."
+
+		# shellcheck disable=SC2154
+		if ${mkdir_bin} -p "${g_lock_directory}" 2>&1 | logHandler
+		then
+			logHandler "Creating daemon lock directory was successful"
+		else
+			logHandler "Creating daemon lock directory was not successful"
+			g_exit_code="30"
+			exit
+		fi
+	else
+		logHandler "Script lock directory exists but permissions are not ok, terminating"
+		g_exit_code="31"
+		exit
+	fi
+
+	logHandler "Setting lock..."
+
+	if printf "%d" "${g_pid}" >"${g_lock_file}"
+	then
+		logHandler "Setting lock was successful"
+	else
+		logHandler "Setting lock was not successful. Maybe another instance has set the lock between checking lock and setting lock"
+		g_exit_code="32"
+		exit
+	fi
+}
+
+removeLock()
+{
+	logHandler "Removing lock..."
+
+	# shellcheck disable=SC2154
+	if ${rm_bin} "${g_lock_file}" 2>&1 | logHandler
+	then
+		logHandler "Removing lock was successful"
+	else
+		logHandler "Removing lock was not successful"
+		g_exit_code="40"
+		exit
+	fi
+}
+
+setProxy()
+{
+	if [ "${c_proxy_enabled}" == "1" ]
+	then
+		local proxy=
+		local proxy_url=
+
+		logHandler "Using proxy is enabled, building proxy configuration..."
+
+		if [ -n "${c_proxy_port}" ]
+		then
+			proxy_url="${c_proxy_ip}:${c_proxy_port}"
+		else
+			proxy_url="${c_proxy_ip}"
+		fi
+
+		if [ -n "${c_proxy_username}" ] && [ -n "${c_proxy_password}" ]
+		then
+			proxy="${c_proxy_protocol}://${c_proxy_username}:${c_proxy_password}@${proxy_url}"
+		else
+			proxy="${c_proxy_protocol}://${proxy_url}"
+		fi
+
+		export http_proxy="${proxy}"
+		export https_proxy="${proxy}"
+		export ftp_proxy="${proxy}"
+		export socks_proxy="${proxy}"
+		export HTTP_PROXY="${proxy}"
+		export HTTPS_PROXY="${proxy}"
+		export FTP_PROXY="${proxy}"
+		export SOCKS_PROXY="${proxy}"
+
+		logHandler "We build the following proxy config: '${proxy}'"
+	fi
+}
+
+checkFileParameters()
+{
+	local file="${1:-}"
+	g_file_permission="0"
+
+	if [ -x "${file}" ]
+	then
+		g_file_permission="$(( g_file_permission | g_permission_execute ))"
+	fi
+
+	if [ -w "${file}" ]
+	then
+		g_file_permission="$(( g_file_permission | g_permission_write ))"
+	fi
+
+	if [ -r "${file}" ]
+	then
+		g_file_permission="$(( g_file_permission | g_permission_read ))"
+	fi
+
+	if [ -f "${file}" ]
+	then
+		g_file_permission="$(( g_file_permission | g_regular_file_exists ))"
+
+		if [ -s "${file}" ]
+		then
+			g_file_permission="$(( g_file_permission | g_regular_file_is_not_empty ))"
+		fi
+	else
+		if [ -d "${file}" ]
+		then
+			g_file_permission="$(( g_file_permission | g_is_directory ))"
+		fi
+
+		if [ -p "${file}" ]
+		then
+			g_file_permission="$(( g_file_permission | g_is_named_pipe ))"
+		fi
+	fi
+}
+
+checkBashVersion()
+{
+	logHandler "Checking bash version..."
+
+	if [ -z "${BASH_VERSINFO[0]}" ]
+	then
+		logHandler "Could not determine bash version, terminating"
+		g_exit_code="50"
+		exit
+	else
+		if [ "${BASH_VERSINFO[0]}" -lt "${g_minimal_required_bash_version}" ]
+		then
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' doesnt meet requirements, terminating"
+
+			g_bypass_exit_routines="1"
+			g_exit_code="51"
+			exit
+		else
+			logHandler "Bash version: '${BASH_VERSINFO[0]}' meets requirements"
+		fi
+	fi
+}
+
+getExecUser()
+{
+	local exec_user=
+
+	logHandler "Get user which starts the daemon..."
+
+	if [ -n "${SUDO_USER:-}" ]
+	then
+		exec_user="$SUDO_USER"
+	else
+		# shellcheck disable=SC2154
+		exec_user="$(${whoami_bin})"
+	fi
+
+	logHandler "${g_name} was started as user: '${exec_user}'"
+}
+
+checkAlreadyRunningInstance()
+{
+	local rc=
+	local running_pid=
+	local session_pid=
+	local session_pids=()
+	local running_pids=()
+
+	# shellcheck disable=SC2154
+	# shellcheck disable=SC2207
+	session_pids+=($(${pgrep_bin} -d " " -s "${g_pid}"))
+	session_pids+=("${g_pid}")
+	# shellcheck disable=SC2154
+	# shellcheck disable=SC2207
+	running_pids+=($(${pgrep_bin} -d " " -f "^(.*)bash(.*)${g_bin_file}/bin/${g_name}(.*)$"))
+
+	for running_pid in "${!running_pids[@]}"
+	do
+		for session_pid in "${!session_pids[@]}"
+		do
+			if [ "${running_pids[$running_pid]}" == "${session_pids[$session_pid]}" ]
+			then
+				unset "running_pids[$running_pid]"
+				break
+			fi
+		done
+	done
+
+	logHandler "Check if another instance of: '${g_name}' is already running..."
+
+	checkLock
+	rc="${?}"
+
+	if [ "${rc}" != "0" ] && [ -z "${running_pids[*]:-}" ]
+	then
+		logHandler "No other instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and no processes are running)"
+		setLock
+	elif [ "${rc}" == "0" ] && [ -z "${running_pids[*]:-}" ]
+	then
+		logHandler "No other instance of: '${g_name}' seems to be running (Lockfile: '${g_lock_file}' exists and no processes are running). Maybe ${g_name} was terminated abnormally"
+		logHandler "We try to remove the old, leftover lockfile..."
+
+		removeLock
+	elif [ "${rc}" == "0" ] && [ -n "${running_pids[*]:-}" ]
+	then
+		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' exists and the following processes: '${running_pids[*]}' are running)"
+
+		g_another_instance_is_running="1"
+		g_exit_code="60"
+		exit
+	elif [ "${rc}" != "0" ] && [ -n "${running_pids[*]:-}" ]
+	then
+		logHandler "Another instance of: '${g_name}' is currently running (Lockfile: '${g_lock_file}' doesnt exist and the following processes: '${running_pids[*]}' are running)"
+
+		g_another_instance_is_running="1"
+		g_exit_code="61"
+		exit
+	fi
+}
+
+createNamedPipe()
+{
+	if checkNamedPipe
+	then
+		logHandler "Creating named pipe..."
+
+		# shellcheck disable=SC2154
+		if ${mkfifo_bin} --mode=774 "${g_named_pipe_file}" 2>&1 | logHandler
+		then
+			logHandler "Creating named pipe was successful"
+		else
+			logHandler "Creating named pipe was not successful, terminating"
+			g_exit_code="70"
+			exit
+		fi
+	fi
+
+	exec 3<> "${g_named_pipe_file}"
+}
+
+removeNamedPipe()
+{
+	logHandler "Remove named pipe..."
+
+	# shellcheck disable=SC2154
+	if ${rm_bin} "${g_named_pipe_file}" 2>&1 | logHandler
+	then
+		logHandler "Removing named pipe was successful"
+
+		exec 3>&-
+		exec 3<&-
+	else
+		logHandler "Removing named pipe was not successful, terminating"
+		g_exit_code="80"
+		exit
+	fi
+}
+
+checkNamedPipe()
+{
+	logHandler "Check if named pipe: '${g_named_pipe_file}' exists and if it is read/writeable..."
+
+	checkFileParameters "${g_named_pipe_file}"
+
+	if [ "$(( g_file_permission & g_is_named_pipe ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_read ))" -gt "0" ] && [ "$(( g_file_permission & g_permission_write ))" -gt "0" ]
+	then
+		logHandler "Named pipe exists and it is read/writeable"
+		return 1
+	elif [ "$(( g_file_permission & g_is_named_pipe ))" -eq "0" ]
+	then
+		logHandler "Named pipe doesnt exist"
+		return 0
+	else
+		logHandler "Named pipe exists, but it is not read/writeable, terminating"
+		g_exit_code="90"
+		exit
+	fi
+}
+
+timerHandler()
+{
+	local interval="${1}"
+	local last_result="${2}"
+	local result="$(( SECONDS / interval ))"
+
+	if [ "${result}" -ge "${last_result}" ]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+
+generateDebugLogOutput()
+{
+	local debug_type="${1}"
+	local log_timestamp=
+	log_timestamp="$(eval "${date_bin} ${g_date_cmd_format_prefix}${c_log_timestamp_format}${g_date_cmd_format_suffix}")"
+
+	printf "********** START (%s) %s debug log cycle **********\\n" "${log_timestamp}" "${g_name}"
+
+	if [ "${debug_type}" == "monitoring" ]
+	then
+		printf "*** START (raw data received from monitoring) ***\\n\\n"
+		printf "${log_timestamp}: %s\\n" "${g_job_raw_data[@]}"
+		printf "\\n*** END (raw data received from monitoring) ***\\n"
+	elif [ "${debug_type}" == "obsessing" ]
+	then
+		printf "*** START (raw data prepared to send via %s) ***\\n\\n" "${c_obsessing_interface}"
+		printf "${log_timestamp}: %s\\n" "${g_job_data[@]}"
+		printf "\\n*** END (raw data prepared to send via %s) ***\\n" "${c_obsessing_interface}"
+	fi
+
+	printf "********** END (%s) %s debug log cycle **********\\n\\n" "${log_timestamp}" "${g_name}"
+}
+
+debugLog()
+{
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
+	then
+		generateDebugLogOutput "monitoring" >> "${g_debug_log_file_monitoring}"
+	fi
+
+	if [ "${c_debug_log_obsessing_data}" == "1" ]
+	then
+		generateDebugLogOutput "obsessing" >> "${g_debug_log_file_obsessing}"
+	fi
+}
+
+truncateDebugLogs()
+{
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
+	then
+		if : >| "${g_debug_log_file_monitoring}" 2>&1 | logHandler
+		then
+			logHandler "Truncating the debug logfile for monitoring data was successful"
+		else
+			logHandler "Truncating the debug logfile for monitoring data was not successful"
+		fi
+	fi
+
+	if [ "${c_debug_log_obsessing_data}" == "1" ]
+	then
+		if : >| "${g_debug_log_file_obsessing}" 2>&1 | logHandler
+		then
+			logHandler "Truncating the debug logfile for obsessing data was successful"
+		else
+			logHandler "Truncating the debug logfile for obsessing data was not successful"
+		fi
+	fi
+}
+
+setSeparators()
+{
+	printf -v g_od_sep "%b" "${c_obsessing_data_separator}"
+	printf -v g_md_sep "%b" "${g_monitoring_data_separator}"
+}
+
+updateExistingData()
+{
+	local saved_g_od_sep=
+
+	saved_g_od_sep="${g_od_sep}"
+	setSeparators
+	g_job_data=("${g_job_data[@]//${saved_g_od_sep}/${g_od_sep}}")
+}
+
+buildJobCommand()
+{
+	logHandler "Building job command..."
+
+	if [ "${c_job_timeout_enabled}" == "1" ]
+	then
+		# shellcheck disable=SC2154
+		g_job_command="${timeout_bin} --signal=TERM ${c_job_timeout}"
+	fi
+
+	case "${c_obsessing_interface:-}" in
+		nrdp)
+			if [ -n "${c_nrdp_username}" ] && [ -n "${c_nrdp_password}" ]
+			then
+				# shellcheck disable=SC2154
+				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_nrdp_username}:${c_nrdp_password}@${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
+			else
+				# shellcheck disable=SC2154
+				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
+			fi
+			;;
+		nsca)
+			g_job_command="${g_job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${c_obsessing_host} -p ${c_obsessing_port} -c \"${c_nsca_config_file}\""
+			;;
+		*)
+			logHandler "Invalid obsessing interface defined in config file: '${g_config_file}', terminating"
+			g_exit_code="100"
+			exit
+			;;
+	esac
+
+	logHandler "We build the following job command: '${g_job_command}'"
+}
+
+jobExec()
+{
+	local retransmission_data=("${@}")
+	local data=
+	local rc=
+
+	if [ "${#retransmission_data[@]}" -gt "0" ]
+	then
+		data=("${retransmission_data[@]}")
+	else
+		data=("${g_job_data[@]}")
+	fi
+
+	case "${c_obsessing_interface:-}" in
+		nrdp)
+			printf "%s\\n" "${data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
+			;;
+		nsca)
+			printf "%s\\n\\x17" "${data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
+			;;
+	esac
+
+	rc="${PIPESTATUS[1]}"
+
+	if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
+	then
+		debugLog
+	fi
+
+	return "${rc}"
+}
+
+retransmissionHandler()
+{
+	local data=("${@}")
+	local pid=
+	local rc=
+
+	if [ "${c_job_nok_retransmit}" == "1" ]
+	then
+		jobExec "${data[@]}" &
+		pid="${!}"
+		g_job_retransmission_pids+=("${pid}")
+
+		if [ "${#g_job_retransmission_pids[@]}" -gt "0" ]
+		then
+			for pid in "${!g_job_retransmission_pids[@]}"
+			do
+				if ! ${kill_bin} -0 "${g_job_retransmission_pids[${pid}]}"
+				then
+					wait "${g_job_retransmission_pids[${pid}]}"
+					rc="${?}"
+					counterHandler "${rc}" "1" "${g_job_retransmission_pids[${pid}]}"
+					unset 'g_job_retransmission_pids[${pid}]'
+				fi
+			done
+		fi
+	fi
+}
+
+counterHandler()
+{
+	local rc="${1:-}"
+	local retransmission="${2:-}"
+	local pid="${3:-}"
+
+	g_job_counter_total="$(( g_job_counter_total + 1 ))"
+
+	if [ "${retransmission}" == "1" ]
+	then
+		g_job_counter_retransmitted_total="$(( g_job_counter_retransmitted_total + 1 ))"
+
+		if [ "${rc}" == "0" ]
+		then
+			g_job_counter_retransmitted_ok="$(( g_job_counter_retransmitted_ok + 1 ))"
+		elif [ "${c_job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
+		then
+			g_job_counter_retransmitted_timeout="$(( g_job_counter_retransmitted_timeout + 1 ))"
+		else
+			g_job_counter_retransmitted_nok="$(( g_job_counter_retransmitted_nok + 1 ))"
+		fi
+
+		return
+	fi
+
+	if [ "${rc}" == "0" ]
+	then
+		g_job_counter_ok="$(( g_job_counter_ok + 1 ))"
+
+		if [ "${c_job_command_log_ok}" == "1" ]
+		then
+			logHandler "Command: '${g_job_command}' was successful"
+		fi
+	elif [ "${c_job_timeout_enabled}" == "1" ] && [ "${rc}" == "124" ]
+	then
+		g_job_counter_timeout="$(( g_job_counter_timeout + 1 ))"
+
+		if [ "${c_job_command_log_timeout}" == "1" ]
+		then
+			logHandler "Command: '${g_job_command}' timed out"
+		fi
+	else
+		g_job_counter_nok="$(( g_job_counter_nok + 1 ))"
+
+		if [ "${c_job_command_log_nok}" == "1" ]
+		then
+			logHandler "Command: '${g_job_command}' was not successful"
+		fi
+	fi
+}
+
+jobHandler()
+{
+	local rc=
+
+	if [ "${#g_job_data[@]}" -eq "0" ]
+	then
+		return
+	fi
+
+	if [ -z "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
+	then
+		jobExec &
+		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
+	elif [ -n "${g_job_pid_1}" ] && [ -z "${g_job_pid_2}" ]
+	then
+		jobExec &
+		g_job_pid_2="${!}"
+		g_job_data_2=("${g_job_data[@]}")
+
+		wait "${g_job_pid_1}"
+		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_1[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_1[@]}"
+		else
+			g_job_data_1=()
+		fi
+
+		counterHandler "${rc}"
+		g_job_pid_1=
+	elif [ -z "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
+	then
+		jobExec &
+		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
+
+		wait "${g_job_pid_2}"
+		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_2[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_2[@]}"
+		else
+			g_job_data_2=()
+		fi
+
+		counterHandler "${rc}"
+		g_job_pid_2=
+	elif [ -n "${g_job_pid_1}" ] && [ -n "${g_job_pid_2}" ]
+	then
+		wait "${g_job_pid_1}"
+		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_1[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_1[@]}"
+		else
+			g_job_data_1=()
+		fi
+
+		counterHandler "${rc}"
+		g_job_pid_1=
+
+		wait "${g_job_pid_2}"
+		rc="${?}"
+
+		if [ "${rc}" != "0" ]
+		then
+			if [ "${c_job_command_log_nok_data}" == "1" ]
+			then
+				logHandler "The following checks were not processed successfully:"
+
+				for data in "${g_job_data_2[@]}"
+				do
+					logHandler "${data}"
+				done
+			fi
+
+			retransmissionHandler "${g_job_data_2[@]}"
+		else
+			g_job_data_2=()
+		fi
+
+		counterHandler "${rc}"
+		g_job_pid_2=
+
+		jobExec &
+		g_job_pid_1="${!}"
+		g_job_data_1=("${g_job_data[@]}")
+	fi
+}
+
+validateStateId()
+{
+	local state_id="${1}"
+
+	if [ "${state_id}" == "0" ] || [ "${state_id}" == "1" ] || [ "${state_id}" == "2" ] || [ "${state_id}" == "3" ]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+
+validateData()
+{
+	local host_name="${1}"
+	local service_description="${2}"
+	local state_id="${3}"
+	local plugin_output="${4}"
+	local junk="${5}"
+
+	if [ "${service_description}" != "NULL" ]
+	then
+		g_service_counter="$(( g_service_counter + 1 ))"
+
+		if [ -n "${junk}" ] || [ -z "${host_name}" ] || [ -z "${service_description}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
+		then
+			return 1
+		fi
+
+		if ! validateStateId "${state_id}"
+		then
+			return 1
+		fi
+	else
+		g_host_counter="$(( g_host_counter + 1 ))"
+
+		if [ -n "${junk}" ] ||  [ -z "${host_name}" ] || [ -z "${state_id}" ] || [ -z "${plugin_output}" ]
+		then
+			return 1
+		fi
+
+		if ! validateStateId "${state_id}"
+		then
+			return 1
+		fi
+	fi
+
+	return 0
+}
+
+logStatsHandler()
+{
+	local timer_interval_stats="300"
+
+	if timerHandler "${timer_interval_stats}" "${g_timer_result_last_stats}"
+	then
+		g_timer_result_last_stats="$(( g_timer_result_last_stats + 1 ))"
+		logStats
+		resetCounters
+	fi
+}
+
+debugLogHandler()
+{
+	local timer_interval_debug_mode_warning="300"
+
+	if timerHandler "${timer_interval_debug_mode_warning}" "${g_timer_result_last_debug_mode_warning}"
+	then
+		g_timer_result_last_debug_mode_warning="$(( g_timer_result_last_debug_mode_warning + 1 ))"
+		logHandler "WARNING: Debug log enabled! This is not intended for use in a production environment!"
+	fi
+
+	if [ "${c_debug_log_monitoring_data}" == "1" ]
+	then
+		if [ -z "${junk}" ]
+		then
+			g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}")
+		else
+			g_job_raw_data+=("${host_name}${g_md_sep}${service_description}${g_md_sep}${state_id}${g_md_sep}${plugin_output}${g_md_sep}${junk}")
+		fi
+	fi
+
+	if timerHandler "${c_debug_log_truncate_interval}" "${g_timer_result_last_debug_log_truncation}"
+	then
+		g_timer_result_last_debug_log_truncation="$(( g_timer_result_last_debug_log_truncation + 1 ))"
+		truncateDebugLogs
+	fi
+}
+
+errorModeHandler()
+{
+	local timer_interval_error_mode_warning="300"
+
+	if timerHandler "${timer_interval_error_mode_warning}" "${g_timer_result_last_error_mode_warning}"
+	then
+		g_timer_result_last_error_mode_warning="$(( g_timer_result_last_error_mode_warning + 1 ))"
+		logHandler "WARNING: Error mode enabled! This is not intended for use in a production environment!"
+	fi
+}
+
+dataProcessor()
+{
+	local host_name=
+	local service_description=
+	local state_id=
+	local plugin_output=
+	local junk=
+	local job_interval_helper="$(( SECONDS + c_job_exec_interval ))"
+	local read_timeout="60"
+
+	while true
+	do
+		if ! IFS=${g_md_sep} read -t "${read_timeout}" -u 3 -r host_name service_description state_id plugin_output junk
+		then
+			logHandler "WARNING: No monitoring data received within the last ${read_timeout} seconds! Is the monitoring engine running?"
+
+			if [ "${c_stats_enabled}" == "1" ]
+			then
+				logStatsHandler
+			fi
+
+			if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
+			then
+				debugLogHandler
+			fi
+
+			if [ "${g_error_mode}" == "1" ]
+			then
+				errorModeHandler
+			fi
+
+			continue
+		fi
+
+		if validateData "${host_name}" "${service_description}" "${state_id}" "${plugin_output}" "${junk}"
+		then
+			if [ "${service_description}" != "NULL" ]
+			then
+				g_job_data+=("${host_name}${g_od_sep}${service_description}${g_od_sep}${state_id}${g_od_sep}${plugin_output}")
+			else
+				g_job_data+=("${host_name}${g_od_sep}${state_id}${g_od_sep}${plugin_output}")
+			fi
+		else
+			g_invalid_data_counter="$(( g_invalid_data_counter + 1 ))"
+
+			if [ "${c_log_invalid_data}" == "1" ]
+			then
+				logHandler "WARNING: Invalid dataset received! (monitoring_data_separator: ${g_md_sep}) 'host_name: ${host_name}, service_description: ${service_description}, state_id: ${state_id}, plugin_output: ${plugin_output} junk: ${junk}'"
+			fi
+		fi
+
+		if [ "${c_stats_enabled}" == "1" ]
+		then
+			logStatsHandler
+		fi
+
+		if [ "${c_debug_log_monitoring_data}" == "1" ] || [ "${c_debug_log_obsessing_data}" == "1" ]
+		then
+			debugLogHandler
+		fi
+
+		if [ "${g_error_mode}" == "1" ]
+		then
+			errorModeHandler
+		fi
+
+		if [ "${job_interval_helper}" -le "${SECONDS}" ] || [ "${#g_job_data[@]}" == "${c_job_max_bulk_size}" ]
+		then
+			jobHandler
+			g_job_data=()
+			g_job_raw_data=()
+			job_interval_helper="$(( SECONDS + c_job_exec_interval ))"
+		fi
+	done
+}
+
+_main()
+{
+	#-----
+	# Main
+	#-----
+
+	local timer_interval_warning_message="60"
+	local timer_result_last_warning_message="1"
+
+	setRequiredVariables
+	includeConfig
+	checkRequiredBinaries
+	logHandlerSetConfig
+	checkLogHandlerRequirements
+	getExecUser
+	checkBashVersion
+	checkAlreadyRunningInstance
+	createNamedPipe
+	setProxy
+	setSeparators
+	buildJobCommand
+
+	logHandler "Ready to handle jobs..."
+
+	while true
+	do
+		dataProcessor
+
+		if timerHandler "${timer_interval_warning_message}" "${timer_result_last_warning_message}"
+		then
+			timer_result_last_warning_message="$(( timer_result_last_warning_message + 1 ))"
+			logHandler "WARNING: Data processor left in main loop!"
+		fi
+
+		# shellcheck disable=SC2154
+		${sleep_bin} 1
+	done
+}
+
+
+
+#-----------------
+# Global variables
+#-----------------
+
+g_pid="${$}"
+g_name="${0##*/}"
+g_version="3.0.0"
+g_author="Christian Zettel (ccztux)"
+g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
+g_project_website="https://github.com/ccztux/${g_name}"
+g_last_modification_date="2023-01-09"
+g_minimal_required_bash_version="3"
+g_license="GNU GPLv2"
+g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"
+g_another_instance_is_running="0"
+g_bypass_exit_routines="0"
+g_config_file_included="0"
+g_log_requirements_ok="0"
+g_start_time=
+g_exit_code="255"
+g_file_permission="0"
+g_permission_execute="1"
+g_permission_write="2"
+g_permission_read="4"
+g_regular_file_exists="8"
+g_regular_file_is_not_empty="16"
+g_is_directory="32"
+g_is_named_pipe="64"
+g_log_conf="0"
+g_log_to_file="1"
+g_log_to_stdout="2"
+g_log_to_syslog="4"
+g_log_to_journal="8"
+g_date_bin_available="16"
+g_logger_bin_available="32"
+g_systemd_cat_bin_available="64"
+g_function_names_max_length="0"
+g_date_bin_printf=
+g_date_cmd_format_prefix=
+g_date_cmd_format_suffix=
+g_monitoring_data_separator="\\x1e"
+g_od_sep=
+g_md_sep=
+g_job_command=
+g_job_pid_1=
+g_job_pid_2=
+g_job_data_1=()
+g_job_data_2=()
+g_job_retransmission_pids=()
+g_host_counter="0"
+g_service_counter="0"
+g_invalid_data_counter="0"
+g_job_counter_total="0"
+g_job_counter_ok="0"
+g_job_counter_nok="0"
+g_job_counter_timeout="0"
+g_job_counter_retransmitted_total="0"
+g_job_counter_retransmitted_ok="0"
+g_job_counter_retransmitted_nok="0"
+g_job_counter_retransmitted_timeout="0"
+g_job_data=()
+g_job_raw_data=()
+g_timer_result_last_stats="1"
+g_timer_result_last_debug_mode_warning="1"
+g_timer_result_last_debug_log_truncation="1"
+g_timer_result_last_error_mode_warning="1"
+
+
+
+#------
+# Start
+#------
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+then
+	#-------------------------------------
+	# Set required bash and shell options:
+	#-------------------------------------
+
+	setRequiredShellOptions
+	setRequiredBashOptions
+
+
+
+	#----------------
+	# Get CLI options
+	#----------------
+
+	OPTERR="0"
+
+	# shellcheck disable=SC2213
+	while getopts ":c:hve" OPTION
+	do
+		case "${OPTION}" in
+			h)
+				printUsage
+				g_bypass_exit_routines="1"
+				g_exit_code="200"
+				exit
+				;;
+			c)
+				g_config_file="${OPTARG}"
+				;;
+			e)
+				g_error_mode="1"
+				;;
+			v)
+				printScriptInfos
+				g_bypass_exit_routines="1"
+				g_exit_code="201"
+				exit
+				;;
+			\?)
+				printf "Invalid option: -%s\\n\\n" "${OPTARG}"
+				printUsage
+				g_bypass_exit_routines="1"
+				g_exit_code="202"
+				exit
+				;;
+			:)
+				printf "Option: -%s requires an argument.\\n\\n" "${OPTARG}"
+				printUsage
+				g_bypass_exit_routines="1"
+				g_exit_code="203"
+				exit
+				;;
+		esac
+	done
+
+
+
+	#-------------------------
+	# Jump into _main function
+	#-------------------------
+
+	_main "${@}"
+	exit
+else
+	#-------------------------------------------------------
+	# In case of an include attempt, write output and return
+	#-------------------------------------------------------
+
+	trap - ERR
+	logHandler "\\n${BASH_SOURCE[0]##*/} is NOT a bash library. Execute it directly!\\n"
+	return 1
+fi

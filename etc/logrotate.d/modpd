@@ -4,14 +4,14 @@
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2021-01-07
+#						2023-01-09
 #
-#  Version				2.3.1
+#  Version				3.0.0
 #
 #  Description:			logrotate config file for modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -34,13 +34,13 @@
 #========================================================================================================
 
 
-/usr/local/modpd/var/log/modpd.log
+/var/log/modpd/modpd.log
 {
-	su nagios nagios
-	weekly
-	rotate 6
-	missingok
-	notifempty
-	sharedscripts
-	compress
+    weekly
+    rotate 6
+    missingok
+    notifempty
+    compress
+    copytruncate
+    create 0644 modpd modpd
 }

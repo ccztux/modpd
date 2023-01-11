@@ -13,7 +13,7 @@
 #
 #  Version				3.0.0
 #
-#  Description:			Makefile for the modpd NEB module
+#  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
 #  License:				GNU GPLv2
 #
@@ -34,46 +34,24 @@
 #========================================================================================================
 
 
-# Source code directories
-NAGIOS3_DIR=./nagios3
-NAEMON_DIR=./naemon
+[Unit]
+Description=Monitoring Obsessing Data Processor Daemon
+Wants=network.target network-online.target
+After=network.target network-online.target
+After=systemd-journald.service
 
+[Service]
+Restart=on-failure
+User=modpd
+Group=modpd
+StandardOutput=null
+StandardError=journal
+EnvironmentFile=/etc/sysconfig/modpd
+PermissionsStartOnly=true
+ExecStartPre=/usr/bin/touch /var/run/modpd.pid
+ExecStartPre=/usr/bin/chown modpd:modpd /var/run/modpd.pid
+ExecStart=/usr/bin/modpd $DAEMON_ARGS
+ExecReload=/bin/kill -SIGHUP $MAINPID
 
-
-all:	neb-nagios3 neb-naemon
-
-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) neb-nagios3
-
-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) neb-naemon
-
-
-
-clean: clean-neb-nagios3 clean-neb-naemon
-
-clean-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) clean-neb-nagios3
-
-clean-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) clean-neb-naemon
-
-
-
-install: install-neb-nagios3 install-neb-naemon
-
-install-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) install-neb-nagios3
-
-install-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) install-neb-naemon
-
-
-
-uninstall: uninstall-neb-nagios3 uninstall-neb-naemon
-
-uninstall-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) uninstall-neb-nagios3
-
-uninstall-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) uninstall-neb-naemon
+[Install]
+WantedBy=multi-user.target

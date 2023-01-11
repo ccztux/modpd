@@ -34,46 +34,36 @@
 #========================================================================================================
 
 
-# Source code directories
-NAGIOS3_DIR=./nagios3
-NAEMON_DIR=./naemon
+# Source code directory
+SRC_INCLUDE=../../naemon
 
+CC=gcc
+MOD_CFLAGS=-fPIC
+CFLAGS=`pkg-config --cflags glib-2.0` -g -O2 -DHAVE_CONFIG_H
+MOD_LDFLAGS=-shared
+LDFLAGS=`pkg-config --libs glib-2.0`
+LIBS=
 
+prefix=/usr/lib64/modpd
+exec_prefix=${prefix}
+INSTALL=/usr/bin/install -c
+INSTALL_DIR_OPTS=-m 755 -o root -g root -d
+INSTALL_FILE_OPTS=-s -m 755 -o root -g root
 
-all:	neb-nagios3 neb-naemon
+DESTDIR=${prefix}
 
-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) neb-nagios3
+all:	neb-naemon
 
-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) neb-naemon
-
-
-
-clean: clean-neb-nagios3 clean-neb-naemon
-
-clean-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) clean-neb-nagios3
+neb-naemon: modpd_naemon.c
+	$(CC) -I $(SRC_INCLUDE) $(MOD_CFLAGS) $(CFLAGS) -o modpd_naemon.o modpd_naemon.c $(MOD_LDFLAGS) $(LDFLAGS) $(LIBS)
 
 clean-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) clean-neb-naemon
-
-
-
-install: install-neb-nagios3 install-neb-naemon
-
-install-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) install-neb-nagios3
+	rm -f modpd_naemon.o
+	rm -f *~ *.*~
 
 install-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) install-neb-naemon
-
-
-
-uninstall: uninstall-neb-nagios3 uninstall-neb-naemon
-
-uninstall-neb-nagios3:
-	cd $(NAGIOS3_DIR) && $(MAKE) uninstall-neb-nagios3
+	$(INSTALL) $(INSTALL_DIR_OPTS) -d $(DESTDIR)
+	$(INSTALL) $(INSTALL_FILE_OPTS) modpd_naemon.o $(DESTDIR)
 
 uninstall-neb-naemon:
-	cd $(NAEMON_DIR) && $(MAKE) uninstall-neb-naemon
+	rm -f $(DESTDIR)/modpd_naemon.o

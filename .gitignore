@@ -1,1 +1,3 @@
 unversioned
+change_version.sh
+*.o

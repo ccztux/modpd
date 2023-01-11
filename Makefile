@@ -4,14 +4,14 @@
 #						2017-05-14
 #						http://linuxinside.at
 #
-#  Copyright:			Copyright © 2017-2020 Christian Zettel (ccztux), all rights reserved
+#  Copyright:			Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved
 #
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2021-01-07
+#						2023-01-09
 #
-#  Version				2.3.1
+#  Version				3.0.0
 #
 #  Description:			Makefile for the modpd NEB module
 #
@@ -38,14 +38,67 @@
 SRC_DIR=./src
 
 
+INSTALL=/usr/bin/install -c
+INSTALL_DIR_OPTS=-m 755 -o root -g root -d
+INSTALL_VAR_LIB_DIR_OPTS=-m 775 -o modpd -g modpd -d
+INSTALL_VAR_LIB_LOCK_DIR_OPTS=-m 755 -o modpd -g modpd -d
+INSTALL_VAR_LOG_DIR_OPTS=-m 755 -o modpd -g root -d
+INSTALL_BIN_OPTS=-m 755 -o root -g root
+INSTALL_FILE_OPTS=-m 644 -o root -g root
 
-all:	modpd.o
 
-modpd.o:
-	cd $(SRC_DIR) && $(MAKE)
+all:	neb-nagios3 neb-naemon
 
-clean:
-	cd $(SRC_DIR) && $(MAKE) clean
+neb-nagios3:
+	cd $(SRC_DIR) && $(MAKE) neb-nagios3
 
-install:
-	cd $(SRC_DIR) && $(MAKE) install
+neb-naemon:
+	cd $(SRC_DIR) && $(MAKE) neb-naemon
+
+
+
+clean: clean-neb-nagios3 clean-neb-naemon
+
+clean-neb-nagios3:
+	cd $(SRC_DIR) && $(MAKE) clean-neb-nagios3
+
+clean-neb-naemon:
+	cd $(SRC_DIR) && $(MAKE) clean-neb-naemon
+
+
+
+install: install-neb-nagios3 install-neb-naemon install-modpd
+
+install-neb-nagios3:
+	cd $(SRC_DIR) && $(MAKE) install-neb-nagios3
+
+install-neb-naemon:
+	cd $(SRC_DIR) && $(MAKE) install-neb-naemon
+
+install-modpd:
+	$(INSTALL) $(INSTALL_DIR_OPTS) /etc/modpd/
+	$(INSTALL) $(INSTALL_DIR_OPTS) /usr/libexec/modpd/
+	$(INSTALL) $(INSTALL_VAR_LIB_DIR_OPTS) /var/lib/modpd/
+	$(INSTALL) $(INSTALL_VAR_LIB_LOCK_DIR_OPTS) /var/lib/modpd/lock/
+	$(INSTALL) $(INSTALL_VAR_LIB_DIR_OPTS) /var/lib/modpd/rw/
+	$(INSTALL) $(INSTALL_VAR_LOG_DIR_OPTS) /var/log/modpd/
+
+	$(INSTALL) $(INSTALL_FILE_OPTS) ./etc/logrotate.d/modpd /etc/logrotate.d/modpd
+	if [ ! -f /etc/modpd/modpd.conf ] ;then $(INSTALL) $(INSTALL_FILE_OPTS) ./etc/modpd/modpd.conf /etc/modpd/modpd.conf ; fi
+	$(INSTALL) $(INSTALL_FILE_OPTS) ./etc/modpd/modpd.sample.conf /etc/modpd/modpd.sample.conf
+	$(INSTALL) $(INSTALL_FILE_OPTS) ./etc/sysconfig/modpd /etc/sysconfig/modpd
+	$(INSTALL) $(INSTALL_BIN_OPTS) ./usr/bin/modpd /usr/bin/modpd
+	$(INSTALL) $(INSTALL_FILE_OPTS) ./usr/lib/systemd/system/modpd.service /usr/lib/systemd/system/modpd.service
+
+
+
+uninstall: uninstall-neb-nagios3 uninstall-neb-naemon
+
+uninstall-neb-nagios3:
+	cd $(SRC_DIR) && $(MAKE) uninstall-neb-nagios3
+
+uninstall-neb-naemon:
+	cd $(SRC_DIR) && $(MAKE) uninstall-neb-naemon
+
+
+.PHONY:	clean
