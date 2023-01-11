@@ -248,7 +248,7 @@ systemctl status modpd
 
 Add the modpd NEB module with the editor of your choice to your Nagios® main config file:
 
-(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+(Default Nagios® main config file: `/usr/local/nagios/etc/nagios.cfg`)
 ```bash
 broker_module=/usr/lib64/modpd/modpd_nagios3.o
 ```
@@ -256,7 +256,7 @@ broker_module=/usr/lib64/modpd/modpd_nagios3.o
 
 Set the eventbroker options with the editor of your choice in your main nagios config file:
 
-(Default Nagios® main config file: ```/usr/local/nagios/etc/nagios.cfg```)
+(Default Nagios® main config file: `/usr/local/nagios/etc/nagios.cfg`)
 ```bash
 event_broker_options=-1
 ```
@@ -287,7 +287,7 @@ Check if the modpd NEB module was loaded by nagios:
 
 Add the modpd NEB module with the editor of your choice to your Naemon main config file:
 
-(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
+(Default Naemon main config file: `/etc/naemon/naemon.cfg`)
 ```bash
 broker_module=/usr/lib64/modpd/modpd_naemon.o
 ```
@@ -295,7 +295,7 @@ broker_module=/usr/lib64/modpd/modpd_naemon.o
 
 Set the eventbroker options with the editor of your choice in your main naemon config file:
 
-(Default Naemon main config file: ```/etc/naemon/naemon.cfg```)
+(Default Naemon main config file: `/etc/naemon/naemon.cfg`)
 ```bash
 event_broker_options=-1
 ```
@@ -517,28 +517,28 @@ OPTIONS:
 
 
 ## File overview
-- ```/etc/logrotate.d/modpd``` logrotate config file for the modpd daemon logfile
-- ```/etc/sysconfig/modpd``` default configuration values for the system unit file
-- ```/usr/bin/modpd``` modpd daemon
-- ```/etc/modpd/modpd.conf``` configuration file for the modpd daemon
-- ```/etc/modpd/modpd.sample.conf``` sample configuration file for the modpd daemon
-- ```/usr/lib/systemd/system/modpd.service``` systemd unit file for modpd
-- ```/usr/lib64/modpd/modpd_nagios3.o``` modpd NEB module for Nagios® 3.x.x
-- ```/usr/lib64/modpd/modpd_naemon.o``` modpd NEB module for Naemon 1.3.x
-- ```/var/lib/modpd/lock/modpd.lock``` modpd daemon lockfile (will be created by the daemon)
-- ```/var/lib/modpd/rw/modpd.cmd``` named pipe (will be created by the daemon)
-- ```/var/log/modpd/modpd.log``` modpd daemon logfile (will be created by the daemon)
-- ```/var/log/modpd/modpd.monitoring.debug.log``` debug logfile containing raw monitoring data (will be created by the daemon)
-- ```/var/log/modpd/modpd.obsessing.debug.log``` debug logfile containing processed obsessing data (will be created by the daemon)
+- `/etc/logrotate.d/modpd` logrotate config file for the modpd daemon logfile
+- `/etc/sysconfig/modpd` default configuration values for the system unit file
+- `/usr/bin/modpd` modpd daemon
+- `/etc/modpd/modpd.conf` configuration file for the modpd daemon
+- `/etc/modpd/modpd.sample.conf` sample configuration file for the modpd daemon
+- `/usr/lib/systemd/system/modpd.service` systemd unit file for modpd
+- `/usr/lib64/modpd/modpd_nagios3.o` modpd NEB module for Nagios® 3.x.x
+- `/usr/lib64/modpd/modpd_naemon.o` modpd NEB module for Naemon 1.3.x
+- `/var/lib/modpd/lock/modpd.lock` modpd daemon lockfile (will be created by the daemon)
+- `/var/lib/modpd/rw/modpd.cmd` named pipe (will be created by the daemon)
+- `/var/log/modpd/modpd.log` modpd daemon logfile (will be created by the daemon)
+- `/var/log/modpd/modpd.monitoring.debug.log` debug logfile containing raw monitoring data (will be created by the daemon)
+- `/var/log/modpd/modpd.obsessing.debug.log` debug logfile containing processed obsessing data (will be created by the daemon)
 
 
 
 ## Daemon control options
-- ```systemctl status modpd``` shows the state of the daemon
-- ```systemctl start modpd``` starts the daemon
-- ```systemctl stop modpd``` stops the daemon
-- ```systemctl restart modpd``` restarts the daemon
-- ```systemctl reload modpd``` reloads the daemon (config will be re-readed)
+- `systemctl status modpd` shows the state of the daemon
+- `systemctl start modpd` starts the daemon
+- `systemctl stop modpd` stops the daemon
+- `systemctl restart modpd` restarts the daemon
+- `systemctl reload modpd` reloads the daemon (config will be re-readed)
 
 
 
