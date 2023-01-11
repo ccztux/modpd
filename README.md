@@ -121,12 +121,33 @@ something in the configuration, because in case of a restart more than one datas
 
 
 # Requirements
-## Required binaries to install modpd
+## Required for building, compiling and installing the NEB modules and modpd
 - **wget** to download the latest release of modpd
 - **tar** to untar the downloaded package of modpd
-- **cp** to copy the files
+- **make** to build the modpd NEB modules
+- **gcc** to compile the modpd NEB modules
+- **install** to install the modpd NEB modules
+- **strip** to strip the modpd NEB binaries
+- **useradd** to add the modpd linux user
+- **passwd** to set a password for the user modpd
+- **usermod** to add users to the modpd group
+
+
+## Required binaries for the installation of NRDP
+- **wget** to download the package
+- **tar** to untar the downloaded package
+- **cp** to copy files
 - **chown** to change the ownership of files
-- **chmod** to change the permission of files
+- **php** to run the application
+
+
+## Required binaries for the installation of NSCA
+- **wget** to download the package
+- **tar** to untar the downloaded package
+- **make** to build the modpd NEB modules
+- **gcc** to compile the modpd NEB modules
+- **cp** to copy files
+- **chown** to change the ownership of files
 
 
 ## Required by the daemon part of modpd
@@ -148,13 +169,6 @@ something in the configuration, because in case of a restart more than one datas
 - **systemd-cat** to log to the system journal
 - **timeout** to start the obsessing jobs with a timeout value
 - **php** in case obsessing_interface is nrdp
-
-
-## Required for building, compiling and installing the modpd NEB modules
-- **make** to build the modpd NEB modules
-- **gcc** to compile the modpd NEB modules
-- **install** to install the modpd NEB modules
-- **strip** to strip the modpd NEB binary
 
 
 
