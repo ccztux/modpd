@@ -48,7 +48,7 @@ prefix=/usr/lib64/modpd
 exec_prefix=${prefix}
 INSTALL=/usr/bin/install -c
 INSTALL_DIR_OPTS=-m 755 -o root -g root -d
-INSTALL_FILE_OPTS=-s -m 755 -o root -g root
+INSTALL_FILE_OPTS=-s -m 644 -o 644 -g root
 
 DESTDIR=${prefix}
 
