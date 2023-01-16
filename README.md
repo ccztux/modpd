@@ -938,3 +938,5 @@ service nagios restart
 
 ## Install modpd 3.x.x
 Use the [regular install guide](#installation-on-the-monitoring-site-which-executes-the-active-checks)
+and merge possible changes between the new config and the old one from your backup using the tool of
+your choice like vimdiff.
