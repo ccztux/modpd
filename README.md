@@ -14,8 +14,9 @@
 * [Registered trademarks](#registered-trademarks)
 * [Known Issues](#known-issues)
 * [Supported monitoring engines](#supported-monitoring-engines)
-   * [modpd &gt;= 3.x.x](#modpd--3xx)
-   * [modpd &lt; 3.x.x](#modpd--3xx-1)
+   * [modpd &gt;= 3.1.x](#modpd--31x)
+   * [modpd == 3.0.x](#modpd--30x)
+   * [modpd &lt; 3.0.0](#modpd--300)
 * [Requirements](#requirements)
    * [Required for building, compiling and installing the NEB modules and modpd](#required-for-building-compiling-and-installing-the-neb-modules-and-modpd)
    * [Required binaries for the installation of NRDP](#required-binaries-for-the-installation-of-nrdp)
@@ -76,7 +77,7 @@
 
 modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
 it to a named pipe. The daemon part reads the data from the named pipe and sends the check results
-via NRDP or NSCA to another monitoring server.
+via NRDP, NSCA or Icinga2 API to another monitoring server.
 
 
 # What was the motivation to develop modpd?
@@ -111,12 +112,19 @@ something in the configuration, because in case of a restart more than one datas
 
 
 # Supported monitoring engines
-## modpd >= 3.x.x
+## modpd >= 3.1.x
+* Nagios® 3.4.x
+* Naemon 1.3.x
+* Icinga2 via Icinga2 API (Only on the passive checks site!)
+
+
+
+## modpd == 3.0.x
 * Nagios® 3.4.x
 * Naemon 1.3.x
 
 
-## modpd < 3.x.x
+## modpd < 3.0.0
 * Nagios® 3.4.x
 
 
