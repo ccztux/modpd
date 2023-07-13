@@ -52,6 +52,7 @@ script_last_modification_date="2023-07-10"
 # Global variables
 #-----------------
 
+api_url_scheme=
 api_host=
 api_port=
 api_username=
@@ -61,8 +62,9 @@ service_description=
 exit_status=
 output=
 perfdata=
-use_stdin=
+use_stdin_flag=
 delimiter=
+debug_flag=
 raw_data=()
 return_code="0"
 
@@ -73,6 +75,7 @@ return_code="0"
 #---------------
 
 default_delimiter="\t"
+default_api_url_scheme="https"
 
 
 
@@ -85,9 +88,33 @@ ePrintf()
 	printf 'ERROR: %b\n' "${@}" >&2
 }
 
+printDebugMessage()
+{
+	local debug_message="${1}"
+
+	if [ "${debug_flag}" != "1" ]
+	then
+		return
+	fi
+
+	if [ -z "${debug_message}" ]
+	then
+		if [ ! -t "0" ]
+		then
+			while read -r
+			do
+				printDebugMessage "${REPLY}"
+			done < /dev/stdin
+		fi
+	fi
+
+	printf 'DEBUG: %b\n' "${debug_message}" >&2
+}
+
 setDefaultValues()
 {
 	delimiter="${delimiter:=${default_delimiter}}"
+	api_url_scheme="${api_url_scheme:=${default_api_url_scheme}}"
 }
 
 printUsage()
@@ -100,7 +127,8 @@ printUsage()
 	printf 'Version:\t\t%s\n\n' "${script_version}"
 	printf 'Description:\t\t%s\n\n' "${script_description}"
 	printf 'API OPTIONS:\n'
-	printf '   -a\t\tHostname or IP address of the hos providing the Icinga2 API\n'
+	printf '   -s\t\tURL scheme which should be used to connect (Default: %s)\n' "${default_api_url_scheme}"
+	printf '   -a\t\tHostname or IP address of the host providing the Icinga2 API\n'
 	printf '   -P\t\tPort to use when connecting to the Icinga2 API\n'
 	printf '   -u\t\tUsername\n'
 	printf '   -p\t\tPassword\n\n'
@@ -112,6 +140,7 @@ printUsage()
 	printf 'COMMON OPTIONS:\n'
 	printf '   -d\t\tDelimiter (Default: %s)\n' "${default_delimiter}"
 	printf '   -i\t\tUse stdin\n'
+	printf '   -D\t\tDebug\n'
 	printf '   -h\t\tShows this help.\n'
 	printf '   -v\t\tShows detailed version information.\n'
 }
@@ -154,7 +183,7 @@ checkOpts()
 		exit 103
 	fi
 
-	if [ "${use_stdin}" != "1" ]
+	if [ "${use_stdin_flag}" != "1" ]
 	then
 		if [ -z "${host_name}" ]
 		then
@@ -201,6 +230,17 @@ split()
 	printf '%s\n' "${arr[@]}"
 }
 
+join()
+{
+	local delimiter="${1:-}"
+	local string="${2:-}"
+
+	if shift 2
+	then
+		printf '%s' "${string}" "${@/#/${delimiter}}"
+	fi
+}
+
 prepareData()
 {
 	local rc=
@@ -231,9 +271,17 @@ prepareData()
 	fi
 
 	splitOutput
-	sendData
 
+	printDebugMessage "host_name: ${host_name}"
+	printDebugMessage "service_description: ${service_description}"
+	printDebugMessage "exit_status: ${exit_status}"
+	printDebugMessage "output: ${output}"
+	printDebugMessage "perfdata: ${perfdata}\n"
+
+	sendData
 	rc="${?}"
+
+	printDebugMessage "------------------------------------------------------------------------\n"
 
 	if [ "${rc}" -gt "${return_code}" ]
 	then
@@ -248,16 +296,8 @@ stdinDataHandler()
 	while read -r
 	do
 		mapfile -t raw_data< <(split "${delimiter}" "${REPLY}")
-
 		resetData
 		prepareData
-
-		#echo "host_name: $host_name"
-		#echo "service_description: $service_description"
-		#echo "exit_status: $exit_status"
-		#echo "output: $output"
-		#echo "perfdata: $perfdata"
-		#echo ------------------------------------
 	done < /dev/stdin
 }
 
@@ -276,7 +316,7 @@ buildPostData()
 {
 	local check_type="${1}"
 
-	printf '{ '
+	printf '{'
 	printf '    "type": "%s",' "${check_type}"
 
 	if [ "${check_type}" == "Service" ]
@@ -295,7 +335,7 @@ buildPostData()
 	fi
 
 	printf '    "check_source": "%s",' "${HOSTNAME}"
-	printf '    "pretty": true'
+	printf '    "pretty": true    '
 	printf '}'
 }
 
@@ -303,6 +343,7 @@ sendData()
 {
 	local check_type="Service"
 	local post_data=
+	local curl_cmd=
 
 	if [ -z "${service_description}" ]
 	then
@@ -310,17 +351,24 @@ sendData()
 	fi
 
 	post_data="$(buildPostData "${check_type}")"
+	curl_cmd="curl --insecure \
+				   --silent \
+				   --show-error \
+				   --include \
+				   --user \"${api_username}:${api_password}\" \
+				   --header 'Accept: application/json' \
+				   --request POST \"${api_url_scheme}://${api_host}:${api_port}/v1/actions/process-check-result\" \
+				   --data '$(printf '%s' "${post_data}")'"
 
-	#echo "post_data: $post_data"
+	printDebugMessage "post_data: ${post_data}\n"
+	printDebugMessage "curl_cmd: $(join " " ${curl_cmd})\n"
 
-	curl --insecure \
-		 --silent \
-		 --show-error \
-		 --include \
-		 --user "${api_username}:${api_password}" \
-		 --header 'Accept: application/json' \
-		 --request POST "https://${api_host}:${api_port}/v1/actions/process-check-result" \
-		 --data "${post_data}" 2> /dev/null
+	if [ "${debug_flag}" != "1" ]
+	then
+		eval "${curl_cmd} > /dev/null"
+	else
+		eval "${curl_cmd} | printDebugMessage"
+	fi
 }
 
 resetData()
@@ -337,7 +385,7 @@ main()
 	checkOpts
 	setDefaultValues
 
-	if [ "${use_stdin}" == "1" ]
+	if [ "${use_stdin_flag}" == "1" ]
 	then
 		if [ ! -t "0" ]
 		then
@@ -367,9 +415,12 @@ then
 
 	OPTERR="0"
 
-	while getopts ":a:P:u:p:H:S:E:O:d:ihv" OPTION
+	while getopts ":s:a:P:u:p:H:S:E:O:d:iDhv" OPTION
 	do
 		case "${OPTION}" in
+			s)
+				api_url_scheme="${OPTARG}"
+				;;
 			a)
 				api_host="${OPTARG}"
 				;;
@@ -399,7 +450,10 @@ then
 				delimiter="${OPTARG}"
 				;;
 			i)
-				use_stdin="1"
+				use_stdin_flag="1"
+				;;
+			D)
+				debug_flag="1"
 				;;
 			h)
 				printUsage

@@ -1302,7 +1302,7 @@ buildJobCommand()
 			fi
 			;;
 		icinga)
-			g_job_command="${g_job_command} ${g_libexec_directory}/send_icinga2_api.sh -a \"${c_obsessing_host}\" -P \"${c_obsessing_port}\" -u \"${c_icinga_username}\" -p \"${c_icinga_password}\" -d \"${g_od_sep}\" -i"
+			g_job_command="${g_job_command} ${g_libexec_directory}/send_icinga2_api.sh -s \"${c_icinga_protocol}\" -a \"${c_obsessing_host}\" -P \"${c_obsessing_port}\" -u \"${c_icinga_username}\" -p \"${c_icinga_password}\" -d \"${g_od_sep}\" -i"
 			;;
 		nsca)
 			g_job_command="${g_job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${c_obsessing_host} -p ${c_obsessing_port} -c \"${c_nsca_config_file}\""

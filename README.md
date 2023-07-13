@@ -655,8 +655,12 @@ c_nrdp_password="mySecret"
 # Icinga2 API specific settings (Needed in case c_obsessing_interface is icinga2)
 #--------------------------------------------------------------------------------
 
+# define the connection protocol
+# (valid values: http|https)
+c_icinga_protocol="https"
+
 # define the username to connect as with Icinga2 API
-c_icinga_username="nrdpuser"
+c_icinga_username="icingauser"
 
 # define the password of the user you have defined in variable: c_icinga_username with which we sould connect
 c_icinga_password="mySecret"
