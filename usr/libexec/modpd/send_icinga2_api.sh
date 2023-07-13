@@ -343,7 +343,7 @@ sendData()
 {
 	local check_type="Service"
 	local post_data=
-	local curl_cmd=
+	local curl_cmd=()
 
 	if [ -z "${service_description}" ]
 	then
@@ -351,23 +351,24 @@ sendData()
 	fi
 
 	post_data="$(buildPostData "${check_type}")"
-	curl_cmd="curl --insecure \
-				   --silent \
-				   --show-error \
-				   --include \
-				   --user \"${api_username}:${api_password}\" \
-				   --header 'Accept: application/json' \
-				   --request POST \"${api_url_scheme}://${api_host}:${api_port}/v1/actions/process-check-result\" \
-				   --data '$(printf '%s' "${post_data}")'"
+	curl_cmd=("curl --insecure \
+					--silent \
+				   	--show-error \
+				   	--include \
+				   	--user \"${api_username}:${api_password}\" \
+				   	--header 'Accept: application/json' \
+				   	--request POST \"${api_url_scheme}://${api_host}:${api_port}/v1/actions/process-check-result\" \
+				   	--data '$(printf '%s' "${post_data}")'")
 
 	printDebugMessage "post_data: ${post_data}\n"
-	printDebugMessage "curl_cmd: $(join " " ${curl_cmd})\n"
+	# shellcheck disable=SC2068
+	printDebugMessage "curl_cmd: $(join " " ${curl_cmd[@]})\n"
 
 	if [ "${debug_flag}" != "1" ]
 	then
-		eval "${curl_cmd} > /dev/null"
+		eval "${curl_cmd[*]} > /dev/null"
 	else
-		eval "${curl_cmd} | printDebugMessage"
+		eval "${curl_cmd[*]} | printDebugMessage"
 	fi
 }
 
