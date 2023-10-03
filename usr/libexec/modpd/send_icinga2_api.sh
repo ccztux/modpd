@@ -243,8 +243,6 @@ join()
 
 prepareData()
 {
-	local rc=
-
 	# host check
 	if [ "${#raw_data[@]}" -eq "3" ]
 	then
@@ -278,15 +276,9 @@ prepareData()
 	printDebugMessage "output: ${output}"
 	printDebugMessage "perfdata: ${perfdata}\n"
 
-	sendData
-	rc="${?}"
+	sendData &
 
 	printDebugMessage "------------------------------------------------------------------------\n"
-
-	if [ "${rc}" -gt "${return_code}" ]
-	then
-		return_code="${rc}"
-	fi
 }
 
 stdinDataHandler()
@@ -295,7 +287,7 @@ stdinDataHandler()
 
 	while read -r
 	do
-		mapfile -t raw_data< <(split "${delimiter}" "${REPLY}")
+		mapfile -t raw_data < <(split "${delimiter}" "${REPLY}")
 		resetData
 		prepareData
 	done < /dev/stdin
@@ -315,34 +307,46 @@ splitOutput()
 buildPostData()
 {
 	local check_type="${1}"
-
-	printf '{'
-	printf '    "type": "%s",' "${check_type}"
+	local filter=
+	local check_source="${HOSTNAME}"
+	local pretty=true
+	local jq_cmd=()
 
 	if [ "${check_type}" == "Service" ]
 	then
-		printf '    "filter": "host.name==\\"%s\\" && service.name==\\"%s\\"",' "${host_name}" "${service_description}"
+		filter="host.name==\\\"${host_name}\\\" && service.name==\\\"${service_description}\\\""
 	else
-		printf '    "filter": "host.name==\\"%s\\"",' "${host_name}"
+		filter="host.name==\\\"${host_name}\\\""
 	fi
 
-	printf '    "exit_status": %s,' "${exit_status}"
-	printf '    "plugin_output": "%s",' "${output}"
+	jq_cmd+=("jq -M -n --arg type \"${check_type}\" \
+					   --arg filter \"${filter}\" \
+					   --argjson exit_status \"${exit_status}\" \
+					   --arg plugin_output \"${output}\" ")
 
 	if [ -n "${perfdata}" ]
 	then
-		printf '    "performance_data": "%s",' "${perfdata}"
+		jq_cmd+=("--arg performance_data \"${perfdata}\" ")
 	fi
 
-	printf '    "check_source": "%s",' "${HOSTNAME}"
-	printf '    "pretty": true    '
-	printf '}'
+	jq_cmd+=("--arg check_source \"${check_source}\" \
+			  --argjson pretty \"${pretty}\" \
+			  '\$ARGS.named'")
+
+	echo "jq_cmd: $(join " " ${jq_cmd[@]})" | printDebugMessage
+	eval "${jq_cmd[@]}"
+
+	return
 }
 
 sendData()
 {
 	local check_type="Service"
-	local post_data=
+	local post_data_file="$(mktemp "/tmp/${script_name%%.*}.postdata.XXXXXX")"
+	local post_data=()
+	local curl_debug_opts="--output /dev/null"
+	local curl_data_opt="--data '@${post_data_file}'"
+	local curl_output_opt=
 	local curl_cmd=()
 
 	if [ -z "${service_description}" ]
@@ -350,25 +354,41 @@ sendData()
 		check_type="Host"
 	fi
 
-	post_data="$(buildPostData "${check_type}")"
-	curl_cmd=("curl --insecure \
-					--silent \
-				   	--show-error \
-				   	--include \
-				   	--user \"${api_username}:${api_password}\" \
-				   	--header 'Accept: application/json' \
-				   	--request POST \"${api_url_scheme}://${api_host}:${api_port}/v1/actions/process-check-result\" \
-				   	--data '$(printf '%s' "${post_data}")'")
+	if [ "${debug_flag}" == "1" ]
+	then
+		curl_output_opt=
+		curl_debug_opts="--show-error --include --verbose"
+	fi
 
-	printDebugMessage "post_data: ${post_data}\n"
+	mapfile -t post_data < <(buildPostData "${check_type}")
+	printf '%s\n' "${post_data[@]}" > "${post_data_file}"
+
+	curl_cmd=("curl --insecure \
+					--connect-timeout 2 \
+					--max-time 4 \
+					--silent \
+					--fail \
+					--user \"${api_username}:${api_password}\" \
+					--header 'Accept: application/json' \
+					--request POST \"${api_url_scheme}://${api_host}:${api_port}/v1/actions/process-check-result\" \
+					${curl_output_opt} \
+					${curl_debug_opts} \
+					${curl_data_opt}")
+
+	printDebugMessage "post_data:\n$(printf '%s\n' "${post_data[@]}")\n"
 	# shellcheck disable=SC2068
 	printDebugMessage "curl_cmd: $(join " " ${curl_cmd[@]})\n"
 
 	if [ "${debug_flag}" != "1" ]
 	then
-		eval "${curl_cmd[*]} > /dev/null"
+		eval "${curl_cmd[@]}"
 	else
-		eval "${curl_cmd[*]} | printDebugMessage"
+		eval "${curl_cmd[@]} |& printDebugMessage"
+	fi
+
+	if [ -f "${post_data_file}" ]
+	then
+		rm "${post_data_file}"
 	fi
 }
 
@@ -399,7 +419,7 @@ main()
 		prepareData
 	fi
 
-	exit "${return_code}"
+	exit 0
 }
 
 
