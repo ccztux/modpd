@@ -332,7 +332,6 @@ buildPostData()
 			  --argjson pretty \"${pretty}\" \
 			  '\$ARGS.named'")
 
-	# shellcheck disable=SC2154
 	echo "jq_cmd: $(join " " ${jq_cmd[@]})" | printDebugMessage
 	# shellcheck disable=SC2294
 	eval "${jq_cmd[@]}"
@@ -384,7 +383,6 @@ sendData()
 		# shellcheck disable=SC2294
 		eval "${curl_cmd[@]}"
 	else
-		# shellcheck disable=SC2294
 		eval "${curl_cmd[@]} |& printDebugMessage"
 	fi
 
