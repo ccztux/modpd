@@ -11,9 +11,9 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2023-01-09
+#						2023-07-10
 #
-#  Version				3.0.0
+#  Version				3.1.0
 #
 #  Description:			modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -590,7 +590,7 @@ checkRequiredBinaries()
 		required_binaries+=("php")
 	fi
 
-	required_binaries+=("whoami" "pgrep" "rm" "mkdir" "mkfifo" "kill" "sleep")
+	required_binaries+=("whoami" "pgrep" "grep" "rm" "mkdir" "mkfifo" "kill" "sleep")
 
 	for bin in "${required_binaries[@]}"
 	do
@@ -664,12 +664,16 @@ includeConfig()
 calculateFunctionNameLength()
 {
 	local function=
+	local function_list=
 	local function_names=()
+	g_function_names_max_length="0"
+	# shellcheck disable=SC2154
+	function_list="$(declare -F | ${grep_bin} -v "\-fx")"
 
-	while IFS='' read -r
+	while read -r
 	do
 		function_names+=("${REPLY}")
-	done <<< "$(declare -F)"
+	done <<< "${function_list}"
 
 	for function in "${function_names[@]//declare -f /}"
 	do
@@ -797,12 +801,31 @@ logHandlerStdinHelper()
 	done < "/dev/stdin"
 }
 
+hideSensitiveData()
+{
+	local string="${1}"
+	local replace_string="[HIDDEN FOR SECURITY]"
+	local data=
+	local sensitive_data=(
+	"${c_proxy_password:-}"
+	"${c_nrdp_password:-}"
+	"${c_nrdp_token:-}"
+	"${c_icinga_password:-}"
+	)
+
+	for data in "${sensitive_data[@]}"
+	do
+		string="${string//${data}/${replace_string}}"
+	done
+
+	printf '%s' "${string}"
+}
+
 logHandler()
 {
 	local log_message="${1:-}"
 	local log_timestamp=
 	local calling_function=
-	local log_secure_replace_string="[HIDDEN FOR SECURITY]"
 
 	if [ -z "${log_message:-}" ]
 	then
@@ -812,9 +835,7 @@ logHandler()
 		fi
 	else
 		log_message="${log_message//\`/}"
-		log_message="${log_message//${c_proxy_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${c_nrdp_password:-}/${log_secure_replace_string}}"
-		log_message="${log_message//${c_nrdp_token:-}/${log_secure_replace_string}}"
+		log_message="$(hideSensitiveData "${log_message}")"
 
 		if [ "${g_log_requirements_ok}" -ne "1" ]
 		then
@@ -1279,6 +1300,8 @@ updateExistingData()
 
 buildJobCommand()
 {
+	local nrdp_auth_string=
+
 	logHandler "Building job command..."
 
 	if [ "${c_job_timeout_enabled}" == "1" ]
@@ -1289,14 +1312,16 @@ buildJobCommand()
 
 	case "${c_obsessing_interface:-}" in
 		nrdp)
-			if [ -n "${c_nrdp_username}" ] && [ -n "${c_nrdp_password}" ]
+			if [ -n "${c_nrdp_username:-}" ] && [ -n "${c_nrdp_password:-}" ]
 			then
-				# shellcheck disable=SC2154
-				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_nrdp_username}:${c_nrdp_password}@${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
-			else
-				# shellcheck disable=SC2154
-				g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
+				nrdp_auth_string="${c_nrdp_username}:${c_nrdp_password}@"
 			fi
+
+			# shellcheck disable=SC2154
+			g_job_command="${g_job_command} ${php_bin} ${g_libexec_directory}/send_nrdp.php --usestdin --delim=\"${g_od_sep}\" --token=\"${c_nrdp_token}\" --url=${c_nrdp_protocol}://${nrdp_auth_string}${c_obsessing_host}:${c_obsessing_port}${c_nrdp_url_path}"
+			;;
+		icinga)
+			g_job_command="${g_job_command} ${g_libexec_directory}/send_icinga2_api.sh -s \"${c_icinga_protocol}\" -a \"${c_obsessing_host}\" -P \"${c_obsessing_port}\" -u \"${c_icinga_username}\" -p \"${c_icinga_password}\" -d \"${g_od_sep}\" -i"
 			;;
 		nsca)
 			g_job_command="${g_job_command} ${g_libexec_directory}/send_nsca -d \"${g_od_sep}\" -H ${c_obsessing_host} -p ${c_obsessing_port} -c \"${c_nsca_config_file}\""
@@ -1325,7 +1350,7 @@ jobExec()
 	fi
 
 	case "${c_obsessing_interface:-}" in
-		nrdp)
+		nrdp|icinga)
 			printf "%s\\n" "${data[@]}" | eval "${g_job_command}" 2>&1 | logHandler
 			;;
 		nsca)
@@ -1769,11 +1794,11 @@ _main()
 
 g_pid="${$}"
 g_name="${0##*/}"
-g_version="3.0.0"
+g_version="3.1.0"
 g_author="Christian Zettel (ccztux)"
 g_copyright="Copyright © 2017-2020 ${g_author}, all rights reserved"
 g_project_website="https://github.com/ccztux/${g_name}"
-g_last_modification_date="2023-01-09"
+g_last_modification_date="2023-07-10"
 g_minimal_required_bash_version="3"
 g_license="GNU GPLv2"
 g_description="${g_name} (Monitoring Obsessing Data Processor Daemon)"

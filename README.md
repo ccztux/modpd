@@ -14,8 +14,9 @@
 * [Registered trademarks](#registered-trademarks)
 * [Known Issues](#known-issues)
 * [Supported monitoring engines](#supported-monitoring-engines)
-   * [modpd &gt;= 3.x.x](#modpd--3xx)
-   * [modpd &lt; 3.x.x](#modpd--3xx-1)
+   * [modpd &gt;= 3.1.x](#modpd--31x)
+   * [modpd == 3.0.x](#modpd--30x)
+   * [modpd &lt; 3.0.0](#modpd--300)
 * [Requirements](#requirements)
    * [Required for building, compiling and installing the NEB modules and modpd](#required-for-building-compiling-and-installing-the-neb-modules-and-modpd)
    * [Required binaries for the installation of NRDP](#required-binaries-for-the-installation-of-nrdp)
@@ -76,7 +77,7 @@
 
 modpd consists of a NEB module and a daemon written in bash. The NEB module collects data and writes
 it to a named pipe. The daemon part reads the data from the named pipe and sends the check results
-via NRDP or NSCA to another monitoring server.
+via NRDP, NSCA or Icinga2 API to another monitoring server.
 
 
 # What was the motivation to develop modpd?
@@ -111,12 +112,19 @@ something in the configuration, because in case of a restart more than one datas
 
 
 # Supported monitoring engines
-## modpd >= 3.x.x
+## modpd >= 3.1.x
+* Nagios® 3.4.x
+* Naemon 1.3.x
+* Icinga2 via Icinga2 API (Only on the passive checks site!)
+
+
+
+## modpd == 3.0.x
 * Nagios® 3.4.x
 * Naemon 1.3.x
 
 
-## modpd < 3.x.x
+## modpd < 3.0.0
 * Nagios® 3.4.x
 
 
@@ -156,6 +164,7 @@ something in the configuration, because in case of a restart more than one datas
 - **bash** (version >= 3)
 - **whoami** to check the user who has started modpd
 - **pgrep** to check if an instance of modpd is already running
+- **grep** for common purposes
 - **date** for logging purposes (Only required if bash version < 4.2, else bash's printf builtin will be used.)
 - **rm** to delete the named_pipe_filename
 - **mkdir** to create directories
@@ -276,7 +285,7 @@ systemctl status nagios
 Check if the modpd NEB module was loaded by nagios:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.1.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/lib64/modpd/modpd_nagios3.o' initialized successfully.
 ```
@@ -315,7 +324,7 @@ systemctl status naemon
 Check if the modpd NEB module was loaded by naemon:
 ```bash
 [root@lab01]:~# grep -i modpd /var/log/naemon/naemon.log
-[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.1.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
 ```
@@ -443,7 +452,7 @@ systemctl status nagios
 Check if the modpd NEB module was loaded by nagios:
 ```bash
 [root@lab01]:~# grep -i modpd /usr/local/nagios/var/nagios.log
-[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.1.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/lib64/modpd/modpd_nagios3.o' initialized successfully.
 ```
@@ -466,7 +475,7 @@ systemctl status naemon
 Check if the modpd NEB module was loaded by naemon:
 ```bash
 [root@lab01]:~# grep -i modpd /var/log/naemon/naemon.log
-[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1582272717] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.1.0
 [1582272717] modpd: Starting...
 [1582272717] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
 ```
@@ -502,8 +511,8 @@ tail -f /var/log/modpd/modpd.log
 Usage: modpd OPTIONS
 
 Author:                 Christian Zettel (ccztux)
-Last modification:      2023-01-09
-Version:                3.0.0
+#						2023-07-10
+Version:                3.1.0
 
 Description:            modpd (Monitoring Obsessing Data Processor Daemon)
 
@@ -558,9 +567,9 @@ OPTIONS:
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2023-01-09
+#						2023-07-10
 #
-#  Version				3.0.0
+#  Version				3.1.0
 #
 #  Description:			Config file for modpd (Monitoring Obsessing Data Processor Daemon)
 #
@@ -606,7 +615,7 @@ fi
 #-------------------
 
 # define the obsessing interface
-# (valid values: nrdp|nsca)
+# (valid values: nrdp|nsca|icinga)
 c_obsessing_interface="nrdp"
 
 # define the host, where check results should be sent to
@@ -639,6 +648,22 @@ c_nrdp_username="nrdpuser"
 
 # define the password of the user you have defined in variable: c_nrdp_username with which we sould connect
 c_nrdp_password="mySecret"
+
+
+
+#--------------------------------------------------------------------------------
+# Icinga2 API specific settings (Needed in case c_obsessing_interface is icinga2)
+#--------------------------------------------------------------------------------
+
+# define the connection protocol
+# (valid values: http|https)
+c_icinga_protocol="https"
+
+# define the username to connect as with Icinga2 API
+c_icinga_username="icingauser"
+
+# define the password of the user you have defined in variable: c_icinga_username with which we sould connect
+c_icinga_password="mySecret"
 
 
 
@@ -783,7 +808,7 @@ c_stats_enabled="1"
 ## Example log snippets
 ### modpd daemon log snippet
 ```
-2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.0.0 starting... (PID=7084)
+2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | modpd 3.1.0 starting... (PID=7084)
 2021-01-07 16:10:01 |   7084 | checkLogHandlerRequirements | We are using the config file: '/etc/modpd/modpd.conf'
 2021-01-07 16:10:01 |   7084 |                 getExecUser | Get user which starts the daemon...
 2021-01-07 16:10:01 |   7084 |                 getExecUser | modpd was started as user: 'nagios'
@@ -866,7 +891,7 @@ c_stats_enabled="1"
 
 ### modpd NEB module log snippet
 ```
-[1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0
+[1607849563] modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.1.0
 [1607849563] modpd: Starting...
 [1607849563] Event broker module '/usr/lib64/modpd/modpd_naemon.o' initialized successfully.
 [1607849863] modpd: The modpd NEB module is running 0d 0h 5m 0s

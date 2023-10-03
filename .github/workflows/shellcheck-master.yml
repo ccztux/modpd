@@ -31,3 +31,4 @@ jobs:
       - name: ShellCheck our scripts
         run: |
           docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --check-sourced --external-sources /scripts/usr/bin/modpd
+          docker run -v $(pwd):/scripts koalaman/shellcheck:stable --color=always --check-sourced --external-sources /scripts/usr/libexec/modpd/send_icinga2_api.sh

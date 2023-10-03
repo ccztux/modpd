@@ -9,9 +9,9 @@
 *  Project website:		https://github.com/ccztux/modpd
 *
 *  Last Modification:	Christian Zettel (ccztux)
-*						2023-01-09
+*						2023-07-10
 *
-*  Version				3.0.0
+*  Version				3.1.0
 *
 *  Description:			NEB module to write obsessing data to unix socket
 *						Based on example: nagioscore/module/helloworld.c
@@ -72,12 +72,12 @@ int nebmodule_init(int flags, char *args, nebmodule *handle)
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "modpd");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_AUTHOR, "Christian Zettel (ccztux)");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_TITLE, "Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved");
-	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "3.0.0");
+	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_VERSION, "3.1.0");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(modpd_module_handle, NEBMODULE_MODINFO_DESC, "Obsessing NEB Module.");
 
 	/* log module info to the Naemon log file */
-	nm_log(NSLOG_INFO_MESSAGE, "modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.0.0");
+	nm_log(NSLOG_INFO_MESSAGE, "modpd: Copyright © 2017-NOW Christian Zettel (ccztux), all rights reserved, Version: 3.1.0");
 
 	/* log a message to the Naemon log file */
 	nm_log(NSLOG_INFO_MESSAGE, "modpd: Starting...");
