@@ -309,7 +309,7 @@ buildPostData()
 	local check_type="${1}"
 	local filter=
 	local check_source="${HOSTNAME}"
-	local pretty=true
+	local pretty="true"
 	local jq_cmd=()
 
 	if [ "${check_type}" == "Service" ]
