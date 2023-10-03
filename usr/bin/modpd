@@ -666,7 +666,8 @@ calculateFunctionNameLength()
 	local function=
 	local function_list=
 	local function_names=()
-	function_names_max_length="0"
+	g_function_names_max_length="0"
+	# shellcheck disable=SC2154
 	function_list="$(declare -F | ${grep_bin} -v "\-fx")"
 
 	while read -r
