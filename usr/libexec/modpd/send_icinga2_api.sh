@@ -66,7 +66,6 @@ use_stdin_flag=
 delimiter=
 debug_flag=
 raw_data=()
-return_code="0"
 
 
 
@@ -333,7 +332,7 @@ buildPostData()
 			  --argjson pretty \"${pretty}\" \
 			  '\$ARGS.named'")
 
-	echo "jq_cmd: $(join " " ${jq_cmd[@]})" | printDebugMessage
+	echo "jq_cmd: $(join " " ${jq_cmd[*]})" | printDebugMessage
 	eval "${jq_cmd[@]}"
 
 	return
@@ -342,12 +341,13 @@ buildPostData()
 sendData()
 {
 	local check_type="Service"
-	local post_data_file="$(mktemp "/tmp/${script_name%%.*}.postdata.XXXXXX")"
-	local post_data=()
 	local curl_debug_opts="--output /dev/null"
 	local curl_data_opt="--data '@${post_data_file}'"
 	local curl_output_opt=
 	local curl_cmd=()
+	local post_data=()
+	local post_data_file=
+	post_data_file="$(mktemp "/tmp/${script_name%%.*}.postdata.XXXXXX")"
 
 	if [ -z "${service_description}" ]
 	then
