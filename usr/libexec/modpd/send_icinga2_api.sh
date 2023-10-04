@@ -11,7 +11,7 @@
 #  Project website:		https://github.com/ccztux/modpd
 #
 #  Last Modification:	Christian Zettel (ccztux)
-#						2023-07-10
+#						2023-10-04
 #
 #  Version				3.1.0
 #
@@ -44,7 +44,7 @@ script_name="${0##*/}"
 script_author="Christian Zettel"
 script_version="3.1.0"
 script_description="Send host/service checkresults to Icinga2 API"
-script_last_modification_date="2023-07-10"
+script_last_modification_date="2023-10-04"
 
 
 
